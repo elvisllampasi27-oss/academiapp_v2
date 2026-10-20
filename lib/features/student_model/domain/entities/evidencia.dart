@@ -2,6 +2,8 @@ enum ResultadoEvidencia { correcta, incorrecta }
 
 enum OrigenEvidencia { practica, evaluacion, simulacro }
 
+enum DificultadEvidencia { basica, intermedia, avanzada }
+
 class Evidencia {
   final String id;
   final String matriculaId;
@@ -9,7 +11,7 @@ class Evidencia {
   final String habilidadId;
   final OrigenEvidencia origen;
   final ResultadoEvidencia resultado;
-  final double dificultad;
+  final DificultadEvidencia dificultad;
   final int numeroIntento;
   final bool ayudaUtilizada;
   final DateTime fecha;
