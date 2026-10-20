@@ -1,6 +1,8 @@
 import '../entities/parametros_bkt.dart';
 
 class ModeloBktService {
+  const ModeloBktService();
+
   double actualizarPorRespuesta({
     required double conocimientoActual,
     required bool respuestaCorrecta,
