@@ -1,3 +1,4 @@
+import '../entities/actividad_programada.dart';
 import '../entities/dia_academico.dart';
 import '../entities/tema.dart';
 
@@ -31,11 +32,26 @@ class CalendarioAcademicoService {
           ? posicion + cantidadTemas
           : secuencia.length;
 
+      final temasDelDia = secuencia.sublist(posicion, fin);
+
+      final actividades = <ActividadProgramada>[];
+
+      for (var i = 0; i < temasDelDia.length; i++) {
+        actividades.add(
+          ActividadProgramada(
+            id: 'dia-$numeroDia-actividad-${i + 1}',
+            diaId: 'dia-$numeroDia',
+            temaId: temasDelDia[i].id,
+            orden: i + 1,
+          ),
+        );
+      }
+
       dias.add(
         DiaAcademico(
           numero: numeroDia,
           fecha: fechaActual,
-          temas: secuencia.sublist(posicion, fin),
+          actividades: actividades,
         ),
       );
 
