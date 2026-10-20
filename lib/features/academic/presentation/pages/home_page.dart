@@ -9,10 +9,7 @@ class HomePage extends StatelessWidget {
       body: Center(
         child: Text(
           'AcademiApp V2',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
       ),
     );
