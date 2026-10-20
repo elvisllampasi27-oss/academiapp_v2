@@ -4,16 +4,28 @@ import '../entities/tema.dart';
 class CalendarioAcademicoService {
   const CalendarioAcademicoService();
 
-  List<DiaAcademico> generar(List<Tema> secuencia) {
+  List<DiaAcademico> generar({
+    required List<Tema> secuencia,
+    required DateTime fechaInicio,
+  }) {
     final dias = <DiaAcademico>[];
 
     var posicion = 0;
     var numeroDia = 1;
 
-    while (posicion < secuencia.length) {
-      final posicionSemana = (numeroDia - 1) % 6;
+    var fechaActual = DateTime(
+      fechaInicio.year,
+      fechaInicio.month,
+      fechaInicio.day,
+    );
 
-      final cantidadTemas = posicionSemana == 5 ? 2 : 3;
+    while (posicion < secuencia.length) {
+      if (fechaActual.weekday == DateTime.sunday) {
+        fechaActual = fechaActual.add(const Duration(days: 1));
+        continue;
+      }
+
+      final cantidadTemas = fechaActual.weekday == DateTime.saturday ? 2 : 3;
 
       final fin = (posicion + cantidadTemas < secuencia.length)
           ? posicion + cantidadTemas
@@ -22,12 +34,14 @@ class CalendarioAcademicoService {
       dias.add(
         DiaAcademico(
           numero: numeroDia,
+          fecha: fechaActual,
           temas: secuencia.sublist(posicion, fin),
         ),
       );
 
       posicion = fin;
       numeroDia++;
+      fechaActual = fechaActual.add(const Duration(days: 1));
     }
 
     return dias;
