@@ -4,6 +4,7 @@ import 'package:academiapp_v2/features/tutor_rag/domain/entities/chunk_conocimie
 import 'package:academiapp_v2/features/tutor_rag/domain/entities/consulta_tutor.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/entities/contexto_tutor.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/entities/embedding_chunk.dart';
+import 'package:academiapp_v2/features/tutor_rag/domain/exceptions/conocimiento_no_encontrado_exception.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/repositories/generador_embedding.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/repositories/generador_respuesta_tutor.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/services/recuperador_vectorial_service.dart';
@@ -19,6 +20,13 @@ class GeneradorEmbeddingIntegracion implements GeneradorEmbedding {
   }
 }
 
+class GeneradorEmbeddingNoRelacionado implements GeneradorEmbedding {
+  @override
+  Future<List<double>> generar({required String texto}) async {
+    return [-1.0, 0.0];
+  }
+}
+
 class GeneradorRespuestaIntegracion implements GeneradorRespuestaTutor {
   @override
   Future<String> generar({required ContextoTutor contexto}) async {
@@ -26,6 +34,16 @@ class GeneradorRespuestaIntegracion implements GeneradorRespuestaTutor {
     final tipo = contexto.recomendacion.tipo.name;
 
     return '$tipo: $conocimiento';
+  }
+}
+
+class GeneradorRespuestaControlado implements GeneradorRespuestaTutor {
+  bool fueLlamado = false;
+
+  @override
+  Future<String> generar({required ContextoTutor contexto}) async {
+    fueLlamado = true;
+    return 'Respuesta que no deberia generarse.';
   }
 }
 
@@ -101,6 +119,76 @@ void main() {
       expect(respuesta, contains('reforzar'));
       expect(respuesta, contains('sumar matrices'));
       expect(respuesta, isNot(contains('derivada')));
+    },
+  );
+
+  test(
+    'Tutor no genera respuesta si RAG no encuentra conocimiento relevante',
+    () async {
+      const repositorio = RepositorioConocimientoEnMemoria(
+        chunks: [
+          ChunkConocimiento(
+            id: 'chunk-matrices',
+            documentoId: 'doc-matrices',
+            contenido:
+                'Para sumar matrices deben tener las mismas dimensiones.',
+            orden: 1,
+          ),
+        ],
+        embeddings: [
+          EmbeddingChunk(chunkId: 'chunk-matrices', vector: [1.0, 0.0]),
+        ],
+      );
+
+      final recuperador = RecuperadorVectorialService(
+        generadorEmbedding: GeneradorEmbeddingNoRelacionado(),
+        similitudCoseno: const SimilitudCosenoService(),
+        repositorio: repositorio,
+        similitudMinima: 0.5,
+      );
+
+      final generador = GeneradorRespuestaControlado();
+
+      final tutor = TutorService(
+        recuperador: recuperador,
+        generador: generador,
+      );
+
+      const consulta = ConsultaTutor(
+        matriculaId: 'matricula-1',
+        habilidadId: 'mitosis',
+        pregunta: 'Explicame la mitosis.',
+      );
+
+      final estado = EstadoDominio(
+        matriculaId: 'matricula-1',
+        habilidadId: 'mitosis',
+        valor: 0.25,
+        nivel: NivelDominio.bajo,
+        modeloVersion: 'bkt-v1',
+        actualizadoEn: DateTime(2026, 10, 22),
+      );
+
+      final recomendacion = Recomendacion(
+        id: 'recomendacion-mitosis',
+        matriculaId: 'matricula-1',
+        habilidadId: 'mitosis',
+        tipo: TipoRecomendacion.reforzar,
+        motivo: 'El estudiante presenta dominio bajo.',
+        prioridad: 3,
+        fecha: DateTime(2026, 10, 22),
+      );
+
+      await expectLater(
+        tutor.responder(
+          consulta: consulta,
+          estadoDominio: estado,
+          recomendacion: recomendacion,
+        ),
+        throwsA(isA<ConocimientoNoEncontradoException>()),
+      );
+
+      expect(generador.fueLlamado, isFalse);
     },
   );
 }
