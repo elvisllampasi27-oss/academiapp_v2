@@ -1,7 +1,7 @@
 import 'package:academiapp_v2/features/tutor_rag/domain/entities/chunk_conocimiento.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/entities/embedding_chunk.dart';
-import 'package:academiapp_v2/features/tutor_rag/domain/repositories/repositorio_conocimiento.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/repositories/generador_embedding.dart';
+import 'package:academiapp_v2/features/tutor_rag/domain/repositories/repositorio_conocimiento.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/services/recuperador_vectorial_service.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/services/similitud_coseno_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +10,13 @@ class GeneradorEmbeddingFalso implements GeneradorEmbedding {
   @override
   Future<List<double>> generar({required String texto}) async {
     return [1.0, 0.0];
+  }
+}
+
+class GeneradorEmbeddingSinCoincidencia implements GeneradorEmbedding {
+  @override
+  Future<List<double>> generar({required String texto}) async {
+    return [-1.0, 0.0];
   }
 }
 
@@ -63,5 +70,35 @@ void main() {
     expect(resultado.length, 2);
     expect(resultado[0].id, 'chunk-a');
     expect(resultado[1].id, 'chunk-c');
+  });
+
+  test('no recupera chunks por debajo de la similitud minima', () async {
+    final service = RecuperadorVectorialService(
+      generadorEmbedding: GeneradorEmbeddingFalso(),
+      similitudCoseno: const SimilitudCosenoService(),
+      repositorio: RepositorioConocimientoFalso(),
+      similitudMinima: 0.99,
+    );
+
+    final resultado = await service.recuperar(
+      consulta: 'consulta sin conocimiento suficientemente relacionado',
+      limite: 3,
+    );
+
+    expect(resultado.length, 1);
+    expect(resultado.first.id, 'chunk-a');
+  });
+
+  test('devuelve vacio cuando ningun chunk supera el umbral', () async {
+    final service = RecuperadorVectorialService(
+      generadorEmbedding: GeneradorEmbeddingSinCoincidencia(),
+      similitudCoseno: const SimilitudCosenoService(),
+      repositorio: RepositorioConocimientoFalso(),
+      similitudMinima: 0.5,
+    );
+
+    final resultado = await service.recuperar(consulta: 'mitosis');
+
+    expect(resultado, isEmpty);
   });
 }
