@@ -35,15 +35,49 @@ El proyecto sigue **Clean Architecture** organizada por *features*. Cada módulo
 
 **Regla principal:** el dominio no conoce la infraestructura. Las dependencias siempre apuntan hacia el dominio.
 
-```text
-DOMINIO
-  RepositorioConocimiento  (contrato)
-          ↑
-──────────┼──────────────────────────
-INFRAESTRUCTURA
-          │ implementa
-  RepositorioConocimientoEnMemoria   (actual)
-  RepositorioConocimientoFirebase    (planificado)
+### Diagrama de módulos
+
+```mermaid
+flowchart LR
+    subgraph Planificacion["Planificación"]
+        ENR[enrollment<br/>Matrícula]
+        ACA[academic<br/>Plan y calendario]
+    end
+
+    subgraph Personalizacion["Personalización"]
+        ASM[assessment<br/>Evaluación]
+        STM[student_model<br/>BKT]
+        ADE[adaptive_engine<br/>Recomendaciones]
+    end
+
+    subgraph Tutor["Tutor inteligente"]
+        RAG[tutor_rag<br/>RAG]
+    end
+
+    ENR --> ACA
+    ASM -->|respuestas| STM
+    STM -->|EstadoDominio| ADE
+    STM -->|EstadoDominio| RAG
+    ADE -->|Recomendacion| RAG
+```
+
+### Dominio e infraestructura
+
+```mermaid
+flowchart TB
+    subgraph Dominio
+        RC[[RepositorioConocimiento<br/>contrato]]
+    end
+
+    subgraph Infraestructura
+        MEM[RepositorioConocimientoEnMemoria<br/>actual]
+        FB[RepositorioConocimientoFirebase<br/>planificado]
+    end
+
+    MEM -.implementa.-> RC
+    FB -.implementa.-> RC
+
+    style FB stroke-dasharray: 5 5
 ```
 
 ---
@@ -123,24 +157,32 @@ Servicios:
 
 ## Flujo del tutor RAG
 
-```text
-Evidencias ──► BKT ──► EstadoDominio ──► AdaptiveEngine ──► Recomendacion
-                                                                 │
-ConsultaTutor ──► TutorService ◄─────────────────────────────────┘
-                       │
-                       ▼
-             RecuperadorConocimiento
-               /                 \
-   RecuperadorPorTexto    RecuperadorVectorial
-               \                 /
-                ▼               ▼
-             RepositorioConocimiento
-                       │
-          ¿hay chunks relevantes?
-             │                 │
-            No                 Sí
-             │                 ▼
-  ConocimientoNoEncontrado   ContextoTutor ──► GeneradorRespuestaTutor ──► Respuesta
+```mermaid
+flowchart TD
+    EV[Evidencias] --> BKT[ModeloBktService]
+    BKT --> ED[EstadoDominio]
+    ED --> AE[AdaptiveEngineService]
+    AE --> REC[Recomendacion]
+
+    CT[ConsultaTutor] --> TS[TutorService]
+    ED --> TS
+    REC --> TS
+
+    TS --> RCON{{RecuperadorConocimiento}}
+    RCON --> RT[RecuperadorPorTextoService]
+    RCON --> RV[RecuperadorVectorialService]
+    RV --> SC[SimilitudCosenoService<br/>similitud ≥ similitudMinima]
+    RT --> REPO[(RepositorioConocimiento)]
+    SC --> REPO
+
+    REPO --> Q{¿Hay chunks<br/>relevantes?}
+    Q -- No --> EX[ConocimientoNoEncontradoException<br/>no se llama al generador]
+    Q -- Sí --> CTX[ContextoTutor]
+    CTX --> GEN[GeneradorRespuestaTutor]
+    GEN --> RESP[Respuesta]
+
+    style EX fill:#fdd,stroke:#c33
+    style RESP fill:#dfd,stroke:#3a3
 ```
 
 ---
