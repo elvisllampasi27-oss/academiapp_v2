@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "952131163064",
+    "project_id": "academiapp-v2-7b9ce",
+    "storage_bucket": "academiapp-v2-7b9ce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:952131163064:android:bb2dfc9cf820df8ffff54d",
+        "android_client_info": {
+          "package_name": "pe.edu.unsch.academiapp_v2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBklSvusRBkvAA_8qGLMztt9vBEmZ-fsEw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
