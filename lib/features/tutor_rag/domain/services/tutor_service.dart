@@ -1,6 +1,5 @@
 import '../../../adaptive_engine/domain/entities/recomendacion.dart';
 import '../../../student_model/domain/entities/estado_dominio.dart';
-import '../entities/chunk_conocimiento.dart';
 import '../entities/consulta_tutor.dart';
 import '../entities/contexto_tutor.dart';
 import '../exceptions/conocimiento_no_encontrado_exception.dart';
@@ -17,12 +16,11 @@ class TutorService {
     required ConsultaTutor consulta,
     required EstadoDominio estadoDominio,
     required Recomendacion recomendacion,
-    required List<ChunkConocimiento> chunksDisponibles,
+
     int limiteChunks = 3,
   }) async {
     final chunksRecuperados = await recuperador.recuperar(
       consulta: consulta.pregunta,
-      chunks: chunksDisponibles,
       limite: limiteChunks,
     );
 

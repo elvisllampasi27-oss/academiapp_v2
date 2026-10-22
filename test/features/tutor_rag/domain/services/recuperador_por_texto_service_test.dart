@@ -1,10 +1,26 @@
 import 'package:academiapp_v2/features/tutor_rag/domain/entities/chunk_conocimiento.dart';
+import 'package:academiapp_v2/features/tutor_rag/domain/entities/embedding_chunk.dart';
+import 'package:academiapp_v2/features/tutor_rag/domain/repositories/repositorio_conocimiento.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/services/recuperador_por_texto_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-void main() {
-  const service = RecuperadorPorTextoService();
+class RepositorioTextoFalso implements RepositorioConocimiento {
+  final List<ChunkConocimiento> chunks;
 
+  const RepositorioTextoFalso(this.chunks);
+
+  @override
+  Future<List<ChunkConocimiento>> obtenerChunks() async {
+    return chunks;
+  }
+
+  @override
+  Future<List<EmbeddingChunk>> obtenerEmbeddings() async {
+    return const [];
+  }
+}
+
+void main() {
   const chunks = [
     ChunkConocimiento(
       id: 'chunk-1',
@@ -26,10 +42,13 @@ void main() {
     ),
   ];
 
+  final service = RecuperadorPorTextoService(
+    repositorio: RepositorioTextoFalso(chunks),
+  );
+
   test('recupera un chunk relacionado con la consulta', () async {
     final resultado = await service.recuperar(
       consulta: '¿Como puedo sumar matrices?',
-      chunks: chunks,
     );
 
     expect(resultado, isNotEmpty);
@@ -37,20 +56,13 @@ void main() {
   });
 
   test('respeta el limite de resultados', () async {
-    final resultado = await service.recuperar(
-      consulta: 'matrices',
-      chunks: chunks,
-      limite: 2,
-    );
+    final resultado = await service.recuperar(consulta: 'matrices', limite: 2);
 
     expect(resultado.length, 2);
   });
 
   test('devuelve vacio cuando no encuentra contenido relacionado', () async {
-    final resultado = await service.recuperar(
-      consulta: 'geometria triangulos',
-      chunks: chunks,
-    );
+    final resultado = await service.recuperar(consulta: 'geometria triangulos');
 
     expect(resultado, isEmpty);
   });

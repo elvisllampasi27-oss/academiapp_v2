@@ -3,7 +3,9 @@ import 'package:academiapp_v2/features/student_model/domain/entities/estado_domi
 import 'package:academiapp_v2/features/tutor_rag/domain/entities/chunk_conocimiento.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/entities/consulta_tutor.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/entities/contexto_tutor.dart';
+import 'package:academiapp_v2/features/tutor_rag/domain/entities/embedding_chunk.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/exceptions/conocimiento_no_encontrado_exception.dart';
+import 'package:academiapp_v2/features/tutor_rag/domain/repositories/repositorio_conocimiento.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/repositories/generador_respuesta_tutor.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/services/recuperador_por_texto_service.dart';
 import 'package:academiapp_v2/features/tutor_rag/domain/services/tutor_service.dart';
@@ -28,10 +30,43 @@ class GeneradorQueNoDebeLlamarse implements GeneradorRespuestaTutor {
   }
 }
 
+class RepositorioTutorFalso implements RepositorioConocimiento {
+  final List<ChunkConocimiento> chunks;
+
+  const RepositorioTutorFalso(this.chunks);
+
+  @override
+  Future<List<ChunkConocimiento>> obtenerChunks() async {
+    return chunks;
+  }
+
+  @override
+  Future<List<EmbeddingChunk>> obtenerEmbeddings() async {
+    return const [];
+  }
+}
+
 void main() {
   test('Tutor integra recomendacion y conocimiento recuperado', () async {
+    const chunks = [
+      ChunkConocimiento(
+        id: 'chunk-1',
+        documentoId: 'doc-1',
+        contenido: 'Una matriz es un arreglo rectangular.',
+        orden: 1,
+      ),
+      ChunkConocimiento(
+        id: 'chunk-2',
+        documentoId: 'doc-1',
+        contenido: 'Para sumar matrices deben tener las mismas dimensiones.',
+        orden: 2,
+      ),
+    ];
+
     final tutor = TutorService(
-      recuperador: const RecuperadorPorTextoService(),
+      recuperador: RecuperadorPorTextoService(
+        repositorio: RepositorioTutorFalso(chunks),
+      ),
       generador: GeneradorTutorFalso(),
     );
 
@@ -60,40 +95,34 @@ void main() {
       fecha: DateTime(2026, 10, 21),
     );
 
-    const chunks = [
-      ChunkConocimiento(
-        id: 'chunk-1',
-        documentoId: 'doc-1',
-        contenido: 'Una matriz es un arreglo rectangular.',
-        orden: 1,
-      ),
-      ChunkConocimiento(
-        id: 'chunk-2',
-        documentoId: 'doc-1',
-        contenido: 'Para sumar matrices deben tener las mismas dimensiones.',
-        orden: 2,
-      ),
-    ];
-
     final respuesta = await tutor.responder(
       consulta: consulta,
       estadoDominio: estado,
       recomendacion: recomendacion,
-      chunksDisponibles: chunks,
     );
 
     expect(respuesta, contains('reforzar'));
-
     expect(respuesta, contains('sumar matrices'));
   });
 
   test(
     'Tutor no genera respuesta cuando RAG no encuentra conocimiento',
     () async {
+      const chunks = [
+        ChunkConocimiento(
+          id: 'chunk-1',
+          documentoId: 'doc-matrices',
+          contenido: 'Para sumar matrices deben tener las mismas dimensiones.',
+          orden: 1,
+        ),
+      ];
+
       final generador = GeneradorQueNoDebeLlamarse();
 
       final tutor = TutorService(
-        recuperador: const RecuperadorPorTextoService(),
+        recuperador: RecuperadorPorTextoService(
+          repositorio: RepositorioTutorFalso(chunks),
+        ),
         generador: generador,
       );
 
@@ -122,21 +151,11 @@ void main() {
         fecha: DateTime(2026, 10, 21),
       );
 
-      const chunks = [
-        ChunkConocimiento(
-          id: 'chunk-1',
-          documentoId: 'doc-matrices',
-          contenido: 'Para sumar matrices deben tener las mismas dimensiones.',
-          orden: 1,
-        ),
-      ];
-
       expect(
         () => tutor.responder(
           consulta: consulta,
           estadoDominio: estado,
           recomendacion: recomendacion,
-          chunksDisponibles: chunks,
         ),
         throwsA(isA<ConocimientoNoEncontradoException>()),
       );
