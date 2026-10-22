@@ -1,83 +1,272 @@
-Aquí tienes una versión mejorada, profesional y estructurada para tu proyecto **academiapp_v2**. Incluye la arquitectura, las tecnologías detectadas en tu código (Modelo BKT, Motor Adaptativo, Tutor RAG), las instrucciones de instalación y la ejecución de pruebas.
+# AcademiApp v2
+
+Aplicación móvil en **Flutter** para el acompañamiento académico personalizado de estudiantes. Combina un **modelo del estudiante** basado en *Bayesian Knowledge Tracing* (BKT), un **motor adaptativo** que genera recomendaciones según el nivel de dominio y un **tutor con RAG** (*Retrieval-Augmented Generation*) que responde usando solo conocimiento validado.
+
+> Proyecto desarrollado como parte de una tesis de pregrado — Universidad Nacional de San Cristóbal de Huamanga (UNSCH).
 
 ---
 
-# AcademiaApp v2 🎓
+## Tabla de contenidos
 
-Plataforma educativa adaptativa desarrollada en **Flutter** que integra un modelo de conocimiento del estudiante basado en **BKT (Bayesian Knowledge Tracing)**, un motor de recomendaciones personalizadas y un tutor inteligente con arquitectura **RAG (Retrieval-Augmented Generation)**.
-
----
-
-## 🚀 Características Principales
-
-* **Modelo del Estudiante (Student Model):** Seguimiento del nivel de dominio de habilidades mediante algoritmos Bayesian Knowledge Tracing (BKT).
-* **Motor Adaptativo (Adaptive Engine):** Generación automática de rutas de aprendizaje y recomendaciones personalizadas (*reforzar*, *practicar*, *profundizar*).
-* **Tutor RAG (Retrieval-Augmented Generation):** Asistente inteligente que utiliza búsqueda vectorial e indexación de contenido para responder dudas contextualizadas.
-
----
-
-## 🛠️ Tecnologías y Requisitos
-
-* **Framework:** [Flutter](https://flutter.dev/) (SDK `>=3.0.0`)
-* **Lenguaje:** [Dart](https://dart.dev/)
-* **Gestión de Estado y Arquitectura:** Clean Architecture / Domain-Driven Design (DDD)
+- [Arquitectura](#arquitectura)
+- [Módulos](#módulos)
+- [Flujo del tutor RAG](#flujo-del-tutor-rag)
+- [Estructura del proyecto](#estructura-del-proyecto)
+- [Requisitos](#requisitos)
+- [Instalación](#instalación)
+- [Configuración de Firebase](#configuración-de-firebase)
+- [Pruebas y calidad](#pruebas-y-calidad)
+- [Convención de commits](#convención-de-commits)
+- [Estado del proyecto](#estado-del-proyecto)
 
 ---
 
-## 📦 Instalación y Configuración
+## Arquitectura
 
-1. **Clonar el repositorio:**
-```bash
-git clone https://github.com/tu-usuario/academiapp_v2.git
-cd academiapp_v2
+El proyecto sigue **Clean Architecture** organizada por *features*. Cada módulo separa:
 
-```
+| Capa | Responsabilidad |
+|---|---|
+| `domain/entities` | Modelos del negocio, sin dependencias externas. |
+| `domain/repositories` | Contratos (clases abstractas) que el dominio necesita. |
+| `domain/services` | Reglas de negocio puras y testeables. |
+| `infrastructure` | Implementaciones concretas de los contratos (memoria, Firebase…). |
+| `presentation` | Páginas y widgets de Flutter. |
 
+**Regla principal:** el dominio no conoce la infraestructura. Las dependencias siempre apuntan hacia el dominio.
 
-2. **Instalar dependencias:**
-```bash
-flutter pub get
-
-```
-
-
-3. **Ejecutar la aplicación:**
-```bash
-flutter run
-
-```
-
-
-
----
-
-## 🧪 Pruebas (Testing)
-
-El proyecto cuenta con cobertura de pruebas unitarias para los servicios de dominio (BKT, Motor Adaptativo y Tutor RAG).
-
-Para ejecutar todas las pruebas del proyecto:
-
-```bash
-flutter test
-
-```
-
-Para ejecutar un test específico:
-
-```bash
-flutter test test/features/student_model/domain/services/modelo_bkt_service_test.dart
-
+```text
+DOMINIO
+  RepositorioConocimiento  (contrato)
+          ↑
+──────────┼──────────────────────────
+INFRAESTRUCTURA
+          │ implementa
+  RepositorioConocimientoEnMemoria   (actual)
+  RepositorioConocimientoFirebase    (planificado)
 ```
 
 ---
 
-## 📂 Estructura del Proyecto
+## Módulos
+
+### `academic` — Planificación académica
+Entidades: `Area`, `Curso`, `Tema`, `Contenido`, `Recurso`, `PlanAcademico`, `VersionAcademica`, `DiaAcademico`, `ActividadProgramada`.
+
+- `SecuenciaAcademicaService`: ordena los temas de los cursos en una secuencia de estudio.
+- `CalendarioAcademicoService`: genera los días académicos del plan.
+- `ActividadesDelDiaService`: obtiene las actividades programadas para un día.
+
+### `enrollment` — Matrícula
+- `CalcularInicioAcademicoService`: calcula la fecha de inicio académico a partir de la matrícula y su configuración.
+
+### `assessment` — Evaluación
+Entidades: `Evaluacion`, `Pregunta`, `Opcion`, `Respuesta`, `IntentoEvaluacion`, `ResultadoEvaluacion`.
+
+- `CalcularResultadoEvaluacionService`: calcula el resultado de un intento a partir de las respuestas.
+
+### `student_model` — Modelo del estudiante (BKT)
+Entidades: `Habilidad`, `PreguntaHabilidad`, `Evidencia`, `ParametrosBkt`, `EstadoDominio`.
+
+- `GenerarEvidenciasService`: convierte respuestas en evidencias por habilidad.
+- `ModeloBktService`: actualiza la probabilidad de dominio con BKT.
+- `CalcularEstadoDominioService`: recorre las evidencias en orden cronológico y devuelve el `EstadoDominio`.
+
+**Parámetros BKT** (todos entre 0 y 1): conocimiento inicial *P(L₀)*, aprendizaje *P(T)*, adivinanza *P(G)* y desliz *P(S)*.
+
+Actualización tras cada evidencia:
+
+```text
+Correcta:   P(L|obs) = P(L)·(1−S) / [ P(L)·(1−S) + (1−P(L))·G ]
+Incorrecta: P(L|obs) = P(L)·S     / [ P(L)·S     + (1−P(L))·(1−G) ]
+Aprendizaje: P(L') = P(L|obs) + (1 − P(L|obs))·T
+```
+
+**Clasificación del nivel de dominio:**
+
+| Valor | Nivel |
+|---|---|
+| `< 0.50` | `bajo` |
+| `0.50 – 0.79` | `medio` |
+| `≥ 0.80` | `alto` |
+
+### `adaptive_engine` — Motor adaptativo
+- `AdaptiveEngineService.generarRecomendacion()`: transforma un `EstadoDominio` en una `Recomendacion`.
+- `AdaptiveEngineService.construirMiRuta()`: genera recomendaciones para varias habilidades ordenadas por prioridad.
+
+| Nivel de dominio | Recomendación | Prioridad |
+|---|---|---|
+| `bajo` | `reforzar` | 3 |
+| `medio` | `practicar` | 2 |
+| `alto` | `profundizar` | 1 |
+
+### `tutor_rag` — Tutor con RAG
+Entidades: `DocumentoConocimiento`, `ChunkConocimiento`, `EmbeddingChunk`, `ConsultaTutor`, `ContextoTutor`.
+
+Contratos (`domain/repositories`):
+
+| Contrato | Responsabilidad |
+|---|---|
+| `RepositorioConocimiento` | Acceso a chunks y embeddings almacenados. |
+| `RecuperadorConocimiento` | Recuperar los chunks relevantes para una consulta. |
+| `GeneradorEmbedding` | Convertir texto en vector. |
+| `GeneradorRespuestaTutor` | Generar la respuesta final a partir del contexto. |
+
+Servicios:
+
+- `RecuperadorPorTextoService`: recuperación por coincidencia de palabras.
+- `RecuperadorVectorialService`: recuperación por similitud coseno, con umbral configurable `similitudMinima` (por defecto `0.5`, rango `[-1, 1]`).
+- `SimilitudCosenoService`: calcula la similitud coseno entre dos vectores.
+- `TutorService`: orquesta la recuperación y la generación. **Si no recupera conocimiento relevante, lanza `ConocimientoNoEncontradoException` y no llama al generador**, para evitar respuestas inventadas.
+
+---
+
+## Flujo del tutor RAG
+
+```text
+Evidencias ──► BKT ──► EstadoDominio ──► AdaptiveEngine ──► Recomendacion
+                                                                 │
+ConsultaTutor ──► TutorService ◄─────────────────────────────────┘
+                       │
+                       ▼
+             RecuperadorConocimiento
+               /                 \
+   RecuperadorPorTexto    RecuperadorVectorial
+               \                 /
+                ▼               ▼
+             RepositorioConocimiento
+                       │
+          ¿hay chunks relevantes?
+             │                 │
+            No                 Sí
+             │                 ▼
+  ConocimientoNoEncontrado   ContextoTutor ──► GeneradorRespuestaTutor ──► Respuesta
+```
+
+---
+
+## Estructura del proyecto
 
 ```text
 lib/
+├── main.dart
+├── app/
+│   └── app.dart
 └── features/
-    ├── student_model/     # Evaluación de conocimiento (BKT)
-    ├── adaptive_engine/   # Generación de rutas y recomendaciones
-    └── tutor_rag/         # Recuperación de conocimiento e integración con la IA
+    ├── academic/
+    │   ├── domain/{entities,services}
+    │   └── presentation/pages
+    ├── adaptive_engine/domain/{entities,services}
+    ├── assessment/domain/{entities,services}
+    ├── enrollment/domain/{entities,services}
+    ├── student_model/domain/{entities,services}
+    └── tutor_rag/
+        ├── domain/{entities,exceptions,repositories,services}
+        └── infrastructure/repositories
 
+test/
+├── widget_test.dart
+└── features/
+    ├── academic/ …
+    ├── adaptive_engine/ …
+    ├── assessment/ …
+    ├── enrollment/ …
+    ├── student_model/ …
+    └── tutor_rag/
+        ├── domain/{entities,repositories,services}
+        ├── infrastructure/repositories
+        └── integration/tutor_rag_integration_test.dart
 ```
+
+---
+
+## Requisitos
+
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (canal estable) y Dart 3
+- Git
+- Node.js LTS (para Firebase CLI)
+- Firebase CLI y FlutterFire CLI (para la integración con Firebase)
+
+---
+
+## Instalación
+
+```powershell
+git clone <url-del-repositorio>
+cd academiapp_v2
+flutter pub get
+flutter run
+```
+
+---
+
+## Configuración de Firebase
+
+> La integración con Firebase está en proceso. El dominio ya está desacoplado mediante `RepositorioConocimiento`, por lo que Firebase entrará como una implementación más en `infrastructure`.
+
+```powershell
+# 1. Firebase CLI
+npm install -g firebase-tools
+firebase login
+
+# 2. FlutterFire CLI
+dart pub global activate flutterfire_cli
+
+# 3. Desde la raíz del proyecto (donde está pubspec.yaml)
+flutterfire configure
+```
+
+En Windows, si `flutterfire` no se reconoce, agrega `C:\Users\<usuario>\AppData\Local\Pub\Cache\bin` al `PATH` y reinicia VS Code.
+Si PowerShell bloquea `firebase`, ejecuta una vez: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+
+---
+
+## Pruebas y calidad
+
+Antes de cada commit:
+
+```powershell
+dart format lib test
+flutter analyze
+flutter test
+```
+
+Criterio de aceptación: **`flutter analyze` sin problemas y todas las pruebas en verde.**
+
+Las pruebas usan **dobles de prueba** (implementaciones falsas de los contratos) para verificar el dominio sin depender de servicios externos. La prueba de integración `tutor_rag_integration_test.dart` valida el flujo completo del tutor con el repositorio en memoria, incluido el caso en que no hay conocimiento relevante.
+
+---
+
+## Convención de commits
+
+Se usa [Conventional Commits](https://www.conventionalcommits.org/es/):
+
+```text
+feat(tutor_rag): agregar similitud minima al recuperador vectorial
+test(tutor_rag): verificar que el tutor no responde sin conocimiento relevante
+refactor(tutor_rag): renombrar AlmacenVectorial a RepositorioConocimiento
+fix(student_model): corregir orden de evidencias en BKT
+```
+
+Usa siempre `git commit -m "mensaje"` para evitar que se abra el editor (Vim). Si se abre, sal con `Esc` → `:q!` → `Enter`.
+
+---
+
+## Estado del proyecto
+
+- [x] Planificación académica, matrícula y evaluación
+- [x] Modelo del estudiante con BKT
+- [x] Motor adaptativo de recomendaciones
+- [x] Tutor RAG: recuperación textual y vectorial con umbral de similitud
+- [x] Abstracción `RepositorioConocimiento` y repositorio en memoria
+- [x] Prueba de integración del tutor RAG
+- [ ] Repositorio de conocimiento en Firebase
+- [ ] Generador de embeddings real
+- [ ] Generador de respuestas con LLM
+- [ ] Interfaz del tutor y de "Mi ruta"
+
+---
+
+## Autor
+
+**Elvis Llampasi** — Universidad Nacional de San Cristóbal de Huamanga
