@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../academic/presentation/pages/home_page.dart';
+import '../../../enrollment/domain/entities/matricula.dart';
+import '../../../enrollment/infrastructure/repositories/repositorio_matricula_firestore.dart';
 import '../../domain/entities/estado_sesion_estudiante.dart';
 import '../../domain/repositories/repositorio_usuario.dart';
 import '../../domain/repositories/servicio_autenticacion.dart';
@@ -64,8 +66,9 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
 
         final estado = snapshot.data;
 
-        if (estado?.tipo == TipoEstadoSesionEstudiante.autenticado) {
-          return const HomePage();
+        if (estado?.tipo == TipoEstadoSesionEstudiante.autenticado &&
+            estado?.usuario != null) {
+          return _HomeConMatricula(usuarioId: estado!.usuario!.uid);
         }
 
         final iniciarSesionService = IniciarSesionEstudianteService(
@@ -77,6 +80,58 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
           iniciarSesionService: iniciarSesionService,
           onSesionIniciada: _sesionIniciada,
         );
+      },
+    );
+  }
+}
+
+class _HomeConMatricula extends StatefulWidget {
+  final String usuarioId;
+
+  const _HomeConMatricula({required this.usuarioId});
+
+  @override
+  State<_HomeConMatricula> createState() => _HomeConMatriculaState();
+}
+
+class _HomeConMatriculaState extends State<_HomeConMatricula> {
+  late final Future<Matricula?> _matricula;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final repositorio = RepositorioMatriculaFirestore();
+
+    _matricula = repositorio.buscarActivaPorUsuarioId(widget.usuarioId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Matricula?>(
+      future: _matricula,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return const Scaffold(
+            body: Center(child: Text('No se pudo consultar la matrícula.')),
+          );
+        }
+
+        final matricula = snapshot.data;
+
+        if (matricula == null) {
+          return const Scaffold(
+            body: Center(child: Text('No tienes una matrícula activa.')),
+          );
+        }
+
+        return HomePage(matricula: matricula);
       },
     );
   }
