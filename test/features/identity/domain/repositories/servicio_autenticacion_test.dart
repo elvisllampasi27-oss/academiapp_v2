@@ -31,6 +31,11 @@ class ServicioAutenticacionFalso implements ServicioAutenticacion {
   }
 
   @override
+  Future<void> eliminarUsuarioActual() async {
+    usuarioActual = null;
+  }
+
+  @override
   UsuarioAutenticado? obtenerUsuarioActual() {
     return usuarioActual;
   }

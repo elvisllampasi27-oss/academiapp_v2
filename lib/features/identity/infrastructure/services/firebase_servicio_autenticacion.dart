@@ -41,6 +41,17 @@ class FirebaseServicioAutenticacion implements ServicioAutenticacion {
   }
 
   @override
+  Future<void> eliminarUsuarioActual() async {
+    final usuario = firebaseAuth.currentUser;
+
+    if (usuario == null) {
+      throw StateError('No existe un usuario autenticado para eliminar.');
+    }
+
+    await usuario.delete();
+  }
+
+  @override
   UsuarioAutenticado? obtenerUsuarioActual() {
     final usuario = firebaseAuth.currentUser;
 

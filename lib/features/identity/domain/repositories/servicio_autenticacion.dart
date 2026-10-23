@@ -13,5 +13,7 @@ abstract class ServicioAutenticacion {
 
   Future<void> cerrarSesion();
 
+  Future<void> eliminarUsuarioActual();
+
   UsuarioAutenticado? obtenerUsuarioActual();
 }
