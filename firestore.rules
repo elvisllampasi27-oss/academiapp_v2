@@ -30,5 +30,13 @@ service cloud.firestore {
 
       allow create, update, delete: if false;
     }
+
+    // VERSIONES ACADEMICAS
+    match /versiones_academicas/{versionId} {
+
+      allow read: if request.auth != null;
+
+      allow create, update, delete: if false;
+    }
   }
 }

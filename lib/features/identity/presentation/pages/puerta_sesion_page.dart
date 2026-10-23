@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../academic/domain/entities/version_academica.dart';
+import '../../../academic/infrastructure/repositories/repositorio_version_academica_firestore.dart';
 import '../../../academic/presentation/pages/home_page.dart';
 import '../../../enrollment/domain/entities/matricula.dart';
 import '../../../enrollment/infrastructure/repositories/repositorio_matricula_firestore.dart';
@@ -31,10 +33,11 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
   @override
   void initState() {
     super.initState();
-    _resolverEstado();
+
+    _estadoInicial = _resolverEstado();
   }
 
-  void _resolverEstado() {
+  Future<EstadoSesionEstudiante> _resolverEstado() {
     final recuperarSesion = RecuperarSesionEstudianteService(
       servicioAutenticacion: widget.servicioAutenticacion,
       repositorioUsuario: widget.repositorioUsuario,
@@ -44,12 +47,12 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
       recuperarSesion: recuperarSesion,
     );
 
-    _estadoInicial = resolver.resolver();
+    return resolver.resolver();
   }
 
-  void _sesionIniciada() {
+  void _alIniciarSesion() {
     setState(() {
-      _resolverEstado();
+      _estadoInicial = _resolverEstado();
     });
   }
 
@@ -65,20 +68,19 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
         }
 
         final estado = snapshot.data;
+        final usuario = estado?.usuario;
 
         if (estado?.tipo == TipoEstadoSesionEstudiante.autenticado &&
-            estado?.usuario != null) {
-          return _HomeConMatricula(usuarioId: estado!.usuario!.uid);
+            usuario != null) {
+          return _HomeConMatricula(usuarioId: usuario.uid);
         }
 
-        final iniciarSesionService = IniciarSesionEstudianteService(
-          servicioAutenticacion: widget.servicioAutenticacion,
-          repositorioUsuario: widget.repositorioUsuario,
-        );
-
         return LoginPage(
-          iniciarSesionService: iniciarSesionService,
-          onSesionIniciada: _sesionIniciada,
+          iniciarSesionService: IniciarSesionEstudianteService(
+            servicioAutenticacion: widget.servicioAutenticacion,
+            repositorioUsuario: widget.repositorioUsuario,
+          ),
+          onSesionIniciada: _alIniciarSesion,
         );
       },
     );
@@ -95,21 +97,43 @@ class _HomeConMatricula extends StatefulWidget {
 }
 
 class _HomeConMatriculaState extends State<_HomeConMatricula> {
-  late final Future<Matricula?> _matricula;
+  late final Future<_ContextoAcademico?> _contextoAcademico;
 
   @override
   void initState() {
     super.initState();
 
-    final repositorio = RepositorioMatriculaFirestore();
+    _contextoAcademico = _cargarContextoAcademico();
+  }
 
-    _matricula = repositorio.buscarActivaPorUsuarioId(widget.usuarioId);
+  Future<_ContextoAcademico?> _cargarContextoAcademico() async {
+    final repositorioMatricula = RepositorioMatriculaFirestore();
+
+    final matricula = await repositorioMatricula.buscarActivaPorUsuarioId(
+      widget.usuarioId,
+    );
+
+    if (matricula == null) {
+      return null;
+    }
+
+    final repositorioVersion = RepositorioVersionAcademicaFirestore();
+
+    final version = await repositorioVersion.buscarPorId(matricula.versionId);
+
+    if (version == null) {
+      throw StateError(
+        'La versión académica ${matricula.versionId} no existe.',
+      );
+    }
+
+    return _ContextoAcademico(matricula: matricula, versionAcademica: version);
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Matricula?>(
-      future: _matricula,
+    return FutureBuilder<_ContextoAcademico?>(
+      future: _contextoAcademico,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Scaffold(
@@ -118,21 +142,42 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
         }
 
         if (snapshot.hasError) {
-          return const Scaffold(
-            body: Center(child: Text('No se pudo consultar la matrícula.')),
+          return Scaffold(
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'ERROR:\n${snapshot.error}',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
           );
         }
 
-        final matricula = snapshot.data;
+        final contexto = snapshot.data;
 
-        if (matricula == null) {
+        if (contexto == null) {
           return const Scaffold(
             body: Center(child: Text('No tienes una matrícula activa.')),
           );
         }
 
-        return HomePage(matricula: matricula);
+        return HomePage(
+          matricula: contexto.matricula,
+          versionAcademica: contexto.versionAcademica,
+        );
       },
     );
   }
+}
+
+class _ContextoAcademico {
+  final Matricula matricula;
+  final VersionAcademica versionAcademica;
+
+  const _ContextoAcademico({
+    required this.matricula,
+    required this.versionAcademica,
+  });
 }
