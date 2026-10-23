@@ -392,3 +392,5 @@ Usa siempre `git commit -m "mensaje"` para evitar que se abra el editor (Vim). S
 ## Autor
 
 **Elvis Llampasi** — Universidad Nacional de San Cristóbal de Huamanga
+
+### Diagrama de módulos
