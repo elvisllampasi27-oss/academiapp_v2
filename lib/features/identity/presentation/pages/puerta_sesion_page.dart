@@ -142,15 +142,9 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
         }
 
         if (snapshot.hasError) {
-          return Scaffold(
+          return const Scaffold(
             body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'ERROR:\n${snapshot.error}',
-                  textAlign: TextAlign.center,
-                ),
-              ),
+              child: Text('No se pudo cargar la información académica.'),
             ),
           );
         }
