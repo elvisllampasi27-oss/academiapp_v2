@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 
-import '../features/academic/presentation/pages/home_page.dart';
+import '../features/identity/infrastructure/repositories/repositorio_usuario_firestore.dart';
+import '../features/identity/infrastructure/services/firebase_servicio_autenticacion.dart';
+import '../features/identity/presentation/pages/puerta_sesion_page.dart';
 
 class AcademiApp extends StatelessWidget {
   const AcademiApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    final servicioAutenticacion = FirebaseServicioAutenticacion();
+    final repositorioUsuario = RepositorioUsuarioFirestore();
+
+    return MaterialApp(
       title: 'AcademiApp',
       debugShowCheckedModeBanner: false,
-      home: HomePage(),
+      home: PuertaSesionPage(
+        servicioAutenticacion: servicioAutenticacion,
+        repositorioUsuario: repositorioUsuario,
+      ),
     );
   }
 }
