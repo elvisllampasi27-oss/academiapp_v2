@@ -18,6 +18,7 @@ Aplicación en **Flutter** para el acompañamiento académico personalizado de e
 - [Arquitectura](#arquitectura)
 - [Módulos](#módulos)
 - [Flujo de sesión](#flujo-de-sesión)
+- [Flujo académico del estudiante](#flujo-académico-del-estudiante)
 - [Datos en Firestore](#datos-en-firestore)
 - [Flujo del tutor RAG](#flujo-del-tutor-rag)
 - [Decisiones de diseño](#decisiones-de-diseño)
@@ -84,6 +85,10 @@ flowchart TB
         SA[[ServicioAutenticacion]]
         RU[[RepositorioUsuario]]
         RM[[RepositorioMatricula]]
+        RVA[[RepositorioVersionAcademica]]
+        RPA[[RepositorioPlanAcademico]]
+        RCT[[RepositorioCurso · RepositorioTema]]
+        RPT[[RepositorioPublicacionTema]]
         RC[[RepositorioConocimiento]]
     end
 
@@ -91,6 +96,10 @@ flowchart TB
         FSA[FirebaseServicioAutenticacion]
         RUF[RepositorioUsuarioFirestore]
         RMF[RepositorioMatriculaFirestore]
+        RVAF[RepositorioVersionAcademicaFirestore]
+        RPAF[RepositorioPlanAcademicoFirestore]
+        RCTF[RepositorioCursoFirestore · RepositorioTemaFirestore]
+        RPTF[RepositorioPublicacionTemaFirestore]
         MEM[RepositorioConocimientoEnMemoria]
         FB[RepositorioConocimientoFirebase<br/>planificado]
     end
@@ -103,12 +112,20 @@ flowchart TB
     FSA -.implementa.-> SA
     RUF -.implementa.-> RU
     RMF -.implementa.-> RM
+    RVAF -.implementa.-> RVA
+    RPAF -.implementa.-> RPA
+    RCTF -.implementa.-> RCT
+    RPTF -.implementa.-> RPT
     MEM -.implementa.-> RC
     FB -.implementa.-> RC
 
     FSA --> AUTH
     RUF --> FS
     RMF --> FS
+    RVAF --> FS
+    RPAF --> FS
+    RCTF --> FS
+    RPTF --> FS
 
     style FB stroke-dasharray: 5 5
 ```
@@ -122,6 +139,8 @@ main.dart  →  AcademiApp  →  PuertaSesionPage  →  servicios del dominio
 ```
 
 Ninguna página ni servicio del dominio llama a `FirebaseAuth.instance` o `FirebaseFirestore.instance` directamente.
+
+> **Pendiente:** los repositorios académicos (matrícula, versión, plan, cursos, temas y publicaciones) todavía se crean dentro de `PuertaSesionPage`. El siguiente refactor es moverlos también a `main.dart`.
 
 ---
 
@@ -144,15 +163,30 @@ Servicios:
 
 Presentación:
 
-- `PuertaSesionPage`: muestra un indicador de carga y decide entre `LoginPage` y `HomePage`.
+- `PuertaSesionPage`: muestra un indicador de carga y decide entre `LoginPage` y el Home. Con sesión válida, carga matrícula, versión y día académico antes de mostrar `HomePage`.
 - `LoginPage`: valida el formulario antes de llamar al servicio (correo vacío, correo sin `@`, contraseña vacía) y muestra un mensaje genérico si las credenciales fallan, sin exponer errores técnicos.
 
 ### `academic` — Planificación académica
-Entidades: `Area`, `Curso`, `Tema`, `Contenido`, `Recurso`, `PlanAcademico`, `VersionAcademica`, `DiaAcademico`, `ActividadProgramada`.
+Entidades: `Area`, `Curso`, `Tema`, `Contenido`, `Recurso`, `PlanAcademico`, `VersionAcademica`, `DiaAcademico`, `ActividadProgramada`, `PublicacionTema` y `ContextoDiaEstudiante`.
 
-- `SecuenciaAcademicaService`: ordena los temas de los cursos en una secuencia de estudio.
-- `CalendarioAcademicoService`: genera los días académicos del plan.
-- `ActividadesDelDiaService`: obtiene las actividades programadas para un día.
+| Enum | Valores |
+|---|---|
+| `EstadoVersionAcademica` | `preparacion`, `publicada`, `activa`, `cerradaNuevasMatriculas`, `finalizada`, `archivada` |
+| `TipoActividadProgramada` | `tema`, `reforzamiento` |
+| `EstadoActividadProgramada` | `preparada`, `publicada`, `archivada` |
+
+Servicios:
+
+- `SecuenciaAcademicaService`: ordena los temas **por rondas**, un tema de cada curso por ronda, respetando el `orden` de cursos y temas.
+- `CalendarioAcademicoService`: reparte la secuencia en días a partir de una fecha de inicio. **Lunes a viernes 3 temas, sábado 2, domingo descanso** (17 temas por semana).
+- `ActividadesDelDiaService`: devuelve las actividades publicadas de una fecha.
+- `ConstruirDiaEstudianteService`: une todo. Obtiene el plan, los cursos, los temas y las publicaciones de la versión; genera el calendario **personal** desde `fechaInicioAcademico`; localiza el día de hoy y deja solo los temas publicados.
+
+Repositorios (contrato → Firestore): `RepositorioVersionAcademica`, `RepositorioPlanAcademico`, `RepositorioCurso`, `RepositorioTema` y `RepositorioPublicacionTema`.
+
+Presentación:
+
+- `HomePage`: muestra la versión, el plan, el número de día académico y una tarjeta por tema publicado (título del tema y nombre del curso). Si hoy no hay día académico o nada está publicado, lo indica con un mensaje.
 
 ### `enrollment` — Matrícula
 Entidad `Matricula`: vincula a un estudiante (`usuarioId`) con una versión académica (`versionId`). Estados: `programada`, `activa`, `finalizada`, `suspendida`.
@@ -253,11 +287,43 @@ flowchart TD
     style X fill:#fdd,stroke:#c33
 ```
 
-Siguiente paso en este flujo: tras autenticar, leer la **matrícula activa** del estudiante para obtener su `versionId` y cargar su plan académico.
+Con sesión válida, la app continúa con el [flujo académico del estudiante](#flujo-académico-del-estudiante).
 
-```text
-Estudiante autenticado → RepositorioMatriculaFirestore → matrícula activa → versionId → VersionAcademica
+---
+
+## Flujo académico del estudiante
+
+```mermaid
+flowchart TD
+    U[Estudiante autenticado] --> M[matriculas<br/>matrícula activa]
+    M -->|versionId| V[versiones_academicas/version-1]
+    M -->|versionId| P[planes_academicos<br/>plan activo]
+    M -->|fechaInicioAcademico| CAL
+
+    P --> CT[cursos + temas activos]
+    CT --> SEC[SecuenciaAcademicaService<br/>rondas: un tema por curso]
+    SEC --> CAL[CalendarioAcademicoService<br/>L–V 3 · S 2 · D descanso]
+    CAL --> HOY{¿Qué día académico<br/>es hoy?}
+
+    PUB[publicaciones_temas<br/>temas liberados] --> FIL
+    HOY --> FIL[Filtrar solo<br/>temas publicados]
+    FIL --> H[HomePage]
+
+    style H fill:#dfd,stroke:#3a3
 ```
+
+**El plan es común y el calendario es personal.** Firestore no guarda fechas por alumno: guarda el plan, los cursos, los temas y qué temas están publicados. Cada estudiante obtiene sus fechas a partir de su propia `fechaInicioAcademico`, así que puede empezar cualquier día de la semana.
+
+Ejemplo con 3 cursos y 6 temas, inicio un viernes:
+
+| Fecha | Día académico | Temas programados | Visible si está publicado |
+|---|---|---|---|
+| Viernes | 1 | Matrices · Cinemática · Comprensión lectora | ✅ publicados |
+| Sábado | 2 | Álgebra · Dinámica | ❌ aún no |
+| Domingo | — | descanso | — |
+| Lunes | 3 | Oraciones | ❌ aún no |
+
+**Programado ≠ publicado.** El calendario dice qué le corresponde al estudiante; `publicaciones_temas` dice qué puede ver. Así la administración puede tener cargados los temas siguientes sin liberarlos.
 
 ---
 
@@ -266,7 +332,11 @@ Estudiante autenticado → RepositorioMatriculaFirestore → matrícula activa �
 ```mermaid
 erDiagram
     USUARIOS ||--o{ MATRICULAS : "usuarioId"
-    MATRICULAS }o--|| VERSIONES_ACADEMICAS : "versionId (pendiente)"
+    MATRICULAS }o--|| VERSIONES_ACADEMICAS : "versionId"
+    VERSIONES_ACADEMICAS ||--o{ PLANES_ACADEMICOS : "versionId"
+    VERSIONES_ACADEMICAS ||--o{ PUBLICACIONES_TEMAS : "versionId"
+    CURSOS ||--o{ TEMAS : "cursoId"
+    TEMAS ||--o{ PUBLICACIONES_TEMAS : "temaId"
 
     USUARIOS {
         string uid PK "ID del documento = UID de Auth"
@@ -286,6 +356,45 @@ erDiagram
         timestamp fechaFin "null mientras está activa"
         string estado "programada | activa | finalizada | suspendida"
     }
+
+    VERSIONES_ACADEMICAS {
+        string id PK "ej. version-1"
+        string codigo
+        string nombre
+        timestamp fechaApertura
+        timestamp fechaCorte "null"
+        string estado "activa | ..."
+    }
+
+    PLANES_ACADEMICOS {
+        string id PK "ej. plan-v1"
+        string versionId FK
+        string nombre
+        boolean activo
+    }
+
+    CURSOS {
+        string id PK "ej. matematica"
+        string areaId
+        string nombre
+        number orden
+        boolean activo
+    }
+
+    TEMAS {
+        string id PK "ej. matrices"
+        string cursoId FK
+        string titulo
+        number orden
+        boolean activo
+    }
+
+    PUBLICACIONES_TEMAS {
+        string id PK "ej. publicacion-matrices"
+        string versionId FK
+        string temaId FK
+        boolean publicada
+    }
 ```
 
 **Convenciones**
@@ -293,14 +402,22 @@ erDiagram
 - Los enums se guardan como texto con su `.name` (`"activo"`, `"estudiante"`, `"activa"`).
 - Las fechas se guardan como `timestamp`, nunca como texto.
 - El ID del documento en `usuarios` es el mismo UID de Firebase Auth.
+- En las colecciones académicas el ID se escribe a mano y es legible (`version-1`, `plan-v1`, `matematica`): **sin tildes ni espacios**, porque debe coincidir exactamente con las referencias (`versionId`, `cursoId`, `temaId`).
+- `orden` es `number` y `activo` / `publicada` son `boolean`, no texto.
 
 **Reglas de seguridad** (`firestore.rules`)
 
 | Colección | Estudiante | Administrador / backend |
 |---|---|---|
+| `usuarios` | Lee su perfil; lo crea solo como `estudiante` `activo`; no puede cambiar su rol ni su estado | — |
 | `matriculas` | Solo **lee** su propia matrícula | Crea y gestiona matrículas |
+| `versiones_academicas` | Lee (con sesión iniciada) | Crea y gestiona |
+| `planes_academicos` | Lee (con sesión iniciada) | Crea y gestiona |
+| `cursos` | Lee (con sesión iniciada) | Crea y gestiona |
+| `temas` | Lee (con sesión iniciada) | Crea y gestiona |
+| `publicaciones_temas` | Lee (con sesión iniciada) | Publica y retira temas |
 
-El estudiante no puede crearse ni modificarse una matrícula. Mientras no exista el panel administrativo, las matrículas de prueba se crean manualmente desde Firebase Console.
+Desde la app nadie puede escribir en las colecciones académicas. Mientras no exista el panel administrativo, estos datos se crean manualmente desde Firebase Console, simulando la operación administrativa.
 
 ---
 
@@ -394,6 +511,9 @@ sequenceDiagram
 | **Validar perfil además de Auth** | Tener cuenta en Firebase Auth no basta: el usuario debe tener perfil en `usuarios`, estar `activo` y ser `estudiante`. |
 | **Registro con rollback** | Si se crea la cuenta en Auth pero falla el perfil en Firestore, se elimina la cuenta para no dejar usuarios huérfanos. |
 | **Matrículas creadas por administración** | Las reglas impiden que un estudiante se matricule a sí mismo; solo puede leer su matrícula. |
+| **Plan común, calendario personal** | No se guardan fechas por alumno: el calendario se genera desde `fechaInicioAcademico`. Un mismo plan sirve para estudiantes que empiezan en días distintos. |
+| **Programado ≠ publicado** | El calendario decide qué corresponde y `publicaciones_temas` qué se muestra. Permite preparar contenido futuro sin liberarlo. |
+| **Secuencia por rondas** | Un tema de cada curso por ronda: el estudiante avanza en todos los cursos a la vez. |
 | **Mensajes de error genéricos en el login** | No se muestran excepciones técnicas ni se revela si el correo existe. |
 | **Dobles de prueba en lugar de servicios reales** | Las pruebas son deterministas, rápidas y no requieren red ni credenciales. |
 
@@ -413,7 +533,8 @@ lib/
     │   ├── infrastructure/{repositories,services}
     │   └── presentation/pages  # PuertaSesionPage, LoginPage
     ├── academic/
-    │   ├── domain/{entities,services}
+    │   ├── domain/{entities,repositories,services}
+    │   ├── infrastructure/repositories  # versión, plan, cursos, temas, publicaciones
     │   └── presentation/pages  # HomePage
     ├── adaptive_engine/domain/{entities,services}
     ├── assessment/domain/{entities,services}
@@ -493,6 +614,8 @@ firebase deploy --only firestore:rules
 | PowerShell bloquea `firebase` | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
 | `No currently active project` al desplegar | `firebase use academiapp-v2-7b9ce` |
 | Web: `Couldn't resolve the package 'flutter_web_plugins'` | Declarar `flutter_web_plugins: sdk: flutter` en `pubspec.yaml`, luego `flutter clean` y `flutter pub get`. |
+| `La versión académica version-1 no existe` con el documento visible | El ID tiene espacios o tilde (`versión-1`, `" version-1"`). Revisar la barra de direcciones de la consola: debe terminar en `~2Fversion-1`. Borrar y recrear el documento. |
+| `firebase deploy` dice *already up to date* tras editar reglas | El archivo `firestore.rules` no se guardó o se editó otra copia. |
 | `[core/no-app]` en `flutter test` | Un widget creó Firebase en una prueba: inyectar dobles en `AcademiApp` en lugar de instancias reales. |
 
 ---
@@ -551,8 +674,17 @@ Usa siempre `git commit -m "mensaje"` para evitar que se abra el editor (Vim). S
 - [x] Perfiles en `usuarios` con validación de rol y estado
 - [x] `PuertaSesionPage` y `LoginPage` con validación de formulario
 - [x] `RepositorioMatriculaFirestore` y reglas de Firestore desplegadas
-- [ ] Lectura real de la matrícula activa desde la app
-- [ ] Colección `versiones_academicas` vinculada por `versionId`
+- [x] Lectura real de la matrícula activa desde la app
+- [x] `versiones_academicas` vinculada por `versionId`
+
+**Plan académico (12.11)**
+- [x] Plan, cursos y temas en Firestore con sus repositorios
+- [x] Calendario personal generado desde la matrícula (L–V 3, S 2, D descanso)
+- [x] Publicación progresiva de temas (`publicaciones_temas`)
+- [x] Home con el día académico y los temas publicados de hoy
+- [ ] Mover la creación de repositorios académicos a `main.dart`
+- [ ] Pruebas unitarias de `ConstruirDiaEstudianteService`
+- [ ] Abrir un tema: contenido, material y progreso (12.12)
 
 **Pendiente**
 - [ ] Repositorio de conocimiento en Firebase
