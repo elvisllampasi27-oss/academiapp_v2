@@ -38,5 +38,38 @@ service cloud.firestore {
 
       allow create, update, delete: if false;
     }
+
+    // PLANES ACADEMICOS
+    match /planes_academicos/{planId} {
+
+      allow read: if request.auth != null;
+
+      allow write: if false;
+    }
+
+    // CURSOS
+    match /cursos/{cursoId} {
+
+      allow read: if request.auth != null;
+
+      allow write: if false;
+    }
+
+    // TEMAS
+    match /temas/{temaId} {
+
+      allow read: if request.auth != null;
+
+      allow write: if false;
+    
+    }
+    
+    // PUBLICACIONES DE TEMAS
+    match /publicaciones_temas/{publicacionId} {
+
+      allow read: if request.auth != null;
+
+      allow write: if false;
+    }
   }
 }

@@ -1,47 +1,101 @@
 import 'package:flutter/material.dart';
 
 import '../../../enrollment/domain/entities/matricula.dart';
+import '../../domain/entities/contexto_dia_estudiante.dart';
+import '../../domain/entities/curso.dart';
+import '../../domain/entities/tema.dart';
 import '../../domain/entities/version_academica.dart';
 
 class HomePage extends StatelessWidget {
   final Matricula matricula;
   final VersionAcademica versionAcademica;
+  final ContextoDiaEstudiante diaEstudiante;
 
   const HomePage({
     super.key,
     required this.matricula,
     required this.versionAcademica,
+    required this.diaEstudiante,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'AcademiApp V2',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 24),
-            const Text('Matrícula activa', style: TextStyle(fontSize: 18)),
-            const SizedBox(height: 8),
+      appBar: AppBar(title: const Text('AcademiApp V2')),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          Text(
+            versionAcademica.nombre,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          Text(diaEstudiante.plan.nombre, style: const TextStyle(fontSize: 16)),
+          const SizedBox(height: 24),
+          if (diaEstudiante.dia == null)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Text(
+                  'Hoy no tienes actividades académicas.',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            )
+          else ...[
             Text(
-              'Versión: ${versionAcademica.nombre}',
-              style: const TextStyle(fontSize: 16),
+              'Día académico ${diaEstudiante.dia!.numero}',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            Text(
-              'Código: ${versionAcademica.codigo}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            Text(
-              'Estado: ${versionAcademica.estado.name}',
-              style: const TextStyle(fontSize: 16),
-            ),
+            const SizedBox(height: 6),
+            const Text('Actividades de hoy'),
+            const SizedBox(height: 16),
+            if (diaEstudiante.actividades.isEmpty)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text(
+                    'Las actividades de hoy todavía no han sido publicadas.',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              )
+            else
+              ...diaEstudiante.actividades.map((actividad) {
+                final tema = _buscarTema(actividad.temaId);
+                final curso = tema == null ? null : _buscarCurso(tema.cursoId);
+
+                return Card(
+                  child: ListTile(
+                    leading: CircleAvatar(child: Text('${actividad.orden}')),
+                    title: Text(tema?.titulo ?? 'Tema no encontrado'),
+                    subtitle: Text(curso?.nombre ?? 'Curso no encontrado'),
+                  ),
+                );
+              }),
           ],
-        ),
+        ],
       ),
     );
+  }
+
+  Tema? _buscarTema(String temaId) {
+    for (final tema in diaEstudiante.temas) {
+      if (tema.id == temaId) {
+        return tema;
+      }
+    }
+
+    return null;
+  }
+
+  Curso? _buscarCurso(String cursoId) {
+    for (final curso in diaEstudiante.cursos) {
+      if (curso.id == cursoId) {
+        return curso;
+      }
+    }
+
+    return null;
   }
 }

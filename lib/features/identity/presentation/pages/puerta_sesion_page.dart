@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../academic/domain/entities/contexto_dia_estudiante.dart';
 import '../../../academic/domain/entities/version_academica.dart';
+import '../../../academic/domain/services/construir_dia_estudiante_service.dart';
+import '../../../academic/infrastructure/repositories/repositorio_curso_firestore.dart';
+import '../../../academic/infrastructure/repositories/repositorio_plan_academico_firestore.dart';
+import '../../../academic/infrastructure/repositories/repositorio_publicacion_tema_firestore.dart';
+import '../../../academic/infrastructure/repositories/repositorio_tema_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_version_academica_firestore.dart';
 import '../../../academic/presentation/pages/home_page.dart';
 import '../../../enrollment/domain/entities/matricula.dart';
@@ -33,7 +39,6 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
   @override
   void initState() {
     super.initState();
-
     _estadoInicial = _resolverEstado();
   }
 
@@ -102,7 +107,6 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
   @override
   void initState() {
     super.initState();
-
     _contextoAcademico = _cargarContextoAcademico();
   }
 
@@ -127,7 +131,30 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
       );
     }
 
-    return _ContextoAcademico(matricula: matricula, versionAcademica: version);
+    final construirDia = ConstruirDiaEstudianteService(
+      repositorioPlan: RepositorioPlanAcademicoFirestore(),
+      repositorioCurso: RepositorioCursoFirestore(),
+      repositorioTema: RepositorioTemaFirestore(),
+      repositorioPublicacion: RepositorioPublicacionTemaFirestore(),
+    );
+
+    final diaEstudiante = await construirDia.construir(
+      versionId: matricula.versionId,
+      fechaInicioAcademico: matricula.fechaInicioAcademico,
+      fechaActual: DateTime.now(),
+    );
+
+    if (diaEstudiante == null) {
+      throw StateError(
+        'No existe un plan académico activo para ${matricula.versionId}.',
+      );
+    }
+
+    return _ContextoAcademico(
+      matricula: matricula,
+      versionAcademica: version,
+      diaEstudiante: diaEstudiante,
+    );
   }
 
   @override
@@ -142,9 +169,16 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
         }
 
         if (snapshot.hasError) {
-          return const Scaffold(
+          return Scaffold(
             body: Center(
-              child: Text('No se pudo cargar la información académica.'),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'No se pudo cargar la información académica.\n\n'
+                  '${snapshot.error}',
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ),
           );
         }
@@ -160,6 +194,7 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
         return HomePage(
           matricula: contexto.matricula,
           versionAcademica: contexto.versionAcademica,
+          diaEstudiante: contexto.diaEstudiante,
         );
       },
     );
@@ -169,9 +204,11 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
 class _ContextoAcademico {
   final Matricula matricula;
   final VersionAcademica versionAcademica;
+  final ContextoDiaEstudiante diaEstudiante;
 
   const _ContextoAcademico({
     required this.matricula,
     required this.versionAcademica,
+    required this.diaEstudiante,
   });
 }
