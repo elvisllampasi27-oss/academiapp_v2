@@ -15,6 +15,7 @@ class RegistrarEstudianteService {
     required String correo,
     required String contrasena,
     required String nombre,
+    String? carreraPostulada,
   }) async {
     final usuarioAutenticado = await servicioAutenticacion.registrar(
       correo: correo,
@@ -28,6 +29,7 @@ class RegistrarEstudianteService {
       rol: RolUsuario.estudiante,
       estado: EstadoUsuario.activo,
       fechaCreacion: DateTime.now(),
+      carreraPostulada: carreraPostulada,
     );
 
     try {

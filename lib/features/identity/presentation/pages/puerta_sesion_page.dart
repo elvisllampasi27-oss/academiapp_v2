@@ -12,20 +12,26 @@ import '../../../academic/presentation/pages/home_page.dart';
 import '../../../enrollment/domain/entities/matricula.dart';
 import '../../../enrollment/infrastructure/repositories/repositorio_matricula_firestore.dart';
 import '../../domain/entities/estado_sesion_estudiante.dart';
+import '../../domain/entities/usuario_academiapp.dart';
 import '../../domain/repositories/repositorio_usuario.dart';
 import '../../domain/repositories/servicio_autenticacion.dart';
+import '../../domain/repositories/servicio_recuperacion_contrasena.dart';
 import '../../domain/services/iniciar_sesion_estudiante_service.dart';
+import '../../domain/services/recuperar_contrasena_service.dart';
 import '../../domain/services/recuperar_sesion_estudiante_service.dart';
+import '../../domain/services/registrar_estudiante_service.dart';
 import '../../domain/services/resolver_estado_inicial_sesion_service.dart';
 import 'login_page.dart';
 
 class PuertaSesionPage extends StatefulWidget {
   final ServicioAutenticacion servicioAutenticacion;
+  final ServicioRecuperacionContrasena servicioRecuperacion;
   final RepositorioUsuario repositorioUsuario;
 
   const PuertaSesionPage({
     super.key,
     required this.servicioAutenticacion,
+    required this.servicioRecuperacion,
     required this.repositorioUsuario,
   });
 
@@ -61,6 +67,16 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
     });
   }
 
+  Future<void> _cerrarSesion() async {
+    await widget.servicioAutenticacion.cerrarSesion();
+
+    if (!mounted) return;
+
+    setState(() {
+      _estadoInicial = _resolverEstado();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<EstadoSesionEstudiante>(
@@ -77,13 +93,24 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
 
         if (estado?.tipo == TipoEstadoSesionEstudiante.autenticado &&
             usuario != null) {
-          return _HomeConMatricula(usuarioId: usuario.uid);
+          return _HomeConMatricula(
+            key: ValueKey(usuario.uid),
+            usuario: usuario,
+            onCerrarSesion: _cerrarSesion,
+          );
         }
 
         return LoginPage(
           iniciarSesionService: IniciarSesionEstudianteService(
             servicioAutenticacion: widget.servicioAutenticacion,
             repositorioUsuario: widget.repositorioUsuario,
+          ),
+          registrarService: RegistrarEstudianteService(
+            servicioAutenticacion: widget.servicioAutenticacion,
+            repositorioUsuario: widget.repositorioUsuario,
+          ),
+          recuperarContrasenaService: RecuperarContrasenaService(
+            servicio: widget.servicioRecuperacion,
           ),
           onSesionIniciada: _alIniciarSesion,
         );
@@ -93,9 +120,14 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
 }
 
 class _HomeConMatricula extends StatefulWidget {
-  final String usuarioId;
+  final UsuarioAcademiApp usuario;
+  final Future<void> Function() onCerrarSesion;
 
-  const _HomeConMatricula({required this.usuarioId});
+  const _HomeConMatricula({
+    super.key,
+    required this.usuario,
+    required this.onCerrarSesion,
+  });
 
   @override
   State<_HomeConMatricula> createState() => _HomeConMatriculaState();
@@ -114,7 +146,7 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
     final repositorioMatricula = RepositorioMatriculaFirestore();
 
     final matricula = await repositorioMatricula.buscarActivaPorUsuarioId(
-      widget.usuarioId,
+      widget.usuario.uid,
     );
 
     if (matricula == null) {
@@ -169,25 +201,24 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
         }
 
         if (snapshot.hasError) {
-          return Scaffold(
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'No se pudo cargar la información académica.\n\n'
-                  '${snapshot.error}',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
+          // Deuda: antes de producción, registrar el error y mostrar un
+          // mensaje genérico en lugar del detalle técnico.
+          return _PantallaAviso(
+            titulo: 'No se pudo cargar la información académica',
+            mensaje: snapshot.error.toString(),
+            onCerrarSesion: widget.onCerrarSesion,
           );
         }
 
         final contexto = snapshot.data;
 
         if (contexto == null) {
-          return const Scaffold(
-            body: Center(child: Text('No tienes una matrícula activa.')),
+          return _PantallaAviso(
+            titulo: 'Hola, ${widget.usuario.nombre}',
+            mensaje:
+                'Tu cuenta está lista, pero todavía no tienes una matrícula '
+                'activa. Cuando se active, aquí verás tus actividades del día.',
+            onCerrarSesion: widget.onCerrarSesion,
           );
         }
 
@@ -195,6 +226,7 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
           matricula: contexto.matricula,
           versionAcademica: contexto.versionAcademica,
           diaEstudiante: contexto.diaEstudiante,
+          onCerrarSesion: widget.onCerrarSesion,
         );
       },
     );
@@ -211,4 +243,52 @@ class _ContextoAcademico {
     required this.versionAcademica,
     required this.diaEstudiante,
   });
+}
+
+class _PantallaAviso extends StatelessWidget {
+  final String titulo;
+  final String mensaje;
+  final Future<void> Function() onCerrarSesion;
+
+  const _PantallaAviso({
+    required this.titulo,
+    required this.mensaje,
+    required this.onCerrarSesion,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('AcademiApp')),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  titulo,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(mensaje, textAlign: TextAlign.center),
+                const SizedBox(height: 24),
+                OutlinedButton.icon(
+                  onPressed: onCerrarSesion,
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Cerrar sesión'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

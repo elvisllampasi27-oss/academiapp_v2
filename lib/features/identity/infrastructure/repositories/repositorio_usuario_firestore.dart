@@ -20,6 +20,7 @@ class RepositorioUsuarioFirestore implements RepositorioUsuario {
       'rol': usuario.rol.name,
       'estado': usuario.estado.name,
       'fechaCreacion': Timestamp.fromDate(usuario.fechaCreacion),
+      'carreraPostulada': usuario.carreraPostulada,
     });
   }
 
@@ -44,6 +45,7 @@ class RepositorioUsuarioFirestore implements RepositorioUsuario {
       rol: RolUsuario.values.byName(datos['rol'] as String),
       estado: EstadoUsuario.values.byName(datos['estado'] as String),
       fechaCreacion: (datos['fechaCreacion'] as Timestamp).toDate(),
+      carreraPostulada: datos['carreraPostulada'] as String?,
     );
   }
 }

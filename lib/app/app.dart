@@ -17,6 +17,7 @@ class AcademiApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: PuertaSesionPage(
         servicioAutenticacion: servicioAutenticacion,
+        servicioRecuperacion: servicioAutenticacion,
         repositorioUsuario: repositorioUsuario,
       ),
     );

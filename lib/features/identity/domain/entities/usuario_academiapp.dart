@@ -10,6 +10,9 @@ class UsuarioAcademiApp {
   final EstadoUsuario estado;
   final DateTime fechaCreacion;
 
+  /// Carrera a la que postula. Opcional: cuentas antiguas no la tienen.
+  final String? carreraPostulada;
+
   const UsuarioAcademiApp({
     required this.uid,
     required this.correo,
@@ -17,5 +20,6 @@ class UsuarioAcademiApp {
     required this.rol,
     required this.estado,
     required this.fechaCreacion,
+    this.carreraPostulada,
   });
 }

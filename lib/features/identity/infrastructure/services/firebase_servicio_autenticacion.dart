@@ -1,9 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../domain/entities/usuario_autenticado.dart';
+import '../../domain/errors/excepcion_autenticacion.dart';
 import '../../domain/repositories/servicio_autenticacion.dart';
+import '../../domain/repositories/servicio_recuperacion_contrasena.dart';
+import 'codigos_error_firebase_auth.dart';
 
-class FirebaseServicioAutenticacion implements ServicioAutenticacion {
+class FirebaseServicioAutenticacion
+    implements ServicioAutenticacion, ServicioRecuperacionContrasena {
   final FirebaseAuth firebaseAuth;
 
   FirebaseServicioAutenticacion({FirebaseAuth? firebaseAuth})
@@ -14,9 +18,11 @@ class FirebaseServicioAutenticacion implements ServicioAutenticacion {
     required String correo,
     required String contrasena,
   }) async {
-    final credencial = await firebaseAuth.createUserWithEmailAndPassword(
-      email: correo,
-      password: contrasena,
+    final credencial = await _traducirErrores(
+      () => firebaseAuth.createUserWithEmailAndPassword(
+        email: correo,
+        password: contrasena,
+      ),
     );
 
     return _convertirUsuario(credencial.user);
@@ -27,12 +33,32 @@ class FirebaseServicioAutenticacion implements ServicioAutenticacion {
     required String correo,
     required String contrasena,
   }) async {
-    final credencial = await firebaseAuth.signInWithEmailAndPassword(
-      email: correo,
-      password: contrasena,
+    final credencial = await _traducirErrores(
+      () => firebaseAuth.signInWithEmailAndPassword(
+        email: correo,
+        password: contrasena,
+      ),
     );
 
     return _convertirUsuario(credencial.user);
+  }
+
+  @override
+  Future<void> enviarCorreoRecuperacion(String correo) async {
+    await firebaseAuth.setLanguageCode('es');
+
+    try {
+      await _traducirErrores(
+        () => firebaseAuth.sendPasswordResetEmail(email: correo),
+      );
+    } on ExcepcionAutenticacion catch (error) {
+      // No revelar si el correo existe: solo se propagan errores que el
+      // usuario puede corregir o que impiden el envío.
+      if (error.tipo == TipoErrorAutenticacion.credencialesInvalidas) {
+        return;
+      }
+      rethrow;
+    }
   }
 
   @override
@@ -60,6 +86,17 @@ class FirebaseServicioAutenticacion implements ServicioAutenticacion {
     }
 
     return UsuarioAutenticado(uid: usuario.uid, correo: usuario.email);
+  }
+
+  Future<T> _traducirErrores<T>(Future<T> Function() operacion) async {
+    try {
+      return await operacion();
+    } on FirebaseAuthException catch (error) {
+      throw ExcepcionAutenticacion(
+        traducirCodigoFirebaseAuth(error.code),
+        detalle: error.code,
+      );
+    }
   }
 
   UsuarioAutenticado _convertirUsuario(User? usuario) {

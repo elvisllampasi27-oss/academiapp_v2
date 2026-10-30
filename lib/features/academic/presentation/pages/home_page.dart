@@ -10,18 +10,30 @@ class HomePage extends StatelessWidget {
   final Matricula matricula;
   final VersionAcademica versionAcademica;
   final ContextoDiaEstudiante diaEstudiante;
+  final VoidCallback? onCerrarSesion;
 
   const HomePage({
     super.key,
     required this.matricula,
     required this.versionAcademica,
     required this.diaEstudiante,
+    this.onCerrarSesion,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AcademiApp V2')),
+      appBar: AppBar(
+        title: const Text('AcademiApp V2'),
+        actions: [
+          if (onCerrarSesion != null)
+            IconButton(
+              tooltip: 'Cerrar sesión',
+              icon: const Icon(Icons.logout),
+              onPressed: onCerrarSesion,
+            ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

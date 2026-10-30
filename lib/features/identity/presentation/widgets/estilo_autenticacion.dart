@@ -1,0 +1,376 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+
+/// Componentes visuales de las pantallas de acceso.
+/// Estilo "glass" reutilizado de AcademiApp V1 (login.dart / singup.dart).
+
+const _bordeVidrio = Color(0x99FFFFFF);
+const _rellenoTarjeta = Color.fromARGB(31, 56, 62, 150);
+
+class FondoAutenticacion extends StatelessWidget {
+  final Widget child;
+
+  const FondoAutenticacion({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'assets/images/fondo_autenticacion.jpeg',
+            fit: BoxFit.cover,
+          ),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xAA000000),
+                  Color(0x33000000),
+                  Color(0x99000000),
+                ],
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 24,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: child,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class EncabezadoAutenticacion extends StatelessWidget {
+  final String titulo;
+  final String subtitulo;
+
+  const EncabezadoAutenticacion({
+    super.key,
+    required this.titulo,
+    required this.subtitulo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          titulo,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          subtitulo,
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.white.withValues(alpha: 0.85),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+}
+
+class TarjetaVidrio extends StatelessWidget {
+  final Widget child;
+
+  const TarjetaVidrio({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: _rellenoTarjeta,
+            border: Border.all(color: _bordeVidrio, width: 0.6),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class CampoVidrio extends StatefulWidget {
+  final String hint;
+  final TextEditingController controller;
+  final bool esContrasena;
+  final TextInputType? tipoTeclado;
+  final TextInputAction? accion;
+  final Iterable<String>? autocompletado;
+  final ValueChanged<String>? alEnviar;
+
+  const CampoVidrio({
+    super.key,
+    required this.hint,
+    required this.controller,
+    this.esContrasena = false,
+    this.tipoTeclado,
+    this.accion,
+    this.autocompletado,
+    this.alEnviar,
+  });
+
+  @override
+  State<CampoVidrio> createState() => _CampoVidrioState();
+}
+
+class _CampoVidrioState extends State<CampoVidrio> {
+  bool _oculto = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: _bordeVidrio, width: 0.6),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: TextField(
+        controller: widget.controller,
+        obscureText: widget.esContrasena && _oculto,
+        keyboardType: widget.tipoTeclado,
+        textInputAction: widget.accion,
+        autofillHints: widget.autocompletado,
+        onSubmitted: widget.alEnviar,
+        style: const TextStyle(color: Colors.white, fontSize: 14),
+        cursorColor: Colors.white,
+        decoration: InputDecoration(
+          hintText: widget.hint,
+          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 14,
+          ),
+          suffixIcon: widget.esContrasena
+              ? IconButton(
+                  tooltip: _oculto
+                      ? 'Mostrar contraseña'
+                      : 'Ocultar contraseña',
+                  icon: Icon(
+                    _oculto ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.white.withValues(alpha: 0.7),
+                    size: 20,
+                  ),
+                  onPressed: () => setState(() => _oculto = !_oculto),
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+}
+
+class SelectorVidrio extends StatelessWidget {
+  final String hint;
+  final String? valor;
+  final List<String> opciones;
+  final ValueChanged<String?> alCambiar;
+
+  const SelectorVidrio({
+    super.key,
+    required this.hint,
+    required this.valor,
+    required this.opciones,
+    required this.alCambiar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: _bordeVidrio, width: 0.6),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          value: valor,
+          hint: Text(
+            hint,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+          ),
+          dropdownColor: const Color(0xE6393975),
+          icon: Icon(
+            Icons.keyboard_arrow_down,
+            color: Colors.white.withValues(alpha: 0.7),
+          ),
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+          items: [
+            for (final opcion in opciones)
+              DropdownMenuItem(value: opcion, child: Text(opcion)),
+          ],
+          onChanged: alCambiar,
+        ),
+      ),
+    );
+  }
+}
+
+class BotonVidrio extends StatelessWidget {
+  final String texto;
+  final bool cargando;
+  final VoidCallback? alPresionar;
+
+  const BotonVidrio({
+    super.key,
+    required this.texto,
+    required this.alPresionar,
+    this.cargando = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: cargando ? null : alPresionar,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white.withValues(alpha: 0.2),
+          disabledBackgroundColor: Colors.white.withValues(alpha: 0.12),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(9),
+            side: const BorderSide(color: _bordeVidrio, width: 0.6),
+          ),
+        ),
+        child: cargando
+            ? const SizedBox(
+                height: 16,
+                width: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                texto,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+class MensajeErrorVidrio extends StatelessWidget {
+  final String mensaje;
+
+  const MensajeErrorVidrio({super.key, required this.mensaje});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.redAccent.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.redAccent.withValues(alpha: 0.6),
+          width: 0.6,
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Color(0xFFFFB4AB), size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              mensaje,
+              style: const TextStyle(color: Color(0xFFFFDAD6), fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SeparadorTexto extends StatelessWidget {
+  final String texto;
+
+  const SeparadorTexto({super.key, required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    final linea = Expanded(
+      child: Divider(color: Colors.white.withValues(alpha: 0.5), thickness: 1),
+    );
+
+    return Row(
+      children: [
+        linea,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Text(
+            texto,
+            style: const TextStyle(color: Colors.white, fontSize: 13),
+          ),
+        ),
+        linea,
+      ],
+    );
+  }
+}
+
+class EnlaceTexto extends StatelessWidget {
+  final String texto;
+  final VoidCallback alPresionar;
+
+  const EnlaceTexto({
+    super.key,
+    required this.texto,
+    required this.alPresionar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: alPresionar,
+      style: TextButton.styleFrom(foregroundColor: Colors.white),
+      child: Text(
+        texto,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          decoration: TextDecoration.underline,
+          decorationColor: Colors.white,
+          fontSize: 13,
+        ),
+      ),
+    );
+  }
+}
