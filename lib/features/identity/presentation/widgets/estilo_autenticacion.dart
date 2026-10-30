@@ -6,7 +6,10 @@ import 'package:flutter/material.dart';
 /// Estilo "glass" reutilizado de AcademiApp V1 (login.dart / singup.dart).
 
 const _bordeVidrio = Color(0x99FFFFFF);
-const _rellenoTarjeta = Color.fromARGB(31, 56, 62, 150);
+// Paleta neutra: solo blanco y negro translúcidos sobre la foto.
+const _rellenoTarjeta = Color(0x1AFFFFFF);
+const _rellenoVentana = Color(0x99000000);
+const _desenfoque = 12.0;
 
 class FondoAutenticacion extends StatelessWidget {
   final Widget child;
@@ -103,7 +106,7 @@ class TarjetaVidrio extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        filter: ImageFilter.blur(sigmaX: _desenfoque, sigmaY: _desenfoque),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -321,11 +324,11 @@ class _HojaSeleccionVidrioState extends State<_HojaSeleccionVidrio> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        filter: ImageFilter.blur(sigmaX: _desenfoque, sigmaY: _desenfoque),
         child: Container(
           constraints: BoxConstraints(maxHeight: alturaMaxima),
           decoration: BoxDecoration(
-            color: const Color(0x8C14142B),
+            color: _rellenoVentana,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: _bordeVidrio, width: 0.6),
           ),
