@@ -46,3 +46,8 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Scripts administrativos (tool/)
+tool/node_modules/
+serviceAccountKey.json
+**/serviceAccountKey*.json

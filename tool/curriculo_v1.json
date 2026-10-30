@@ -1,0 +1,1388 @@
+{
+  "fuente": "AcademiApp V1 - lib/seed_firestore.dart",
+  "areas": [
+    {
+      "id": "comunicacion",
+      "nombre": "Comunicación",
+      "orden": 1
+    },
+    {
+      "id": "matematica",
+      "nombre": "Matemática",
+      "orden": 2
+    },
+    {
+      "id": "ciencias_tecnologia",
+      "nombre": "Ciencias y Tecnología",
+      "orden": 3
+    },
+    {
+      "id": "ciencias_sociales",
+      "nombre": "Ciencias Sociales",
+      "orden": 4
+    },
+    {
+      "id": "dpcc",
+      "nombre": "Desarrollo Personal, Ciudadanía y Cívica",
+      "orden": 5
+    },
+    {
+      "id": "razonamiento_matematico",
+      "nombre": "Razonamiento Matemático",
+      "orden": 6
+    }
+  ],
+  "cursos": [
+    {
+      "id": "razonamiento_verbal",
+      "areaId": "comunicacion",
+      "nombre": "Razonamiento Verbal",
+      "orden": 1,
+      "icono": "📖"
+    },
+    {
+      "id": "lenguaje",
+      "areaId": "comunicacion",
+      "nombre": "Lenguaje",
+      "orden": 2,
+      "icono": "✍️"
+    },
+    {
+      "id": "literatura",
+      "areaId": "comunicacion",
+      "nombre": "Literatura",
+      "orden": 3,
+      "icono": "📚"
+    },
+    {
+      "id": "aritmetica",
+      "areaId": "matematica",
+      "nombre": "Aritmética",
+      "orden": 4,
+      "icono": "🔢"
+    },
+    {
+      "id": "algebra",
+      "areaId": "matematica",
+      "nombre": "Álgebra",
+      "orden": 5,
+      "icono": "🔣"
+    },
+    {
+      "id": "geometria",
+      "areaId": "matematica",
+      "nombre": "Geometría",
+      "orden": 6,
+      "icono": "📐"
+    },
+    {
+      "id": "trigonometria",
+      "areaId": "matematica",
+      "nombre": "Trigonometría",
+      "orden": 7,
+      "icono": "📏"
+    },
+    {
+      "id": "quimica",
+      "areaId": "ciencias_tecnologia",
+      "nombre": "Química",
+      "orden": 8,
+      "icono": "🧪"
+    },
+    {
+      "id": "biologia",
+      "areaId": "ciencias_tecnologia",
+      "nombre": "Biología",
+      "orden": 9,
+      "icono": "🧬"
+    },
+    {
+      "id": "fisica",
+      "areaId": "ciencias_tecnologia",
+      "nombre": "Física",
+      "orden": 10,
+      "icono": "⚛️"
+    },
+    {
+      "id": "anatomia",
+      "areaId": "ciencias_tecnologia",
+      "nombre": "Anatomía Humana",
+      "orden": 11,
+      "icono": "🫀"
+    },
+    {
+      "id": "historia_peru",
+      "areaId": "ciencias_sociales",
+      "nombre": "Historia del Perú",
+      "orden": 12,
+      "icono": "🏛️"
+    },
+    {
+      "id": "historia_universal",
+      "areaId": "ciencias_sociales",
+      "nombre": "Historia Universal",
+      "orden": 13,
+      "icono": "🌎"
+    },
+    {
+      "id": "economia",
+      "areaId": "ciencias_sociales",
+      "nombre": "Economía",
+      "orden": 14,
+      "icono": "📊"
+    },
+    {
+      "id": "geografia",
+      "areaId": "ciencias_sociales",
+      "nombre": "Geografía",
+      "orden": 15,
+      "icono": "🌍"
+    },
+    {
+      "id": "formacion_civica",
+      "areaId": "dpcc",
+      "nombre": "Formación Cívica",
+      "orden": 16,
+      "icono": "⚖️"
+    },
+    {
+      "id": "razonamiento_matematico",
+      "areaId": "razonamiento_matematico",
+      "nombre": "Razonamiento Matemático",
+      "orden": 17,
+      "icono": "🧩"
+    }
+  ],
+  "temas": [
+    {
+      "id": "razonamiento_verbal-01",
+      "cursoId": "razonamiento_verbal",
+      "titulo": "Etimología: sufijos y étimos",
+      "orden": 1
+    },
+    {
+      "id": "razonamiento_verbal-02",
+      "cursoId": "razonamiento_verbal",
+      "titulo": "Morfología: morfema lexical, derivativo (prefijo, sufijo) y flexivo",
+      "orden": 2
+    },
+    {
+      "id": "razonamiento_verbal-03",
+      "cursoId": "razonamiento_verbal",
+      "titulo": "Conectores lógicos y referencias textuales (anáfora, catáfora, elipsis)",
+      "orden": 3
+    },
+    {
+      "id": "razonamiento_verbal-04",
+      "cursoId": "razonamiento_verbal",
+      "titulo": "Oraciones incompletas",
+      "orden": 4
+    },
+    {
+      "id": "razonamiento_verbal-05",
+      "cursoId": "razonamiento_verbal",
+      "titulo": "Oraciones eliminadas",
+      "orden": 5
+    },
+    {
+      "id": "razonamiento_verbal-06",
+      "cursoId": "razonamiento_verbal",
+      "titulo": "Plan de redacción",
+      "orden": 6
+    },
+    {
+      "id": "razonamiento_verbal-07",
+      "cursoId": "razonamiento_verbal",
+      "titulo": "Comprensión lectora: niveles literal, inferencial y crítico. Estructura textual",
+      "orden": 7
+    },
+    {
+      "id": "razonamiento_verbal-08",
+      "cursoId": "razonamiento_verbal",
+      "titulo": "Parónimos y homónimos: homófonos, homógrafos, parónimos",
+      "orden": 8
+    },
+    {
+      "id": "razonamiento_verbal-09",
+      "cursoId": "razonamiento_verbal",
+      "titulo": "Sinonimia: sinónimos contextuales, relación de significado",
+      "orden": 9
+    },
+    {
+      "id": "razonamiento_verbal-10",
+      "cursoId": "razonamiento_verbal",
+      "titulo": "Antonimia: antónimos directos e indirectos, prefijos de negación",
+      "orden": 10
+    },
+    {
+      "id": "razonamiento_verbal-11",
+      "cursoId": "razonamiento_verbal",
+      "titulo": "Series verbales, términos excluidos y analogías",
+      "orden": 11
+    },
+    {
+      "id": "razonamiento_verbal-12",
+      "cursoId": "razonamiento_verbal",
+      "titulo": "Analogías",
+      "orden": 12
+    },
+    {
+      "id": "lenguaje-01",
+      "cursoId": "lenguaje",
+      "titulo": "Signo lingüístico y elementos de la comunicación",
+      "orden": 1
+    },
+    {
+      "id": "lenguaje-02",
+      "cursoId": "lenguaje",
+      "titulo": "Lengua, habla y funciones del lenguaje",
+      "orden": 2
+    },
+    {
+      "id": "lenguaje-03",
+      "cursoId": "lenguaje",
+      "titulo": "Formación y evolución del castellano (lenguas prerromanas, latín, lenguas romances)",
+      "orden": 3
+    },
+    {
+      "id": "lenguaje-04",
+      "cursoId": "lenguaje",
+      "titulo": "Uso de mayúsculas y minúsculas",
+      "orden": 4
+    },
+    {
+      "id": "lenguaje-05",
+      "cursoId": "lenguaje",
+      "titulo": "Ortografía de la sílaba y tildación general",
+      "orden": 5
+    },
+    {
+      "id": "lenguaje-06",
+      "cursoId": "lenguaje",
+      "titulo": "Morfología y categorías gramaticales",
+      "orden": 6
+    },
+    {
+      "id": "lenguaje-07",
+      "cursoId": "lenguaje",
+      "titulo": "El adjetivo, artículo, los determinantes y pronombre",
+      "orden": 7
+    },
+    {
+      "id": "lenguaje-08",
+      "cursoId": "lenguaje",
+      "titulo": "El verbo, verboides, adverbio, preposición y conjunción",
+      "orden": 8
+    },
+    {
+      "id": "lenguaje-09",
+      "cursoId": "lenguaje",
+      "titulo": "La oración gramatical: clasificación semántica y sintáctica, sujeto y predicado, estructura y clases",
+      "orden": 9
+    },
+    {
+      "id": "lenguaje-10",
+      "cursoId": "lenguaje",
+      "titulo": "El predicado",
+      "orden": 10
+    },
+    {
+      "id": "lenguaje-11",
+      "cursoId": "lenguaje",
+      "titulo": "Signos de puntuación",
+      "orden": 11
+    },
+    {
+      "id": "lenguaje-12",
+      "cursoId": "lenguaje",
+      "titulo": "Vicios de lenguaje y redacción administrativa",
+      "orden": 12
+    },
+    {
+      "id": "literatura-01",
+      "cursoId": "literatura",
+      "titulo": "Géneros literarios, figuras literarias y disciplinas literarias",
+      "orden": 1
+    },
+    {
+      "id": "literatura-02",
+      "cursoId": "literatura",
+      "titulo": "Clasicismo: \"La Odisea\" (Homero), Medievalismo: \"La Divina Comedia\" (Dante Alighieri), Renacimiento: \"Romeo y Julieta\" (Shakespeare)",
+      "orden": 2
+    },
+    {
+      "id": "literatura-03",
+      "cursoId": "literatura",
+      "titulo": "Romanticismo: \"Nuestra Señora de París\" (Víctor Hugo)",
+      "orden": 3
+    },
+    {
+      "id": "literatura-04",
+      "cursoId": "literatura",
+      "titulo": "Realismo: \"Papá Goriot\" (Balzac) y Vanguardismo: \"La metamorfosis\" (Kafka)",
+      "orden": 4
+    },
+    {
+      "id": "literatura-05",
+      "cursoId": "literatura",
+      "titulo": "Medievalismo español: \"El Cantar de Mío Cid\" y Siglo de Oro: \"El ingenioso hidalgo Don Quijote de la Mancha\" (Cervantes)",
+      "orden": 5
+    },
+    {
+      "id": "literatura-06",
+      "cursoId": "literatura",
+      "titulo": "Romanticismo español: \"Rimas LIII\" (Bécquer), Generación del 98: \"Campos de Castilla\" (Antonio Machado), Generación del 27: \"La casada infiel\" (García Lorca) y \"La familia de Pascual Duarte\" (Camilo José Cela)",
+      "orden": 6
+    },
+    {
+      "id": "literatura-07",
+      "cursoId": "literatura",
+      "titulo": "Literatura hispanoamericana: Modernismo (Rubén Darío, \"Prosas profanas\", \"Sonatina\"), Vanguardismo (Pablo Neruda, \"Veinte poemas de amor...\", Jorge Luis Borges, \"La casa de Asterión\")",
+      "orden": 7
+    },
+    {
+      "id": "literatura-08",
+      "cursoId": "literatura",
+      "titulo": "Realismo mágico y Boom Latinoamericano: Juan Rulfo (\"Pedro Páramo\"), Gabriel García Márquez (\"Cien años de soledad\")",
+      "orden": 8
+    },
+    {
+      "id": "literatura-09",
+      "cursoId": "literatura",
+      "titulo": "Literatura peruana: periodización (Literatura Inca, Conquista, Colonia, República), Romanticismo (Ricardo Palma, \"Tradiciones peruanas\", \"Don Dimas de la Tijereta\")",
+      "orden": 9
+    },
+    {
+      "id": "literatura-10",
+      "cursoId": "literatura",
+      "titulo": "Realismo e Indigenismo peruano: Clorinda Matto de Turner (\"Aves sin nido\"), José Santos Chocano (\"Alma América\", \"Blasón\")",
+      "orden": 10
+    },
+    {
+      "id": "literatura-11",
+      "cursoId": "literatura",
+      "titulo": "Vanguardismo y Movimiento Colónida: Abraham Valdelomar (\"El caballero Carmelo\"), César Vallejo (\"Trilce\", \"Masa\"), Indigenismo (José María Arguedas, \"Los ríos profundos\")",
+      "orden": 11
+    },
+    {
+      "id": "literatura-12",
+      "cursoId": "literatura",
+      "titulo": "Narrativa urbana y literatura ayacuchana: Julio Ramón Ribeyro (\"Al pie del acantilado\"), Mario Vargas Llosa (\"La ciudad y los perros\"), autores ayacuchanos (Hildebrando Pérez Huarancca, Marcial Molina Richter, Sócrates Zuzunaga Huayta, Daniel Quispe Torres)",
+      "orden": 12
+    },
+    {
+      "id": "aritmetica-01",
+      "cursoId": "aritmetica",
+      "titulo": "Razones y proporciones",
+      "orden": 1
+    },
+    {
+      "id": "aritmetica-02",
+      "cursoId": "aritmetica",
+      "titulo": "Magnitudes proporcionales",
+      "orden": 2
+    },
+    {
+      "id": "aritmetica-03",
+      "cursoId": "aritmetica",
+      "titulo": "Regla de tres",
+      "orden": 3
+    },
+    {
+      "id": "aritmetica-04",
+      "cursoId": "aritmetica",
+      "titulo": "Regla del tanto por ciento",
+      "orden": 4
+    },
+    {
+      "id": "aritmetica-05",
+      "cursoId": "aritmetica",
+      "titulo": "Promedios",
+      "orden": 5
+    },
+    {
+      "id": "aritmetica-06",
+      "cursoId": "aritmetica",
+      "titulo": "Conjuntos I",
+      "orden": 6
+    },
+    {
+      "id": "aritmetica-07",
+      "cursoId": "aritmetica",
+      "titulo": "Operaciones entre conjuntos",
+      "orden": 7
+    },
+    {
+      "id": "aritmetica-08",
+      "cursoId": "aritmetica",
+      "titulo": "Numeración",
+      "orden": 8
+    },
+    {
+      "id": "aritmetica-09",
+      "cursoId": "aritmetica",
+      "titulo": "Divisibilidad y multiplicidad",
+      "orden": 9
+    },
+    {
+      "id": "aritmetica-10",
+      "cursoId": "aritmetica",
+      "titulo": "Números primos",
+      "orden": 10
+    },
+    {
+      "id": "aritmetica-11",
+      "cursoId": "aritmetica",
+      "titulo": "MCD y MCM",
+      "orden": 11
+    },
+    {
+      "id": "aritmetica-12",
+      "cursoId": "aritmetica",
+      "titulo": "Números racionales, potenciación y radicación",
+      "orden": 12
+    },
+    {
+      "id": "algebra-01",
+      "cursoId": "algebra",
+      "titulo": "Teoría de exponentes y ecuaciones exponenciales",
+      "orden": 1
+    },
+    {
+      "id": "algebra-02",
+      "cursoId": "algebra",
+      "titulo": "Polinomios",
+      "orden": 2
+    },
+    {
+      "id": "algebra-03",
+      "cursoId": "algebra",
+      "titulo": "Productos notables",
+      "orden": 3
+    },
+    {
+      "id": "algebra-04",
+      "cursoId": "algebra",
+      "titulo": "División entera de polinomios y métodos de división",
+      "orden": 4
+    },
+    {
+      "id": "algebra-05",
+      "cursoId": "algebra",
+      "titulo": "Divisibilidad y cocientes notables",
+      "orden": 5
+    },
+    {
+      "id": "algebra-06",
+      "cursoId": "algebra",
+      "titulo": "Factorización en Q",
+      "orden": 6
+    },
+    {
+      "id": "algebra-07",
+      "cursoId": "algebra",
+      "titulo": "Ecuaciones de primer grado y segundo grado",
+      "orden": 7
+    },
+    {
+      "id": "algebra-08",
+      "cursoId": "algebra",
+      "titulo": "Sistemas de ecuaciones lineales",
+      "orden": 8
+    },
+    {
+      "id": "algebra-09",
+      "cursoId": "algebra",
+      "titulo": "Ecuación bicuadrada e inecuaciones",
+      "orden": 9
+    },
+    {
+      "id": "algebra-10",
+      "cursoId": "algebra",
+      "titulo": "Valor absoluto y funciones",
+      "orden": 10
+    },
+    {
+      "id": "algebra-11",
+      "cursoId": "algebra",
+      "titulo": "Funciones especiales: lineal, raíz cuadrada, etc.",
+      "orden": 11
+    },
+    {
+      "id": "algebra-12",
+      "cursoId": "algebra",
+      "titulo": "Funciones exponencial y logarítmica, valor absoluto, inyectiva, biyectiva, etc.",
+      "orden": 12
+    },
+    {
+      "id": "geometria-01",
+      "cursoId": "geometria",
+      "titulo": "Ángulos",
+      "orden": 1
+    },
+    {
+      "id": "geometria-02",
+      "cursoId": "geometria",
+      "titulo": "Triángulos rectilíneos",
+      "orden": 2
+    },
+    {
+      "id": "geometria-03",
+      "cursoId": "geometria",
+      "titulo": "Líneas notables en triángulos: mediana, altura, bisectriz, incentro, baricentro",
+      "orden": 3
+    },
+    {
+      "id": "geometria-04",
+      "cursoId": "geometria",
+      "titulo": "Congruencia de triángulos",
+      "orden": 4
+    },
+    {
+      "id": "geometria-05",
+      "cursoId": "geometria",
+      "titulo": "Cuadriláteros convexos",
+      "orden": 5
+    },
+    {
+      "id": "geometria-06",
+      "cursoId": "geometria",
+      "titulo": "Circunferencia: propiedades de tangentes, cuerdas, ángulos inscritos y centrales",
+      "orden": 6
+    },
+    {
+      "id": "geometria-07",
+      "cursoId": "geometria",
+      "titulo": "Circunferencia y ángulos: teoremas de la circunferencia, cuadriláteros inscriptibles",
+      "orden": 7
+    },
+    {
+      "id": "geometria-08",
+      "cursoId": "geometria",
+      "titulo": "Proporcionalidad y semejanza: teorema de Thales, teoremas de la bisectriz, semejanza de triángulos",
+      "orden": 8
+    },
+    {
+      "id": "geometria-09",
+      "cursoId": "geometria",
+      "titulo": "Relaciones métricas en la circunferencia: teorema de las cuerdas, secantes y tangente",
+      "orden": 9
+    },
+    {
+      "id": "geometria-10",
+      "cursoId": "geometria",
+      "titulo": "Áreas de regiones poligonales y circulares",
+      "orden": 10
+    },
+    {
+      "id": "geometria-11",
+      "cursoId": "geometria",
+      "titulo": "Geometría analítica I: punto medio, distancia entre dos puntos, baricentro",
+      "orden": 11
+    },
+    {
+      "id": "geometria-12",
+      "cursoId": "geometria",
+      "titulo": "Geometría analítica II: ecuación de la recta, ecuación de la circunferencia",
+      "orden": 12
+    },
+    {
+      "id": "trigonometria-01",
+      "cursoId": "trigonometria",
+      "titulo": "Sistemas de medición angular: sexagesimal, centesimal y radial, conversión",
+      "orden": 1
+    },
+    {
+      "id": "trigonometria-02",
+      "cursoId": "trigonometria",
+      "titulo": "Área de un sector circular: longitud de arco, área de sector circular",
+      "orden": 2
+    },
+    {
+      "id": "trigonometria-03",
+      "cursoId": "trigonometria",
+      "titulo": "Razones trigonométricas de un ángulo agudo: definición en triángulos rectángulos",
+      "orden": 3
+    },
+    {
+      "id": "trigonometria-04",
+      "cursoId": "trigonometria",
+      "titulo": "Ángulo de elevación y depresión: problemas con ángulos, direcciones (N, S, E, O)",
+      "orden": 4
+    },
+    {
+      "id": "trigonometria-05",
+      "cursoId": "trigonometria",
+      "titulo": "Ángulos en posición normal: signo de las razones, reducción al primer cuadrante",
+      "orden": 5
+    },
+    {
+      "id": "trigonometria-06",
+      "cursoId": "trigonometria",
+      "titulo": "Circunferencia trigonométrica: variación de razones, cálculo de áreas",
+      "orden": 6
+    },
+    {
+      "id": "trigonometria-07",
+      "cursoId": "trigonometria",
+      "titulo": "Identidades trigonométricas: fundamentales y auxiliares, simplificación",
+      "orden": 7
+    },
+    {
+      "id": "trigonometria-08",
+      "cursoId": "trigonometria",
+      "titulo": "Ángulos compuestos: suma y diferencia de ángulos, identidades adicionales",
+      "orden": 8
+    },
+    {
+      "id": "trigonometria-09",
+      "cursoId": "trigonometria",
+      "titulo": "Reducción al primer cuadrante: ángulos negativos y mayores a 360°",
+      "orden": 9
+    },
+    {
+      "id": "trigonometria-10",
+      "cursoId": "trigonometria",
+      "titulo": "Ángulos múltiples: ángulo doble, triple y mitad",
+      "orden": 10
+    },
+    {
+      "id": "trigonometria-11",
+      "cursoId": "trigonometria",
+      "titulo": "Transformaciones trigonométricas: suma a producto, producto a suma",
+      "orden": 11
+    },
+    {
+      "id": "trigonometria-12",
+      "cursoId": "trigonometria",
+      "titulo": "Resolución de triángulos oblicuángulos, ecuaciones trigonométricas",
+      "orden": 12
+    },
+    {
+      "id": "quimica-01",
+      "cursoId": "quimica",
+      "titulo": "La materia: clasificación, estados de agregación, fenómenos físicos y químicos, propiedades",
+      "orden": 1
+    },
+    {
+      "id": "quimica-02",
+      "cursoId": "quimica",
+      "titulo": "Estructura atómica: Z, A, isótopos, isóbaros, isótonos, iones, distribución electrónica, números cuánticos",
+      "orden": 2
+    },
+    {
+      "id": "quimica-03",
+      "cursoId": "quimica",
+      "titulo": "Tabla periódica y enlace químico: configuración electrónica, regla del octeto, tipos de enlace",
+      "orden": 3
+    },
+    {
+      "id": "quimica-04",
+      "cursoId": "quimica",
+      "titulo": "Nomenclatura inorgánica: funciones químicas, sistemas de nomenclatura, formulación",
+      "orden": 4
+    },
+    {
+      "id": "quimica-05",
+      "cursoId": "quimica",
+      "titulo": "Reacciones y ecuaciones químicas: clasificación de reacciones, balanceo de ecuaciones",
+      "orden": 5
+    },
+    {
+      "id": "quimica-06",
+      "cursoId": "quimica",
+      "titulo": "Cálculos químicos y estado gaseoso: mol, número de Avogadro, leyes de los gases, ecuación general",
+      "orden": 6
+    },
+    {
+      "id": "quimica-07",
+      "cursoId": "quimica",
+      "titulo": "Estequiometría y soluciones: leyes ponderales, reactivo limitante, concentración de soluciones",
+      "orden": 7
+    },
+    {
+      "id": "quimica-08",
+      "cursoId": "quimica",
+      "titulo": "Ácidos, bases y química nuclear: pH, pOH, neutralización, radiactividad, reacciones nucleares",
+      "orden": 8
+    },
+    {
+      "id": "quimica-09",
+      "cursoId": "quimica",
+      "titulo": "Química ambiental: contaminación del aire, agua y suelo, ciclos biogeoquímicos",
+      "orden": 9
+    },
+    {
+      "id": "quimica-10",
+      "cursoId": "quimica",
+      "titulo": "Química orgánica I: propiedades del carbono, hidrocarburos, nomenclatura",
+      "orden": 10
+    },
+    {
+      "id": "quimica-11",
+      "cursoId": "quimica",
+      "titulo": "Funciones químicas inorgánicas",
+      "orden": 11
+    },
+    {
+      "id": "quimica-12",
+      "cursoId": "quimica",
+      "titulo": "Reacciones y ecuaciones químicas",
+      "orden": 12
+    },
+    {
+      "id": "biologia-01",
+      "cursoId": "biologia",
+      "titulo": "La biología y niveles de organización",
+      "orden": 1
+    },
+    {
+      "id": "biologia-02",
+      "cursoId": "biologia",
+      "titulo": "Biomoléculas orgánicas: glúcidos, lípidos, proteínas, ácidos nucleicos",
+      "orden": 2
+    },
+    {
+      "id": "biologia-03",
+      "cursoId": "biologia",
+      "titulo": "Citología: teoría celular, clasificación de células, estructura celular, transporte de membrana",
+      "orden": 3
+    },
+    {
+      "id": "biologia-04",
+      "cursoId": "biologia",
+      "titulo": "Función de nutrición I: tipos de nutrición, digestión, sistemas digestivos, respiración",
+      "orden": 4
+    },
+    {
+      "id": "biologia-05",
+      "cursoId": "biologia",
+      "titulo": "Función de nutrición II: circulación, transporte, excreción",
+      "orden": 5
+    },
+    {
+      "id": "biologia-06",
+      "cursoId": "biologia",
+      "titulo": "Metabolismo celular: fotosíntesis, respiración celular",
+      "orden": 6
+    },
+    {
+      "id": "biologia-07",
+      "cursoId": "biologia",
+      "titulo": "Ciclo celular eucariota: interfase, mitosis, meiosis",
+      "orden": 7
+    },
+    {
+      "id": "biologia-08",
+      "cursoId": "biologia",
+      "titulo": "Función de relación y coordinación: estímulo, receptor, centro de coordinación, efector, fitohormonas, sistema nervioso en invertebrados y vertebrados",
+      "orden": 8
+    },
+    {
+      "id": "biologia-09",
+      "cursoId": "biologia",
+      "titulo": "Reproducción humana y desarrollo embrionario: gametogénesis, ciclo menstrual, fecundación, desarrollo embrionario, reproducción vegetativa",
+      "orden": 9
+    },
+    {
+      "id": "biologia-10",
+      "cursoId": "biologia",
+      "titulo": "Genética y biotecnología: conceptos básicos, leyes de Mendel, herencia ligada al sexo, anomalías cromosómicas, mutaciones, técnicas biotecnológicas",
+      "orden": 10
+    },
+    {
+      "id": "biologia-11",
+      "cursoId": "biologia",
+      "titulo": "Origen de la vida y evolución: teorías, evolucionismo, adaptaciones, especiación, fósiles",
+      "orden": 11
+    },
+    {
+      "id": "biologia-12",
+      "cursoId": "biologia",
+      "titulo": "Ecología: ecosistema, niveles tróficos, relaciones ecológicas, recursos naturales, cambio climático, biodiversidad",
+      "orden": 12
+    },
+    {
+      "id": "fisica-01",
+      "cursoId": "fisica",
+      "titulo": "Magnitudes y ecuaciones dimensionales: clasificación, principio de homogeneidad",
+      "orden": 1
+    },
+    {
+      "id": "fisica-02",
+      "cursoId": "fisica",
+      "titulo": "Análisis vectorial: operaciones con vectores, métodos de suma, componentes rectangulares",
+      "orden": 2
+    },
+    {
+      "id": "fisica-03",
+      "cursoId": "fisica",
+      "titulo": "Cinemática I: MRU, MRUV, gráficas de movimiento",
+      "orden": 3
+    },
+    {
+      "id": "fisica-04",
+      "cursoId": "fisica",
+      "titulo": "Cinemática II: MVCL, movimiento parabólico, MCU, transmisión de movimiento circular",
+      "orden": 4
+    },
+    {
+      "id": "fisica-05",
+      "cursoId": "fisica",
+      "titulo": "Estática y momento de fuerza: equilibrio de cuerpos, fuerzas usuales",
+      "orden": 5
+    },
+    {
+      "id": "fisica-06",
+      "cursoId": "fisica",
+      "titulo": "Dinámica lineal y circular: segunda ley de Newton, fuerza de rozamiento, fuerza centrípeta",
+      "orden": 6
+    },
+    {
+      "id": "fisica-07",
+      "cursoId": "fisica",
+      "titulo": "Trabajo y potencia: trabajo mecánico, potencia, eficiencia",
+      "orden": 7
+    },
+    {
+      "id": "fisica-08",
+      "cursoId": "fisica",
+      "titulo": "Oscilaciones y ondas",
+      "orden": 8
+    },
+    {
+      "id": "fisica-09",
+      "cursoId": "fisica",
+      "titulo": "Hidrostática",
+      "orden": 9
+    },
+    {
+      "id": "fisica-10",
+      "cursoId": "fisica",
+      "titulo": "Electrostática",
+      "orden": 10
+    },
+    {
+      "id": "fisica-11",
+      "cursoId": "fisica",
+      "titulo": "Electrodinámica",
+      "orden": 11
+    },
+    {
+      "id": "fisica-12",
+      "cursoId": "fisica",
+      "titulo": "Electromagnetismo",
+      "orden": 12
+    },
+    {
+      "id": "anatomia-01",
+      "cursoId": "anatomia",
+      "titulo": "Sistema cardiovascular: componentes y anatomía del corazón",
+      "orden": 1
+    },
+    {
+      "id": "anatomia-02",
+      "cursoId": "anatomia",
+      "titulo": "Sistema nodal, ciclo cardíaco y gasto cardíaco",
+      "orden": 2
+    },
+    {
+      "id": "anatomia-03",
+      "cursoId": "anatomia",
+      "titulo": "Sistema respiratorio: vías respiratorias, pulmones, hematosis, transporte de gases",
+      "orden": 3
+    },
+    {
+      "id": "anatomia-04",
+      "cursoId": "anatomia",
+      "titulo": "Sistema digestivo humano I: tubo digestivo, glándulas anexas, histología, boca, esófago, estómago",
+      "orden": 4
+    },
+    {
+      "id": "anatomia-05",
+      "cursoId": "anatomia",
+      "titulo": "Sistema digestivo humano II: intestino delgado, intestino grueso, glándulas anexas",
+      "orden": 5
+    },
+    {
+      "id": "anatomia-06",
+      "cursoId": "anatomia",
+      "titulo": "Sistema urinario: riñones, vías urinarias, nefrón, formación de la orina",
+      "orden": 6
+    },
+    {
+      "id": "anatomia-07",
+      "cursoId": "anatomia",
+      "titulo": "Regulación renal: sistema Renina-Angiotensina-Aldosterona, homeostasis",
+      "orden": 7
+    },
+    {
+      "id": "anatomia-08",
+      "cursoId": "anatomia",
+      "titulo": "Sistema nervioso central: encéfalo, médula espinal, meninges, neuronas, actos reflejos",
+      "orden": 8
+    },
+    {
+      "id": "anatomia-09",
+      "cursoId": "anatomia",
+      "titulo": "Sistema nervioso periférico y autónomo: nervios craneales y raquídeos, simpático y parasimpático",
+      "orden": 9
+    },
+    {
+      "id": "anatomia-10",
+      "cursoId": "anatomia",
+      "titulo": "Sistema endocrino: glándulas endocrinas, hormonas, mecanismo de retroalimentación",
+      "orden": 10
+    },
+    {
+      "id": "anatomia-11",
+      "cursoId": "anatomia",
+      "titulo": "Sistema inmunológico: órganos linfoides, células de defensa, anticuerpos, tipos de inmunidad",
+      "orden": 11
+    },
+    {
+      "id": "anatomia-12",
+      "cursoId": "anatomia",
+      "titulo": "Sistema reproductor masculino y femenino",
+      "orden": 12
+    },
+    {
+      "id": "anatomia-13",
+      "cursoId": "anatomia",
+      "titulo": "Sistema sensorial: receptores sensoriales, gusto, olfato, vista, audición y equilibrio",
+      "orden": 13
+    },
+    {
+      "id": "historia_peru-01",
+      "cursoId": "historia_peru",
+      "titulo": "Historia del Perú: concepto, fuentes y ciencias auxiliares. Teorías del poblamiento americano",
+      "orden": 1
+    },
+    {
+      "id": "historia_peru-02",
+      "cursoId": "historia_peru",
+      "titulo": "El Primer Horizonte: Cultura Chavín, Vicus, culturas Puente (formativo superior) y Cultura Moche, Nazca y Tiahuanaco (intermedio temprano)",
+      "orden": 2
+    },
+    {
+      "id": "historia_peru-03",
+      "cursoId": "historia_peru",
+      "titulo": "Horizonte Medio: cultura Wari, intermedio tardío: cultura Chimú, Chanca y Chincha",
+      "orden": 3
+    },
+    {
+      "id": "historia_peru-04",
+      "cursoId": "historia_peru",
+      "titulo": "Horizonte Tardío: Los Incas",
+      "orden": 4
+    },
+    {
+      "id": "historia_peru-05",
+      "cursoId": "historia_peru",
+      "titulo": "Contexto Europeo, Descubrimiento y Primeros Viajes",
+      "orden": 5
+    },
+    {
+      "id": "historia_peru-06",
+      "cursoId": "historia_peru",
+      "titulo": "Conquista, guerras civiles y resistencia andina",
+      "orden": 6
+    },
+    {
+      "id": "historia_peru-07",
+      "cursoId": "historia_peru",
+      "titulo": "Virreinato en el Perú",
+      "orden": 7
+    },
+    {
+      "id": "historia_peru-08",
+      "cursoId": "historia_peru",
+      "titulo": "La emancipación: Rebeliones indígenas, corrientes libertadoras",
+      "orden": 8
+    },
+    {
+      "id": "historia_peru-09",
+      "cursoId": "historia_peru",
+      "titulo": "La república peruana: Primer Militarismo",
+      "orden": 9
+    },
+    {
+      "id": "historia_peru-10",
+      "cursoId": "historia_peru",
+      "titulo": "El segundo militarismo (reconstrucción nacional) y República Aristocrática (Elitista)",
+      "orden": 10
+    },
+    {
+      "id": "historia_peru-11",
+      "cursoId": "historia_peru",
+      "titulo": "El Oncenio de Augusto B. Leguía y Gobierno de las fuerzas armadas",
+      "orden": 11
+    },
+    {
+      "id": "historia_peru-12",
+      "cursoId": "historia_peru",
+      "titulo": "El Civilismo democrático",
+      "orden": 12
+    },
+    {
+      "id": "historia_universal-01",
+      "cursoId": "historia_universal",
+      "titulo": "Historia: concepto y periodificación",
+      "orden": 1
+    },
+    {
+      "id": "historia_universal-02",
+      "cursoId": "historia_universal",
+      "titulo": "Cultura Caldeo-Asiria, Egipto",
+      "orden": 2
+    },
+    {
+      "id": "historia_universal-03",
+      "cursoId": "historia_universal",
+      "titulo": "Cultura Fenicia, Persia, India y China",
+      "orden": 3
+    },
+    {
+      "id": "historia_universal-04",
+      "cursoId": "historia_universal",
+      "titulo": "Grecia, Esparta, Atenas, Las Guerras Médicas",
+      "orden": 4
+    },
+    {
+      "id": "historia_universal-05",
+      "cursoId": "historia_universal",
+      "titulo": "Roma",
+      "orden": 5
+    },
+    {
+      "id": "historia_universal-06",
+      "cursoId": "historia_universal",
+      "titulo": "Edad Media o Feudal: imperio Carolingio y feudalismo",
+      "orden": 6
+    },
+    {
+      "id": "historia_universal-07",
+      "cursoId": "historia_universal",
+      "titulo": "Las cruzadas, imperio Bizantino, humanismo y Renacimiento",
+      "orden": 7
+    },
+    {
+      "id": "historia_universal-08",
+      "cursoId": "historia_universal",
+      "titulo": "Edad Moderna: la reforma protestante, contrarreforma, la ilustración, el despotismo ilustrado",
+      "orden": 8
+    },
+    {
+      "id": "historia_universal-09",
+      "cursoId": "historia_universal",
+      "titulo": "Edad contemporánea: revolución francesa, revolución industrial, socialismo y capitalismo",
+      "orden": 9
+    },
+    {
+      "id": "historia_universal-10",
+      "cursoId": "historia_universal",
+      "titulo": "Primera guerra mundial, revolución rusa, fascismo, nazismo",
+      "orden": 10
+    },
+    {
+      "id": "historia_universal-11",
+      "cursoId": "historia_universal",
+      "titulo": "Segunda guerra mundial",
+      "orden": 11
+    },
+    {
+      "id": "historia_universal-12",
+      "cursoId": "historia_universal",
+      "titulo": "La guerra fría",
+      "orden": 12
+    },
+    {
+      "id": "economia-01",
+      "cursoId": "economia",
+      "titulo": "Economía: definición, métodos de estudio (inductivo, deductivo), división de la economía (microeconomía, macroeconomía)",
+      "orden": 1
+    },
+    {
+      "id": "economia-02",
+      "cursoId": "economia",
+      "titulo": "Necesidades y bienes: clasificación de necesidades, leyes de la necesidad, clasificación de bienes (económicos, no económicos, bienes de capital)",
+      "orden": 2
+    },
+    {
+      "id": "economia-03",
+      "cursoId": "economia",
+      "titulo": "Actividades económicas: factores de la producción, retribución a los factores, proceso económico (producción, circulación, distribución, consumo)",
+      "orden": 3
+    },
+    {
+      "id": "economia-04",
+      "cursoId": "economia",
+      "titulo": "El Trabajo, El capital",
+      "orden": 4
+    },
+    {
+      "id": "economia-05",
+      "cursoId": "economia",
+      "titulo": "Teoría de la producción: productividad, función de producción, costos de producción (fijos, variables, marginales, a corto y largo plazo)",
+      "orden": 5
+    },
+    {
+      "id": "economia-06",
+      "cursoId": "economia",
+      "titulo": "Oferta y demanda: ley de la demanda, factores determinantes, desplazamiento de la curva, ley de la oferta, precio de equilibrio",
+      "orden": 6
+    },
+    {
+      "id": "economia-07",
+      "cursoId": "economia",
+      "titulo": "Macroeconomía y sistema financiero: Bolsa de Valores de Lima (BVL), Banco Central de Reserva del Perú (BCRP)",
+      "orden": 7
+    },
+    {
+      "id": "economia-08",
+      "cursoId": "economia",
+      "titulo": "La inflación",
+      "orden": 8
+    },
+    {
+      "id": "economia-09",
+      "cursoId": "economia",
+      "titulo": "Presupuesto público: ingresos (tributarios y no tributarios), gastos (corrientes y de capital), déficit fiscal, superávit fiscal",
+      "orden": 9
+    },
+    {
+      "id": "economia-10",
+      "cursoId": "economia",
+      "titulo": "Teoría de los agregados económicos: PBI (nominal y real, métodos de cálculo), PNB, PNN, ingreso nacional (YN), ingreso personal (YP), ingreso disponible (YD), PBI per cápita",
+      "orden": 10
+    },
+    {
+      "id": "economia-11",
+      "cursoId": "economia",
+      "titulo": "El comercio internacional: cuenta corriente, cuenta financiera",
+      "orden": 11
+    },
+    {
+      "id": "economia-12",
+      "cursoId": "economia",
+      "titulo": "Globalización económica y las integraciones",
+      "orden": 12
+    },
+    {
+      "id": "geografia-01",
+      "cursoId": "geografia",
+      "titulo": "Geografía: principios, evolución, espacio geográfico, gestión de riesgos de desastres",
+      "orden": 1
+    },
+    {
+      "id": "geografia-02",
+      "cursoId": "geografia",
+      "titulo": "Cartografía: líneas geodésicas, coordenadas geográficas, elementos de un mapa (proyección, escala)",
+      "orden": 2
+    },
+    {
+      "id": "geografia-03",
+      "cursoId": "geografia",
+      "titulo": "Geodinámica terrestre: estructura de la geósfera, meteorización y erosión",
+      "orden": 3
+    },
+    {
+      "id": "geografia-04",
+      "cursoId": "geografia",
+      "titulo": "Relieve geográfico: regiones naturales (costa, sierra, selva), formas de relieve",
+      "orden": 4
+    },
+    {
+      "id": "geografia-05",
+      "cursoId": "geografia",
+      "titulo": "Clima y regiones naturales: elementos del clima (temperatura, presión, vientos), las ocho regiones naturales del Perú (Chala, Yunga, Quechua, Suni, Puna, Janca, Rupa Rupa, Omagua)",
+      "orden": 5
+    },
+    {
+      "id": "geografia-06",
+      "cursoId": "geografia",
+      "titulo": "Hidrografía: océanos, mares, vertientes hidrográficas del Perú (Pacífico, Atlántico o Amazonas, Titicaca), ríos, cuencas y ciclo del agua",
+      "orden": 6
+    },
+    {
+      "id": "geografia-07",
+      "cursoId": "geografia",
+      "titulo": "Actividades económicas extractivas, actividades económicas productivas",
+      "orden": 7
+    },
+    {
+      "id": "geografia-08",
+      "cursoId": "geografia",
+      "titulo": "Población peruana: censos (INEI), indicadores demográficos, características de la población",
+      "orden": 8
+    },
+    {
+      "id": "geografia-09",
+      "cursoId": "geografia",
+      "titulo": "Atmósfera y cambio climático: composición, estructura, efecto invernadero, contaminación del aire, Estándares de Calidad Ambiental (ECA)",
+      "orden": 9
+    },
+    {
+      "id": "geografia-10",
+      "cursoId": "geografia",
+      "titulo": "Recursos naturales: niveles de diversidad, ecorregiones peruanas, áreas naturales protegidas (SINANPE, SERNANP)",
+      "orden": 10
+    },
+    {
+      "id": "geografia-11",
+      "cursoId": "geografia",
+      "titulo": "Fenómenos y desastres naturales",
+      "orden": 11
+    },
+    {
+      "id": "geografia-12",
+      "cursoId": "geografia",
+      "titulo": "Biodiversidad",
+      "orden": 12
+    },
+    {
+      "id": "formacion_civica-01",
+      "cursoId": "formacion_civica",
+      "titulo": "Persona natural y jurídica: capacidad de goce y ejercicio, incapacidad absoluta y restringida",
+      "orden": 1
+    },
+    {
+      "id": "formacion_civica-02",
+      "cursoId": "formacion_civica",
+      "titulo": "La familia: tipos de familia, funciones, paternidad responsable, planificación familiar, parentesco",
+      "orden": 2
+    },
+    {
+      "id": "formacion_civica-03",
+      "cursoId": "formacion_civica",
+      "titulo": "Matrimonio y uniones: régimen patrimonial, impedimentos, separación de cuerpos y divorcio",
+      "orden": 3
+    },
+    {
+      "id": "formacion_civica-04",
+      "cursoId": "formacion_civica",
+      "titulo": "Patria potestad, tutela y curatela: deberes de los padres, suspensión y extinción de la patria potestad, funciones del tutor y del curador",
+      "orden": 4
+    },
+    {
+      "id": "formacion_civica-05",
+      "cursoId": "formacion_civica",
+      "titulo": "Sucesiones y ciudadanía: tipos de sucesores, órdenes hereditarios, testamento, legítima, albacea, concepto de ciudadanía y derechos políticos",
+      "orden": 5
+    },
+    {
+      "id": "formacion_civica-06",
+      "cursoId": "formacion_civica",
+      "titulo": "Normas y constitución: la norma jurídica, estructura del ordenamiento jurídico, historia del constitucionalismo peruano, evolución de las constituciones en el Perú",
+      "orden": 6
+    },
+    {
+      "id": "formacion_civica-07",
+      "cursoId": "formacion_civica",
+      "titulo": "La ley y los derechos humanos: características de la ley, procedimiento legislativo, clasificación generacional de los derechos humanos, declaraciones internacionales",
+      "orden": 7
+    },
+    {
+      "id": "formacion_civica-08",
+      "cursoId": "formacion_civica",
+      "titulo": "Garantías constitucionales: procesos constitucionales y El Estado peruano",
+      "orden": 8
+    },
+    {
+      "id": "formacion_civica-09",
+      "cursoId": "formacion_civica",
+      "titulo": "Los poderes del Estado: Poder Legislativo (Congreso de la República), Poder Ejecutivo (presidente de la República, Consejo de ministros), Poder Judicial (estructura, principios)",
+      "orden": 9
+    },
+    {
+      "id": "formacion_civica-10",
+      "cursoId": "formacion_civica",
+      "titulo": "Órganos constitucionales autónomos: Contraloría, BCRP, SBS, JNJ, Ministerio Público, Defensoría del Pueblo, TC, JNE, ONPE, RENIEC",
+      "orden": 10
+    },
+    {
+      "id": "formacion_civica-11",
+      "cursoId": "formacion_civica",
+      "titulo": "Descentralización, estructura municipal, gobierno regional",
+      "orden": 11
+    },
+    {
+      "id": "formacion_civica-12",
+      "cursoId": "formacion_civica",
+      "titulo": "Funciones del régimen democrático, símbolos patrios y organismos internacionales",
+      "orden": 12
+    },
+    {
+      "id": "razonamiento_matematico-01",
+      "cursoId": "razonamiento_matematico",
+      "titulo": "Planteo de ecuaciones",
+      "orden": 1
+    },
+    {
+      "id": "razonamiento_matematico-02",
+      "cursoId": "razonamiento_matematico",
+      "titulo": "Edades",
+      "orden": 2
+    },
+    {
+      "id": "razonamiento_matematico-03",
+      "cursoId": "razonamiento_matematico",
+      "titulo": "Lógica recreativa, relaciones de tiempo y parentesco",
+      "orden": 3
+    },
+    {
+      "id": "razonamiento_matematico-04",
+      "cursoId": "razonamiento_matematico",
+      "titulo": "Cuatro operaciones, poleas y engranajes",
+      "orden": 4
+    },
+    {
+      "id": "razonamiento_matematico-05",
+      "cursoId": "razonamiento_matematico",
+      "titulo": "Sucesiones, series, sumatorias, analogías y distribuciones",
+      "orden": 5
+    },
+    {
+      "id": "razonamiento_matematico-06",
+      "cursoId": "razonamiento_matematico",
+      "titulo": "Inducción, deducción, cortes, estacas y pastillas",
+      "orden": 6
+    },
+    {
+      "id": "razonamiento_matematico-07",
+      "cursoId": "razonamiento_matematico",
+      "titulo": "Operadores matemáticos y binarios",
+      "orden": 7
+    },
+    {
+      "id": "razonamiento_matematico-08",
+      "cursoId": "razonamiento_matematico",
+      "titulo": "Análisis combinatorio",
+      "orden": 8
+    },
+    {
+      "id": "razonamiento_matematico-09",
+      "cursoId": "razonamiento_matematico",
+      "titulo": "Probabilidades",
+      "orden": 9
+    },
+    {
+      "id": "razonamiento_matematico-10",
+      "cursoId": "razonamiento_matematico",
+      "titulo": "Estadística",
+      "orden": 10
+    },
+    {
+      "id": "razonamiento_matematico-11",
+      "cursoId": "razonamiento_matematico",
+      "titulo": "Lógica proposicional I",
+      "orden": 11
+    },
+    {
+      "id": "razonamiento_matematico-12",
+      "cursoId": "razonamiento_matematico",
+      "titulo": "Lógica proposicional II y orden de información",
+      "orden": 12
+    }
+  ]
+}

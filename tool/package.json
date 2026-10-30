@@ -1,0 +1,12 @@
+{
+  "name": "academiapp-v2-tool",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Scripts administrativos de AcademiApp V2 (se ejecutan desde PC, no desde la app)",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}
