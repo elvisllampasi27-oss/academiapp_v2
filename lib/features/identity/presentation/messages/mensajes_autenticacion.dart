@@ -21,6 +21,10 @@ String mensajeErrorAutenticacion(Object error) {
         'No hay conexión. Revisa tu internet.',
       TipoErrorAutenticacion.operacionNoPermitida =>
         'Este método de acceso no está habilitado.',
+      TipoErrorAutenticacion.cancelado => 'Inicio de sesión cancelado.',
+      TipoErrorAutenticacion.ventanaBloqueada =>
+        'El navegador bloqueó la ventana de Google. '
+            'Permite las ventanas emergentes e inténtalo de nuevo.',
       TipoErrorAutenticacion.desconocido =>
         'Ocurrió un error inesperado. Inténtalo de nuevo.',
     };

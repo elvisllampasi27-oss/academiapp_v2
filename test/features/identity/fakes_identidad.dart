@@ -3,12 +3,22 @@ import 'package:academiapp_v2/features/identity/domain/entities/usuario_autentic
 import 'package:academiapp_v2/features/identity/domain/errors/excepcion_autenticacion.dart';
 import 'package:academiapp_v2/features/identity/domain/repositories/repositorio_usuario.dart';
 import 'package:academiapp_v2/features/identity/domain/repositories/servicio_autenticacion.dart';
+import 'package:academiapp_v2/features/identity/domain/repositories/servicio_autenticacion_google.dart';
 import 'package:academiapp_v2/features/identity/domain/repositories/servicio_recuperacion_contrasena.dart';
 
 /// Dobles de prueba compartidos por los tests del bloque 12.13.
 class AuthFalsoConfigurable
-    implements ServicioAutenticacion, ServicioRecuperacionContrasena {
+    implements
+        ServicioAutenticacion,
+        ServicioRecuperacionContrasena,
+        ServicioAutenticacionGoogle {
   ExcepcionAutenticacion? errorAlIniciar;
+  ExcepcionAutenticacion? errorGoogle;
+  UsuarioAutenticado cuentaGoogle = const UsuarioAutenticado(
+    uid: 'uid-google',
+    correo: 'ana@gmail.com',
+    nombre: 'Ana Quispe',
+  );
   ExcepcionAutenticacion? errorAlRegistrar;
   UsuarioAutenticado? usuarioActual;
   final List<String> correosRecuperacion = [];
@@ -31,6 +41,13 @@ class AuthFalsoConfigurable
     if (errorAlIniciar != null) throw errorAlIniciar!;
     usuarioActual = UsuarioAutenticado(uid: 'uid-1', correo: correo);
     return usuarioActual!;
+  }
+
+  @override
+  Future<UsuarioAutenticado> iniciarConGoogle() async {
+    if (errorGoogle != null) throw errorGoogle!;
+    usuarioActual = cuentaGoogle;
+    return cuentaGoogle;
   }
 
   @override

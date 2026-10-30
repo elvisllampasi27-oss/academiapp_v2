@@ -18,6 +18,7 @@ class AcademiApp extends StatelessWidget {
       home: PuertaSesionPage(
         servicioAutenticacion: servicioAutenticacion,
         servicioRecuperacion: servicioAutenticacion,
+        servicioGoogle: servicioAutenticacion,
         repositorioUsuario: repositorioUsuario,
       ),
     );

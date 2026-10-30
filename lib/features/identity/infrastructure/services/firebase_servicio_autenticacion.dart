@@ -1,13 +1,18 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../../domain/entities/usuario_autenticado.dart';
 import '../../domain/errors/excepcion_autenticacion.dart';
 import '../../domain/repositories/servicio_autenticacion.dart';
+import '../../domain/repositories/servicio_autenticacion_google.dart';
 import '../../domain/repositories/servicio_recuperacion_contrasena.dart';
 import 'codigos_error_firebase_auth.dart';
 
 class FirebaseServicioAutenticacion
-    implements ServicioAutenticacion, ServicioRecuperacionContrasena {
+    implements
+        ServicioAutenticacion,
+        ServicioRecuperacionContrasena,
+        ServicioAutenticacionGoogle {
   final FirebaseAuth firebaseAuth;
 
   FirebaseServicioAutenticacion({FirebaseAuth? firebaseAuth})
@@ -38,6 +43,22 @@ class FirebaseServicioAutenticacion
         email: correo,
         password: contrasena,
       ),
+    );
+
+    return _convertirUsuario(credencial.user);
+  }
+
+  @override
+  Future<UsuarioAutenticado> iniciarConGoogle() async {
+    final proveedor = GoogleAuthProvider()
+      ..setCustomParameters({'prompt': 'select_account'});
+
+    // Web: ventana emergente de Google. Móvil: flujo del proveedor de
+    // Firebase (no requiere el paquete google_sign_in).
+    final credencial = await _traducirErrores(
+      () => kIsWeb
+          ? firebaseAuth.signInWithPopup(proveedor)
+          : firebaseAuth.signInWithProvider(proveedor),
     );
 
     return _convertirUsuario(credencial.user);
@@ -104,6 +125,10 @@ class FirebaseServicioAutenticacion
       throw StateError('Firebase no devolvio un usuario autenticado.');
     }
 
-    return UsuarioAutenticado(uid: usuario.uid, correo: usuario.email);
+    return UsuarioAutenticado(
+      uid: usuario.uid,
+      correo: usuario.email,
+      nombre: usuario.displayName,
+    );
   }
 }

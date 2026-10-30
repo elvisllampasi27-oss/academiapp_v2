@@ -15,8 +15,11 @@ import '../../domain/entities/estado_sesion_estudiante.dart';
 import '../../domain/entities/usuario_academiapp.dart';
 import '../../domain/repositories/repositorio_usuario.dart';
 import '../../domain/repositories/servicio_autenticacion.dart';
+import '../../domain/repositories/servicio_autenticacion_google.dart';
 import '../../domain/repositories/servicio_recuperacion_contrasena.dart';
+import '../../domain/services/completar_perfil_service.dart';
 import '../../domain/services/iniciar_sesion_estudiante_service.dart';
+import '../../domain/services/iniciar_sesion_google_service.dart';
 import '../../domain/services/recuperar_contrasena_service.dart';
 import '../../domain/services/recuperar_sesion_estudiante_service.dart';
 import '../../domain/services/registrar_estudiante_service.dart';
@@ -26,12 +29,14 @@ import 'login_page.dart';
 class PuertaSesionPage extends StatefulWidget {
   final ServicioAutenticacion servicioAutenticacion;
   final ServicioRecuperacionContrasena servicioRecuperacion;
+  final ServicioAutenticacionGoogle servicioGoogle;
   final RepositorioUsuario repositorioUsuario;
 
   const PuertaSesionPage({
     super.key,
     required this.servicioAutenticacion,
     required this.servicioRecuperacion,
+    required this.servicioGoogle,
     required this.repositorioUsuario,
   });
 
@@ -111,6 +116,15 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
           ),
           recuperarContrasenaService: RecuperarContrasenaService(
             servicio: widget.servicioRecuperacion,
+          ),
+          iniciarSesionGoogleService: IniciarSesionGoogleService(
+            servicioGoogle: widget.servicioGoogle,
+            servicioAutenticacion: widget.servicioAutenticacion,
+            repositorioUsuario: widget.repositorioUsuario,
+          ),
+          completarPerfilService: CompletarPerfilService(
+            servicioAutenticacion: widget.servicioAutenticacion,
+            repositorioUsuario: widget.repositorioUsuario,
           ),
           onSesionIniciada: _alIniciarSesion,
         );

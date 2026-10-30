@@ -1,6 +1,8 @@
 import 'package:academiapp_v2/features/identity/domain/entities/usuario_academiapp.dart';
 import 'package:academiapp_v2/features/identity/domain/errors/excepcion_autenticacion.dart';
+import 'package:academiapp_v2/features/identity/domain/services/completar_perfil_service.dart';
 import 'package:academiapp_v2/features/identity/domain/services/iniciar_sesion_estudiante_service.dart';
+import 'package:academiapp_v2/features/identity/domain/services/iniciar_sesion_google_service.dart';
 import 'package:academiapp_v2/features/identity/domain/services/recuperar_contrasena_service.dart';
 import 'package:academiapp_v2/features/identity/domain/services/registrar_estudiante_service.dart';
 import 'package:academiapp_v2/features/identity/presentation/pages/login_page.dart';
@@ -26,6 +28,15 @@ void main() {
           repositorioUsuario: repositorio,
         ),
         recuperarContrasenaService: RecuperarContrasenaService(servicio: auth),
+        iniciarSesionGoogleService: IniciarSesionGoogleService(
+          servicioGoogle: auth,
+          servicioAutenticacion: auth,
+          repositorioUsuario: repositorio,
+        ),
+        completarPerfilService: CompletarPerfilService(
+          servicioAutenticacion: auth,
+          repositorioUsuario: repositorio,
+        ),
         onSesionIniciada: () => sesionesIniciadas++,
       ),
     );
@@ -151,5 +162,60 @@ void main() {
 
     expect(find.text('Buscar'), findsNothing);
     expect(find.text('Ingeniería de Sistemas'), findsOneWidget);
+  });
+
+  testWidgets('Google por primera vez pide completar el perfil', (
+    tester,
+  ) async {
+    await mostrar(tester);
+
+    await tester.tap(find.text('Continuar con Google'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Completa tu perfil'), findsOneWidget);
+    // El nombre llega prellenado desde Google.
+    expect(find.text('Ana Quispe'), findsOneWidget);
+
+    await tester.tap(find.text('Carrera a la que postulas'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Derecho'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
+    expect(sesionesIniciadas, 1);
+    expect(repositorio.usuarios['uid-google']?.carreraPostulada, 'Derecho');
+  });
+
+  testWidgets('Google con perfil existente entra directo', (tester) async {
+    repositorio.usuarios['uid-google'] = UsuarioAcademiApp(
+      uid: 'uid-google',
+      correo: 'ana@gmail.com',
+      nombre: 'Ana',
+      rol: RolUsuario.estudiante,
+      estado: EstadoUsuario.activo,
+      fechaCreacion: DateTime(2026, 10, 1),
+    );
+    await mostrar(tester);
+
+    await tester.tap(find.text('Continuar con Google'));
+    await tester.pumpAndSettle();
+
+    expect(sesionesIniciadas, 1);
+    expect(find.text('Completa tu perfil'), findsNothing);
+  });
+
+  testWidgets('cerrar la ventana de Google no muestra error', (tester) async {
+    auth.errorGoogle = const ExcepcionAutenticacion(
+      TipoErrorAutenticacion.cancelado,
+    );
+    await mostrar(tester);
+
+    await tester.tap(find.text('Continuar con Google'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Inicio de sesión cancelado.'), findsNothing);
+    expect(sesionesIniciadas, 0);
   });
 }

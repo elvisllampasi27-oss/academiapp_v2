@@ -15,6 +15,13 @@ TipoErrorAutenticacion traducirCodigoFirebaseAuth(String codigo) {
     'user-disabled' => TipoErrorAutenticacion.cuentaDeshabilitada,
     'network-request-failed' => TipoErrorAutenticacion.sinConexion,
     'operation-not-allowed' => TipoErrorAutenticacion.operacionNoPermitida,
+    'account-exists-with-different-credential' =>
+      TipoErrorAutenticacion.correoEnUso,
+    'popup-closed-by-user' ||
+    'cancelled-popup-request' ||
+    'web-context-canceled' ||
+    'canceled' => TipoErrorAutenticacion.cancelado,
+    'popup-blocked' => TipoErrorAutenticacion.ventanaBloqueada,
     _ => TipoErrorAutenticacion.desconocido,
   };
 }

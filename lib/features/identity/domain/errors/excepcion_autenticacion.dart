@@ -9,6 +9,8 @@ enum TipoErrorAutenticacion {
   cuentaDeshabilitada,
   sinConexion,
   operacionNoPermitida,
+  cancelado,
+  ventanaBloqueada,
   desconocido,
 }
 

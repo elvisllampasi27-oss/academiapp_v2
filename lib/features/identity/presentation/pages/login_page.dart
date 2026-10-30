@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/errors/excepcion_autenticacion.dart';
+import '../../domain/services/completar_perfil_service.dart';
 import '../../domain/services/iniciar_sesion_estudiante_service.dart';
+import '../../domain/services/iniciar_sesion_google_service.dart';
 import '../../domain/services/recuperar_contrasena_service.dart';
 import '../../domain/services/registrar_estudiante_service.dart';
 import '../../domain/values/validacion_credenciales.dart';
 import '../messages/mensajes_autenticacion.dart';
+import '../widgets/boton_google.dart';
 import '../widgets/estilo_autenticacion.dart';
+import 'completar_perfil_page.dart';
 import 'recuperar_contrasena_page.dart';
 import 'registro_page.dart';
 
@@ -13,6 +18,8 @@ class LoginPage extends StatefulWidget {
   final IniciarSesionEstudianteService iniciarSesionService;
   final RegistrarEstudianteService registrarService;
   final RecuperarContrasenaService recuperarContrasenaService;
+  final IniciarSesionGoogleService iniciarSesionGoogleService;
+  final CompletarPerfilService completarPerfilService;
   final VoidCallback onSesionIniciada;
 
   const LoginPage({
@@ -20,6 +27,8 @@ class LoginPage extends StatefulWidget {
     required this.iniciarSesionService,
     required this.registrarService,
     required this.recuperarContrasenaService,
+    required this.iniciarSesionGoogleService,
+    required this.completarPerfilService,
     required this.onSesionIniciada,
   });
 
@@ -32,6 +41,7 @@ class _LoginPageState extends State<LoginPage> {
   final _contrasenaController = TextEditingController();
 
   bool _cargando = false;
+  bool _cargandoGoogle = false;
   String? _error;
 
   @override
@@ -81,6 +91,49 @@ class _LoginPageState extends State<LoginPage> {
     } finally {
       if (mounted) {
         setState(() => _cargando = false);
+      }
+    }
+  }
+
+  Future<void> _iniciarConGoogle() async {
+    setState(() {
+      _cargandoGoogle = true;
+      _error = null;
+    });
+
+    try {
+      final resultado = await widget.iniciarSesionGoogleService.iniciar();
+
+      if (!mounted) return;
+
+      switch (resultado) {
+        case InicioGoogleCompleto():
+          widget.onSesionIniciada();
+        case InicioGoogleRequierePerfil(:final autenticado):
+          final completado = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(
+              builder: (_) => CompletarPerfilPage(
+                autenticado: autenticado,
+                service: widget.completarPerfilService,
+              ),
+            ),
+          );
+
+          if (completado == true && mounted) {
+            widget.onSesionIniciada();
+          }
+      }
+    } on ExcepcionAutenticacion catch (error) {
+      if (!mounted || error.tipo == TipoErrorAutenticacion.cancelado) return;
+
+      setState(() => _error = mensajeErrorAutenticacion(error));
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() => _error = mensajeErrorAutenticacion(error));
+    } finally {
+      if (mounted) {
+        setState(() => _cargandoGoogle = false);
       }
     }
   }
@@ -173,6 +226,13 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
             ),
+          ),
+          const SizedBox(height: 24),
+          const SeparadorTexto(texto: 'O continúa con'),
+          const SizedBox(height: 16),
+          BotonGoogle(
+            cargando: _cargandoGoogle,
+            alPresionar: _cargando ? null : _iniciarConGoogle,
           ),
           const SizedBox(height: 24),
           const SeparadorTexto(texto: '¿No tienes una cuenta?'),

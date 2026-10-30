@@ -14,6 +14,11 @@ void main() {
       'too-many-requests': TipoErrorAutenticacion.demasiadosIntentos,
       'user-disabled': TipoErrorAutenticacion.cuentaDeshabilitada,
       'network-request-failed': TipoErrorAutenticacion.sinConexion,
+      'popup-closed-by-user': TipoErrorAutenticacion.cancelado,
+      'cancelled-popup-request': TipoErrorAutenticacion.cancelado,
+      'popup-blocked': TipoErrorAutenticacion.ventanaBloqueada,
+      'account-exists-with-different-credential':
+          TipoErrorAutenticacion.correoEnUso,
       'algo-nuevo': TipoErrorAutenticacion.desconocido,
     };
 
