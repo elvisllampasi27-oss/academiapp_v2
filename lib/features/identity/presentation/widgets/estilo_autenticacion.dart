@@ -189,6 +189,8 @@ class _CampoVidrioState extends State<CampoVidrio> {
   }
 }
 
+/// Campo de selección con estilo vidrio. Al tocarlo abre una hoja inferior
+/// translúcida (no el menú opaco por defecto de Flutter) con buscador.
 class SelectorVidrio extends StatelessWidget {
   final String hint;
   final String? valor;
@@ -203,33 +205,279 @@ class SelectorVidrio extends StatelessWidget {
     required this.alCambiar,
   });
 
+  Future<void> _abrir(BuildContext context) async {
+    final elegido = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      constraints: const BoxConstraints(maxWidth: 460),
+      builder: (_) => _HojaSeleccionVidrio(
+        titulo: hint,
+        opciones: opciones,
+        seleccionado: valor,
+      ),
+    );
+
+    if (elegido != null) {
+      alCambiar(elegido);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: _bordeVidrio, width: 0.6),
+    final tieneValor = valor != null;
+
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
         borderRadius: BorderRadius.circular(9),
+        onTap: () => _abrir(context),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            border: Border.all(color: _bordeVidrio, width: 0.6),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  valor ?? hint,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: tieneValor
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.white.withValues(alpha: 0.7),
+              ),
+            ],
+          ),
+        ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: valor,
-          hint: Text(
-            hint,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+    );
+  }
+}
+
+class _HojaSeleccionVidrio extends StatefulWidget {
+  final String titulo;
+  final List<String> opciones;
+  final String? seleccionado;
+
+  const _HojaSeleccionVidrio({
+    required this.titulo,
+    required this.opciones,
+    required this.seleccionado,
+  });
+
+  @override
+  State<_HojaSeleccionVidrio> createState() => _HojaSeleccionVidrioState();
+}
+
+class _HojaSeleccionVidrioState extends State<_HojaSeleccionVidrio> {
+  final _busquedaController = TextEditingController();
+  String _filtro = '';
+
+  @override
+  void dispose() {
+    _busquedaController.dispose();
+    super.dispose();
+  }
+
+  static String _normalizar(String texto) {
+    const conTilde = 'áéíóúüñ';
+    const sinTilde = 'aeiouun';
+    final minusculas = texto.toLowerCase();
+    final buffer = StringBuffer();
+    for (final caracter in minusculas.split('')) {
+      final indice = conTilde.indexOf(caracter);
+      buffer.write(indice >= 0 ? sinTilde[indice] : caracter);
+    }
+    return buffer.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtro = _normalizar(_filtro.trim());
+    final visibles = filtro.isEmpty
+        ? widget.opciones
+        : widget.opciones
+              .where((opcion) => _normalizar(opcion).contains(filtro))
+              .toList();
+
+    final alturaMaxima = MediaQuery.sizeOf(context).height * 0.7;
+    final tecladoAbierto = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: tecladoAbierto),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            constraints: BoxConstraints(maxHeight: alturaMaxima),
+            decoration: BoxDecoration(
+              color: const Color(0x8C14142B),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+              border: Border.all(color: _bordeVidrio, width: 0.6),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 10),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                    child: Text(
+                      widget.titulo,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        border: Border.all(color: _bordeVidrio, width: 0.6),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: TextField(
+                        controller: _busquedaController,
+                        onChanged: (texto) => setState(() => _filtro = texto),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                        cursorColor: Colors.white,
+                        decoration: InputDecoration(
+                          hintText: 'Buscar',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Flexible(
+                    child: visibles.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(
+                              'Sin resultados.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            shrinkWrap: true,
+                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
+                            itemCount: visibles.length,
+                            itemBuilder: (context, indice) {
+                              final opcion = visibles[indice];
+                              return _OpcionVidrio(
+                                texto: opcion,
+                                seleccionada: opcion == widget.seleccionado,
+                                alPresionar: () =>
+                                    Navigator.of(context).pop(opcion),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          dropdownColor: const Color(0xE6393975),
-          icon: Icon(
-            Icons.keyboard_arrow_down,
-            color: Colors.white.withValues(alpha: 0.7),
+        ),
+      ),
+    );
+  }
+}
+
+class _OpcionVidrio extends StatelessWidget {
+  final String texto;
+  final bool seleccionada;
+  final VoidCallback alPresionar;
+
+  const _OpcionVidrio({
+    required this.texto,
+    required this.seleccionada,
+    required this.alPresionar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: alPresionar,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            decoration: BoxDecoration(
+              color: seleccionada
+                  ? Colors.white.withValues(alpha: 0.16)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              border: seleccionada
+                  ? Border.all(color: _bordeVidrio, width: 0.6)
+                  : null,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    texto,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: seleccionada
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ),
+                if (seleccionada)
+                  const Icon(Icons.check, color: Colors.white, size: 18),
+              ],
+            ),
           ),
-          style: const TextStyle(color: Colors.white, fontSize: 14),
-          items: [
-            for (final opcion in opciones)
-              DropdownMenuItem(value: opcion, child: Text(opcion)),
-          ],
-          onChanged: alCambiar,
         ),
       ),
     );

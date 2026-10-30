@@ -122,4 +122,34 @@ void main() {
     expect(find.text('Revisa tu correo'), findsOneWidget);
     expect(auth.correosRecuperacion, ['ana@academiapp.pe']);
   });
+
+  testWidgets('el selector de carrera abre hoja de vidrio con buscador', (
+    tester,
+  ) async {
+    await mostrar(tester);
+
+    await tester.tap(find.text('Registrarse aquí'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Carrera a la que postulas'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Buscar'), findsOneWidget);
+
+    // La búsqueda ignora tildes y mayúsculas.
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Buscar'),
+      'ingenieria de sis',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ingeniería de Sistemas'), findsOneWidget);
+    expect(find.text('Ingeniería Civil'), findsNothing);
+
+    await tester.tap(find.text('Ingeniería de Sistemas'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Buscar'), findsNothing);
+    expect(find.text('Ingeniería de Sistemas'), findsOneWidget);
+  });
 }
