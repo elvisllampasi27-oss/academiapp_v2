@@ -27,8 +27,32 @@ class ServicioCorreccionCloudFunctions implements ServicioCorreccionEvaluacion {
 
       return correccionDesdeMapa(resultado.data);
     } on FirebaseFunctionsException catch (error) {
-      // Los mensajes del servidor ya están escritos para el estudiante.
-      throw StateError(error.message ?? 'No se pudo corregir la práctica.');
+      throw StateError(mensajeErrorCorreccion(error.code, error.message));
     }
   }
+}
+
+/// Los errores que la función lanza a propósito (permiso, no publicado...)
+/// ya traen un mensaje para el estudiante. Los fallos inesperados del
+/// servidor ("internal", "unavailable"...) no deben mostrarse en crudo.
+String mensajeErrorCorreccion(String codigo, String? mensaje) {
+  const codigosConMensajePropio = {
+    'unauthenticated',
+    'permission-denied',
+    'not-found',
+    'failed-precondition',
+    'invalid-argument',
+  };
+
+  if (codigosConMensajePropio.contains(codigo) &&
+      mensaje != null &&
+      mensaje.isNotEmpty) {
+    return mensaje;
+  }
+
+  if (codigo == 'unavailable' || codigo == 'deadline-exceeded') {
+    return 'No hay conexión con el servidor. Inténtalo de nuevo.';
+  }
+
+  return 'Ocurrió un error al corregir la práctica. Inténtalo de nuevo.';
 }

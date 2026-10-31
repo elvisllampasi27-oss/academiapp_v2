@@ -2,6 +2,7 @@
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
+const { FieldValue } = require('firebase-admin/firestore');
 const { calificar, validarSolicitud } = require('./calificar');
 
 /**
@@ -77,7 +78,7 @@ const enviarIntentoEvaluacion = onCall(async (request) => {
     throw new HttpsError('internal', 'La práctica está mal configurada.');
   }
 
-  const ahora = admin.firestore.FieldValue.serverTimestamp();
+  const ahora = FieldValue.serverTimestamp();
   const intentoRef = db.collection('intentos_evaluacion').doc();
   const lote = db.batch();
 
