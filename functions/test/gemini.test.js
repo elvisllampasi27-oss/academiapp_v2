@@ -25,7 +25,7 @@ test('envia instrucciones e historial y devuelve el texto', async (t) => {
   });
 
   assert.strictEqual(texto, 'P(1) = 7');
-  assert.match(enviado.url, /gemini-2\.5-flash:generateContent$/);
+  assert.match(enviado.url, /gemini-3\.8-flash:generateContent$/);
   assert.strictEqual(enviado.clave, 'clave-prueba');
   assert.deepStrictEqual(enviado.cuerpo.contents.map((c) => c.role), ['user', 'model', 'user']);
   assert.strictEqual(enviado.cuerpo.systemInstruction.parts[0].text, 'Eres el tutor');

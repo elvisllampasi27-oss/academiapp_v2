@@ -7,7 +7,7 @@
  * @returns {Promise<string>} texto de la respuesta
  */
 async function generarConGemini({ clave, modelo, instrucciones, mensajes }) {
-  const nombre = modelo || 'gemini-2.5-flash';
+  const nombre = modelo || 'gemini-3.8-flash';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${nombre}:generateContent`;
 
   const respuesta = await fetch(url, {
@@ -21,9 +21,10 @@ async function generarConGemini({ clave, modelo, instrucciones, mensajes }) {
       })),
       generationConfig: {
         temperature: 0.4,
-        maxOutputTokens: 1024,
-        // Sin "pensamiento" extra: respuestas rápidas y más baratas.
-        thinkingConfig: { thinkingBudget: 0 },
+        // Incluye el razonamiento interno del modelo, no solo la respuesta.
+        maxOutputTokens: 2048,
+        // Poco "pensamiento": respuestas rápidas y más baratas.
+        thinkingConfig: { thinkingLevel: 'low' },
       },
     }),
   });
@@ -37,6 +38,7 @@ async function generarConGemini({ clave, modelo, instrucciones, mensajes }) {
 
   const datos = await respuesta.json();
   const texto = (datos.candidates?.[0]?.content?.parts || [])
+    .filter((p) => !p.thought)
     .map((p) => p.text || '')
     .join('')
     .trim();

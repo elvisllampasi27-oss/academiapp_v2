@@ -61,3 +61,6 @@ tool/banco_v1.json
 # Claves del tutor para el emulador de Functions (nunca a git)
 functions/.secret.local
 functions/.env.local
+
+**/.secret.local
+**/.env.local
