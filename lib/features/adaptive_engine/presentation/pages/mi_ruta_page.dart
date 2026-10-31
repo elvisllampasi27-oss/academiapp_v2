@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/colores_app.dart';
+
 import '../../domain/entities/item_mi_ruta.dart';
 import '../../domain/entities/recomendacion.dart';
 import '../../domain/services/construir_mi_ruta_service.dart';
@@ -16,6 +18,9 @@ class MiRutaPage extends StatefulWidget {
   final DescribirTema describirTema;
   final void Function(String temaId)? onAbrirTema;
 
+  /// "Mi Ruta" cuando se abre aparte; "Progreso" cuando es una pestaña.
+  final String titulo;
+
   const MiRutaPage({
     super.key,
     required this.service,
@@ -23,6 +28,7 @@ class MiRutaPage extends StatefulWidget {
     required this.matriculaId,
     required this.describirTema,
     this.onAbrirTema,
+    this.titulo = 'Mi Ruta',
   });
 
   @override
@@ -46,7 +52,7 @@ class _MiRutaPageState extends State<MiRutaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mi Ruta')),
+      appBar: AppBar(title: Text(widget.titulo)),
       body: FutureBuilder<List<ItemMiRuta>>(
         future: _ruta,
         builder: (context, snapshot) {
@@ -90,7 +96,7 @@ class _MiRutaPageState extends State<MiRutaPage> {
           }
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
             children: [
               for (final tipo in TipoRecomendacion.values)
                 ..._seccion(
@@ -107,21 +113,20 @@ class _MiRutaPageState extends State<MiRutaPage> {
   List<Widget> _seccion(TipoRecomendacion tipo, List<ItemMiRuta> items) {
     if (items.isEmpty) return const [];
 
-    final colores = Theme.of(context).colorScheme;
     final (titulo, color, icono) = switch (tipo) {
       TipoRecomendacion.reforzar => (
         'Reforzar',
-        colores.error,
+        ColoresApp.naranja,
         Icons.priority_high,
       ),
       TipoRecomendacion.practicar => (
         'Practicar',
-        colores.tertiary,
+        ColoresApp.ambar,
         Icons.fitness_center,
       ),
       TipoRecomendacion.profundizar => (
         'Profundizar',
-        colores.primary,
+        ColoresApp.celeste,
         Icons.trending_up,
       ),
     };

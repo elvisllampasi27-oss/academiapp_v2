@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/estudiante_shell.dart';
+import '../../../../app/inicio/inicio_page.dart';
+
 import '../../../academic/domain/entities/contexto_dia_estudiante.dart';
 import '../../../academic/domain/entities/curso.dart';
 import '../../../academic/domain/entities/tema.dart';
@@ -13,8 +16,8 @@ import '../../../academic/infrastructure/repositories/repositorio_publicacion_te
 import '../../../academic/infrastructure/repositories/repositorio_recurso_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_tema_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_version_academica_firestore.dart';
-import '../../../academic/presentation/pages/home_page.dart';
 import '../../../academic/presentation/pages/tema_page.dart';
+import '../../../adaptive_engine/domain/entities/item_mi_ruta.dart';
 import '../../../adaptive_engine/domain/services/construir_mi_ruta_service.dart';
 import '../../../adaptive_engine/presentation/pages/mi_ruta_page.dart';
 import '../../../assessment/domain/services/practica_tema_service.dart';
@@ -38,6 +41,7 @@ import '../../domain/services/recuperar_sesion_estudiante_service.dart';
 import '../../domain/services/registrar_estudiante_service.dart';
 import '../../domain/services/resolver_estado_inicial_sesion_service.dart';
 import 'login_page.dart';
+import 'perfil_page.dart';
 
 class PuertaSesionPage extends StatefulWidget {
   final ServicioAutenticacion servicioAutenticacion;
@@ -161,12 +165,43 @@ class _HomeConMatricula extends StatefulWidget {
 }
 
 class _HomeConMatriculaState extends State<_HomeConMatricula> {
-  late final Future<_ContextoAcademico?> _contextoAcademico;
+  late Future<_ContextoAcademico?> _contextoAcademico;
+  final ValueNotifier<int> _pestana = ValueNotifier(0);
+  int _recargas = 0;
 
   @override
   void initState() {
     super.initState();
     _contextoAcademico = _cargarContextoAcademico();
+  }
+
+  @override
+  void dispose() {
+    _pestana.dispose();
+    super.dispose();
+  }
+
+  /// Vuelve a leer el día y la ruta (p. ej. al volver de practicar un tema).
+  void _recargar() {
+    setState(() {
+      _recargas++;
+      _contextoAcademico = _cargarContextoAcademico();
+    });
+  }
+
+  ConstruirMiRutaService get _servicioRuta =>
+      ConstruirMiRutaService(repositorio: RepositorioEvidenciaFirestore());
+
+  Future<List<ItemMiRuta>> _cargarRuta(String matriculaId) async {
+    try {
+      return await _servicioRuta.construir(
+        usuarioId: widget.usuario.uid,
+        matriculaId: matriculaId,
+      );
+    } catch (_) {
+      // La ruta es un complemento: si falla, el inicio igual se muestra.
+      return const [];
+    }
   }
 
   Future<_ContextoAcademico?> _cargarContextoAcademico() async {
@@ -213,6 +248,7 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
       matricula: matricula,
       versionAcademica: version,
       diaEstudiante: diaEstudiante,
+      ruta: await _cargarRuta(matricula.id),
     );
   }
 
@@ -221,7 +257,9 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
     return FutureBuilder<_ContextoAcademico?>(
       future: _contextoAcademico,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
+        // Al recargar se mantiene lo anterior en pantalla (sin parpadeo).
+        if (snapshot.connectionState != ConnectionState.done &&
+            !snapshot.hasData) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
@@ -249,20 +287,65 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
           );
         }
 
-        return HomePage(
-          matricula: contexto.matricula,
-          versionAcademica: contexto.versionAcademica,
-          diaEstudiante: contexto.diaEstudiante,
-          onCerrarSesion: widget.onCerrarSesion,
-          onAbrirTema: (tema, curso) => _abrirTema(contexto, tema, curso),
-          onAbrirMiRuta: () => _abrirMiRuta(contexto),
+        return EstudianteShell(
+          indice: _pestana,
+          pestanas: [
+            PestanaApp(
+              etiqueta: 'Inicio',
+              icono: Icons.home_outlined,
+              contenido: InicioPage(
+                nombre: widget.usuario.nombre,
+                hoy: DateTime.now(),
+                dia: contexto.diaEstudiante,
+                ruta: contexto.ruta,
+                onAbrirTema: (tema, curso) => _abrirTema(contexto, tema, curso),
+                onVerRuta: () => _pestana.value = 3,
+                onAbrirPerfil: () => _pestana.value = 4,
+              ),
+            ),
+            const PestanaApp(
+              etiqueta: 'Cursos',
+              icono: Icons.grid_view_rounded,
+              contenido: PantallaProximamente(
+                titulo: 'Cursos',
+                mensaje: 'Muy pronto podrás explorar todos tus cursos y temas.',
+              ),
+            ),
+            const PestanaApp(
+              etiqueta: 'Exámenes',
+              icono: Icons.assignment_outlined,
+              contenido: PantallaProximamente(
+                titulo: 'Exámenes',
+                mensaje:
+                    'Muy pronto: exámenes pasados (Ordinario y Exonerados) '
+                    'y el examen tipo admisión.',
+              ),
+            ),
+            PestanaApp(
+              etiqueta: 'Progreso',
+              icono: Icons.insights_outlined,
+              contenido: _miRuta(contexto, titulo: 'Progreso'),
+            ),
+            PestanaApp(
+              etiqueta: 'Perfil',
+              icono: Icons.person_outline,
+              contenido: PerfilPage(
+                usuario: widget.usuario,
+                onCerrarSesion: widget.onCerrarSesion,
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
-  void _abrirTema(_ContextoAcademico contexto, Tema tema, Curso? curso) {
-    Navigator.of(context).push(
+  Future<void> _abrirTema(
+    _ContextoAcademico contexto,
+    Tema tema,
+    Curso? curso,
+  ) async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => TemaPage(
           tema: tema,
@@ -284,31 +367,30 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
         ),
       ),
     );
+
+    // Al volver puede haber practicado: se actualizan el día y la ruta.
+    if (mounted) _recargar();
   }
 
-  void _abrirMiRuta(_ContextoAcademico contexto) {
+  Widget _miRuta(_ContextoAcademico contexto, {String titulo = 'Mi Ruta'}) {
     final temas = {for (final t in contexto.diaEstudiante.temas) t.id: t};
     final cursos = {for (final c in contexto.diaEstudiante.cursos) c.id: c};
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => MiRutaPage(
-          service: ConstruirMiRutaService(
-            repositorio: RepositorioEvidenciaFirestore(),
-          ),
-          usuarioId: widget.usuario.uid,
-          matriculaId: contexto.matricula.id,
-          describirTema: (temaId) {
-            final tema = temas[temaId];
-            if (tema == null) return null;
-            return (titulo: tema.titulo, curso: cursos[tema.cursoId]?.nombre);
-          },
-          onAbrirTema: (temaId) {
-            final tema = temas[temaId];
-            if (tema != null) _abrirTema(contexto, tema, cursos[tema.cursoId]);
-          },
-        ),
-      ),
+    return MiRutaPage(
+      key: ValueKey('ruta-$_recargas'),
+      titulo: titulo,
+      service: _servicioRuta,
+      usuarioId: widget.usuario.uid,
+      matriculaId: contexto.matricula.id,
+      describirTema: (temaId) {
+        final tema = temas[temaId];
+        if (tema == null) return null;
+        return (titulo: tema.titulo, curso: cursos[tema.cursoId]?.nombre);
+      },
+      onAbrirTema: (temaId) {
+        final tema = temas[temaId];
+        if (tema != null) _abrirTema(contexto, tema, cursos[tema.cursoId]);
+      },
     );
   }
 }
@@ -317,11 +399,13 @@ class _ContextoAcademico {
   final Matricula matricula;
   final VersionAcademica versionAcademica;
   final ContextoDiaEstudiante diaEstudiante;
+  final List<ItemMiRuta> ruta;
 
   const _ContextoAcademico({
     required this.matricula,
     required this.versionAcademica,
     required this.diaEstudiante,
+    required this.ruta,
   });
 }
 
