@@ -36,6 +36,9 @@ const PROYECTO_ESPERADO = 'academiapp-v2-7b9ce';
 const ZONA_HORARIA = 'America/Lima';
 const LIMITE_LOTE = 500;
 
+// Se carga junto con firebase-admin (los tests no lo necesitan).
+let FieldValue;
+
 // Datos manuales de prueba del bloque 12.11 (ver documentos 02/03).
 const TEMPORALES = {
   cursos: ['matematica', 'fisica', 'lenguaje'],
@@ -115,6 +118,28 @@ function calcularTemasAPublicar(secuencia, fechaInicio, hastaDia) {
   return calendario.filter((d) => d.numero <= hastaDia);
 }
 
+/**
+ * Todo el temario de una versión en UN documento: la app lo lee con una sola
+ * lectura en vez de ~220 (17 cursos + 205 temas).
+ */
+function documentoCurriculo(curriculo, versionId) {
+  return {
+    versionId,
+    areas: curriculo.areas.map((a) => ({ id: a.id, nombre: a.nombre, orden: a.orden })),
+    cursos: curriculo.cursos.map((c) => ({
+      id: c.id, areaId: c.areaId, nombre: c.nombre, orden: c.orden, icono: c.icono ?? null,
+    })),
+    temas: curriculo.temas.map((t) => ({
+      id: t.id, cursoId: t.cursoId, titulo: t.titulo, orden: t.orden, descripcion: t.descripcion ?? null,
+    })),
+  };
+}
+
+/** Lista de temas publicados de una versión en UN documento (sin duplicados, ordenada). */
+function documentoPublicaciones(versionId, temaIds) {
+  return { versionId, temas: [...new Set(temaIds)].sort() };
+}
+
 // ---------------------------------------------------------------------------
 // Utilidades de línea de comandos
 // ---------------------------------------------------------------------------
@@ -166,6 +191,7 @@ function iniciarFirebase(rutaKey) {
     );
   }
   const admin = require('firebase-admin');
+  FieldValue = require('firebase-admin/firestore').FieldValue;
   admin.initializeApp({ credential: admin.credential.cert(credencial), projectId: PROYECTO_ESPERADO });
   return admin.firestore();
 }
@@ -286,7 +312,7 @@ async function main() {
 
   const operaciones =
     curriculo.areas.length + curriculo.cursos.length + curriculo.temas.length +
-    temasPublicados.length + borrar.cursos.length + borrar.temas.length + borrar.publicaciones.length;
+    temasPublicados.length + borrar.cursos.length + borrar.temas.length + borrar.publicaciones.length + 2;
   if (operaciones > LIMITE_LOTE) throw new Error(`Demasiadas operaciones (${operaciones}) para un lote.`);
 
   console.log(`\nOperaciones en el lote: ${operaciones}.`);
@@ -318,7 +344,24 @@ async function main() {
       versionId: args.version, temaId: t.id, publicada: true,
     });
   }
+
+  // Documentos resumen que lee la app (1 lectura cada uno).
+  const yaPublicados = [...estado.publicaciones.entries()]
+    .filter(([id, d]) => d.publicada === true && !borrar.publicaciones.includes(id))
+    .map(([, d]) => d.temaId);
+  const resumen = documentoPublicaciones(args.version, [...yaPublicados, ...temasPublicados.map((t) => t.id)]);
+  lote.set(db.collection('curriculos').doc(args.version), {
+    ...documentoCurriculo(curriculo, args.version),
+    actualizadoEn: FieldValue.serverTimestamp(),
+  });
+  lote.set(db.collection('publicaciones_version').doc(args.version), {
+    ...resumen,
+    actualizadoEn: FieldValue.serverTimestamp(),
+  });
+
   await lote.commit();
+  console.log(`  curriculos/${args.version}: ${curriculo.temas.length} temas en un documento`);
+  console.log(`  publicaciones_version/${args.version}: ${resumen.temas.length} temas publicados`);
 
   // Verificación posterior.
   const [areas, cursos, temas, pubs] = await Promise.all([
@@ -343,6 +386,8 @@ if (require.main === module) {
 
 module.exports = {
   iniciarFirebase,
+  documentoCurriculo,
+  documentoPublicaciones,
   generarSecuencia,
   generarCalendario,
   calcularTemasAPublicar,

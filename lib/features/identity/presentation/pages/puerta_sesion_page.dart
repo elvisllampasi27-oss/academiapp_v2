@@ -4,18 +4,19 @@ import '../../../../app/estudiante_shell.dart';
 import '../../../../app/inicio/inicio_page.dart';
 
 import '../../../academic/domain/entities/contexto_dia_estudiante.dart';
+import '../../../academic/domain/entities/curriculo.dart';
 import '../../../academic/domain/entities/curso.dart';
 import '../../../academic/domain/entities/tema.dart';
 import '../../../academic/domain/entities/version_academica.dart';
 import '../../../academic/domain/services/construir_dia_estudiante_service.dart';
 import '../../../academic/domain/services/obtener_material_tema_service.dart';
 import '../../../academic/infrastructure/repositories/repositorio_contenido_firestore.dart';
-import '../../../academic/infrastructure/repositories/repositorio_curso_firestore.dart';
+import '../../../academic/infrastructure/repositories/repositorio_curriculo_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_plan_academico_firestore.dart';
-import '../../../academic/infrastructure/repositories/repositorio_publicacion_tema_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_recurso_firestore.dart';
-import '../../../academic/infrastructure/repositories/repositorio_tema_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_version_academica_firestore.dart';
+import '../../../academic/presentation/pages/curso_detalle_page.dart';
+import '../../../academic/presentation/pages/cursos_page.dart';
 import '../../../academic/presentation/pages/tema_page.dart';
 import '../../../adaptive_engine/domain/entities/item_mi_ruta.dart';
 import '../../../adaptive_engine/domain/services/construir_mi_ruta_service.dart';
@@ -225,11 +226,17 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
       );
     }
 
+    // Temario y publicaciones de la versión: 2 lecturas, compartidas por
+    // el inicio y la pestaña Cursos.
+    final curriculo = RepositorioCurriculoFirestore(
+      versionId: matricula.versionId,
+    );
+
     final construirDia = ConstruirDiaEstudianteService(
       repositorioPlan: RepositorioPlanAcademicoFirestore(),
-      repositorioCurso: RepositorioCursoFirestore(),
-      repositorioTema: RepositorioTemaFirestore(),
-      repositorioPublicacion: RepositorioPublicacionTemaFirestore(),
+      repositorioCurso: curriculo.cursos,
+      repositorioTema: curriculo.temas,
+      repositorioPublicacion: curriculo,
     );
 
     final diaEstudiante = await construirDia.construir(
@@ -249,6 +256,8 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
       versionAcademica: version,
       diaEstudiante: diaEstudiante,
       ruta: await _cargarRuta(matricula.id),
+      curriculo: await curriculo.obtener(),
+      publicados: await curriculo.temasPublicados(),
     );
   }
 
@@ -303,12 +312,13 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
                 onAbrirPerfil: () => _pestana.value = 4,
               ),
             ),
-            const PestanaApp(
+            PestanaApp(
               etiqueta: 'Cursos',
               icono: Icons.grid_view_rounded,
-              contenido: PantallaProximamente(
-                titulo: 'Cursos',
-                mensaje: 'Muy pronto podrás explorar todos tus cursos y temas.',
+              contenido: CursosPage(
+                curriculo: contexto.curriculo,
+                publicados: contexto.publicados,
+                onAbrirCurso: (curso) => _abrirCurso(contexto, curso),
               ),
             ),
             const PestanaApp(
@@ -337,6 +347,25 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
           ],
         );
       },
+    );
+  }
+
+  void _abrirCurso(_ContextoAcademico contexto, Curso curso) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CursoDetallePage(
+          curso: curso,
+          nombreArea: contexto.curriculo.area(curso.areaId)?.nombre,
+          temas: contexto.curriculo.temasDe(curso.id),
+          publicados: contexto.publicados,
+          practicados: {for (final item in contexto.ruta) ?item.temaId},
+          hoy: {
+            for (final actividad in contexto.diaEstudiante.actividades)
+              actividad.temaId,
+          },
+          onAbrirTema: (tema) => _abrirTema(contexto, tema, curso),
+        ),
+      ),
     );
   }
 
@@ -400,12 +429,16 @@ class _ContextoAcademico {
   final VersionAcademica versionAcademica;
   final ContextoDiaEstudiante diaEstudiante;
   final List<ItemMiRuta> ruta;
+  final Curriculo curriculo;
+  final Set<String> publicados;
 
   const _ContextoAcademico({
     required this.matricula,
     required this.versionAcademica,
     required this.diaEstudiante,
     required this.ruta,
+    required this.curriculo,
+    required this.publicados,
   });
 }
 

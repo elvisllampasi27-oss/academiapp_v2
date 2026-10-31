@@ -11,6 +11,8 @@ const {
   calcularTemasAPublicar,
   diaAcademicoEn,
   analizarExistentes,
+  documentoCurriculo,
+  documentoPublicaciones,
 } = require('../seed_academico_v2');
 
 const curriculo = JSON.parse(
@@ -98,4 +100,18 @@ test('detecta documentos activos desconocidos y no los borra', () => {
   assert.deepStrictEqual(borrar.cursos, []);
   assert.deepStrictEqual(borrar.temas, []);
   assert.deepStrictEqual(desconocidos, ['cursos/quimica_extra', 'temas/tema-nuevo']);
+});
+
+test('el curriculo cabe en un documento y conserva todo', () => {
+  const doc = documentoCurriculo(curriculo, 'version-1');
+  assert.strictEqual(doc.cursos.length, 17);
+  assert.strictEqual(doc.temas.length, 205);
+  assert.strictEqual(doc.areas.length, 6);
+  // Muy por debajo del límite de 1 MiB de Firestore.
+  assert.ok(Buffer.byteLength(JSON.stringify(doc)) < 200 * 1024);
+});
+
+test('el resumen de publicaciones no repite temas', () => {
+  const doc = documentoPublicaciones('version-1', ['b', 'a', 'b']);
+  assert.deepStrictEqual(doc.temas, ['a', 'b']);
 });
