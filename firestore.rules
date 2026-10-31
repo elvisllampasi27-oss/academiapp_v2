@@ -80,6 +80,45 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // EVALUACIONES Y PREGUNTAS (sin respuestas correctas)
+    match /evaluaciones/{evaluacionId} {
+
+      allow read: if request.auth != null;
+
+      allow write: if false;
+    }
+
+    match /preguntas/{preguntaId} {
+
+      allow read: if request.auth != null;
+
+      allow write: if false;
+    }
+
+    // CLAVES: solo las lee Cloud Functions (Admin SDK). Nunca el cliente.
+    match /claves_preguntas/{preguntaId} {
+
+      allow read, write: if false;
+    }
+
+    // INTENTOS Y RESPUESTAS: los escribe Cloud Functions; el estudiante
+    // solo puede leer los suyos.
+    match /intentos_evaluacion/{intentoId} {
+
+      allow read: if request.auth != null
+                  && resource.data.usuarioId == request.auth.uid;
+
+      allow write: if false;
+    }
+
+    match /respuestas/{respuestaId} {
+
+      allow read: if request.auth != null
+                  && resource.data.usuarioId == request.auth.uid;
+
+      allow write: if false;
+    }
+
     // PUBLICACIONES DE TEMAS
     match /publicaciones_temas/{publicacionId} {
 

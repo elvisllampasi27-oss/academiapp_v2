@@ -51,3 +51,9 @@ app.*.map.json
 tool/node_modules/
 serviceAccountKey.json
 **/serviceAccountKey*.json
+tool/preguntas.json
+functions/node_modules/
+
+# Banco de preguntas exportado de V1 y claves de cuentas de servicio
+tool/banco_v1.json
+**/*-admin.json

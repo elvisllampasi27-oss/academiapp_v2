@@ -13,6 +13,10 @@ import '../../../academic/infrastructure/repositories/repositorio_tema_firestore
 import '../../../academic/infrastructure/repositories/repositorio_version_academica_firestore.dart';
 import '../../../academic/presentation/pages/home_page.dart';
 import '../../../academic/presentation/pages/tema_page.dart';
+import '../../../assessment/domain/services/practica_tema_service.dart';
+import '../../../assessment/infrastructure/repositories/repositorio_evaluacion_firestore.dart';
+import '../../../assessment/infrastructure/services/servicio_correccion_cloud_functions.dart';
+import '../../../assessment/presentation/widgets/seccion_practica_tema.dart';
 import '../../../enrollment/domain/entities/matricula.dart';
 import '../../../enrollment/infrastructure/repositories/repositorio_matricula_firestore.dart';
 import '../../domain/entities/estado_sesion_estudiante.dart';
@@ -255,6 +259,15 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
                   service: ObtenerMaterialTemaService(
                     repositorioContenido: RepositorioContenidoFirestore(),
                     repositorioRecurso: RepositorioRecursoFirestore(),
+                  ),
+                  seccionExtra: SeccionPracticaTema(
+                    service: PracticaTemaService(
+                      repositorio: RepositorioEvaluacionFirestore(),
+                      correccion: ServicioCorreccionCloudFunctions(),
+                    ),
+                    temaId: tema.id,
+                    versionId: contexto.matricula.versionId,
+                    tituloTema: tema.titulo,
                   ),
                 ),
               ),

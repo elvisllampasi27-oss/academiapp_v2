@@ -23,6 +23,10 @@ class TemaPage extends StatefulWidget {
   /// Inyectable para pruebas; por defecto abre en el navegador/app externa.
   final AbrirEnlace abrirEnlace;
 
+  /// Bloque adicional al final (p. ej. "Practicar"). Lo compone quien abre
+  /// la pantalla, así el módulo académico no depende del de evaluación.
+  final Widget? seccionExtra;
+
   const TemaPage({
     super.key,
     required this.tema,
@@ -30,6 +34,7 @@ class TemaPage extends StatefulWidget {
     required this.versionId,
     required this.service,
     this.abrirEnlace = _abrirEnNavegador,
+    this.seccionExtra,
   });
 
   @override
@@ -91,6 +96,7 @@ class _TemaPageState extends State<TemaPage> {
               ],
               const SizedBox(height: 24),
               ..._cuerpo(snapshot),
+              ?widget.seccionExtra,
             ],
           );
         },
