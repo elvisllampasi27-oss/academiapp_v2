@@ -1,0 +1,35 @@
+{
+  "versionId": "version-1",
+  "contenidos": [
+    {"temaId": "geografia-01", "orden": 1, "nombre": "Principios de la geografía"},
+    {"temaId": "geografia-01", "orden": 2, "nombre": "Evolución de la geografía"},
+    {"temaId": "geografia-01", "orden": 3, "nombre": "Espacio geográfico"},
+    {"temaId": "geografia-01", "orden": 4, "nombre": "Gestión de riesgos de desastres"},
+    {"temaId": "formacion_civica-01", "orden": 1, "nombre": "Persona natural y jurídica"},
+    {"temaId": "formacion_civica-01", "orden": 2, "nombre": "Capacidad de goce y de ejercicio"},
+    {"temaId": "formacion_civica-01", "orden": 3, "nombre": "Incapacidad absoluta y restringida"},
+    {"temaId": "razonamiento_verbal-02", "orden": 1, "nombre": "Morfema lexical"},
+    {"temaId": "razonamiento_verbal-02", "orden": 2, "nombre": "Morfema derivativo: prefijo y sufijo"},
+    {"temaId": "razonamiento_verbal-02", "orden": 3, "nombre": "Morfema flexivo"},
+    {"temaId": "lenguaje-02", "orden": 1, "nombre": "Lengua"},
+    {"temaId": "lenguaje-02", "orden": 2, "nombre": "Habla"},
+    {"temaId": "lenguaje-02", "orden": 3, "nombre": "Funciones del lenguaje"},
+    {"temaId": "literatura-02", "orden": 1, "nombre": "Clasicismo: \"La Odisea\" (Homero)"},
+    {"temaId": "literatura-02", "orden": 2, "nombre": "Medievalismo: \"La Divina Comedia\" (Dante Alighieri)"},
+    {"temaId": "literatura-02", "orden": 3, "nombre": "Renacimiento: \"Romeo y Julieta\" (Shakespeare)"}
+  ],
+  "recursos": [
+    {
+      "temaId": "geografia-01",
+      "tipo": "video",
+      "titulo": "Clase: introducción a la Geografía",
+      "ubicacion": "PEGA_AQUI_EL_ENLACE_DE_YOUTUBE"
+    },
+    {
+      "temaId": "geografia-01",
+      "tipo": "pdf",
+      "titulo": "Separata del tema",
+      "ubicacion": "PEGA_AQUI_EL_ENLACE_DEL_PDF"
+    }
+  ]
+}

@@ -342,6 +342,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  iniciarFirebase,
   generarSecuencia,
   generarCalendario,
   calcularTemasAPublicar,

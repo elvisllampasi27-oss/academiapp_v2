@@ -3,12 +3,16 @@ import 'package:flutter/material.dart';
 import '../../../academic/domain/entities/contexto_dia_estudiante.dart';
 import '../../../academic/domain/entities/version_academica.dart';
 import '../../../academic/domain/services/construir_dia_estudiante_service.dart';
+import '../../../academic/domain/services/obtener_material_tema_service.dart';
+import '../../../academic/infrastructure/repositories/repositorio_contenido_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_curso_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_plan_academico_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_publicacion_tema_firestore.dart';
+import '../../../academic/infrastructure/repositories/repositorio_recurso_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_tema_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_version_academica_firestore.dart';
 import '../../../academic/presentation/pages/home_page.dart';
+import '../../../academic/presentation/pages/tema_page.dart';
 import '../../../enrollment/domain/entities/matricula.dart';
 import '../../../enrollment/infrastructure/repositories/repositorio_matricula_firestore.dart';
 import '../../domain/entities/estado_sesion_estudiante.dart';
@@ -241,6 +245,21 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
           versionAcademica: contexto.versionAcademica,
           diaEstudiante: contexto.diaEstudiante,
           onCerrarSesion: widget.onCerrarSesion,
+          onAbrirTema: (tema, curso) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => TemaPage(
+                  tema: tema,
+                  curso: curso,
+                  versionId: contexto.matricula.versionId,
+                  service: ObtenerMaterialTemaService(
+                    repositorioContenido: RepositorioContenidoFirestore(),
+                    repositorioRecurso: RepositorioRecursoFirestore(),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );

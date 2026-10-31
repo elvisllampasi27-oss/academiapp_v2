@@ -11,6 +11,7 @@ class HomePage extends StatelessWidget {
   final VersionAcademica versionAcademica;
   final ContextoDiaEstudiante diaEstudiante;
   final VoidCallback? onCerrarSesion;
+  final void Function(Tema tema, Curso? curso)? onAbrirTema;
 
   const HomePage({
     super.key,
@@ -18,6 +19,7 @@ class HomePage extends StatelessWidget {
     required this.versionAcademica,
     required this.diaEstudiante,
     this.onCerrarSesion,
+    this.onAbrirTema,
   });
 
   @override
@@ -82,6 +84,12 @@ class HomePage extends StatelessWidget {
                     leading: CircleAvatar(child: Text('${actividad.orden}')),
                     title: Text(tema?.titulo ?? 'Tema no encontrado'),
                     subtitle: Text(curso?.nombre ?? 'Curso no encontrado'),
+                    trailing: tema == null || onAbrirTema == null
+                        ? null
+                        : const Icon(Icons.chevron_right),
+                    onTap: tema == null || onAbrirTema == null
+                        ? null
+                        : () => onAbrirTema!(tema, curso),
                   ),
                 );
               }),
