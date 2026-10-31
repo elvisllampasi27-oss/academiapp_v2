@@ -20,7 +20,11 @@ class ServicioTutorCloudFunctions implements ServicioTutor {
   }) async {
     try {
       final resultado = await functions
-          .httpsCallable('preguntarTutor')
+          .httpsCallable(
+            'preguntarTutor',
+            // La IA puede tardar más que una llamada normal.
+            options: HttpsCallableOptions(timeout: const Duration(seconds: 90)),
+          )
           .call<Map<Object?, Object?>>({
             'versionId': versionId,
             'temaId': temaId,

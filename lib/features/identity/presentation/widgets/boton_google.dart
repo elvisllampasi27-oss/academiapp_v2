@@ -15,14 +15,14 @@ class BotonGoogle extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
+      height: 52,
       child: OutlinedButton(
         onPressed: cargando ? null : alPresionar,
         style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white.withValues(alpha: 0.12),
+          backgroundColor: Colors.white.withValues(alpha: 0.08),
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          side: const BorderSide(color: Color(0x99FFFFFF), width: 0.6),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+          side: const BorderSide(color: Color(0x47FFFFFF)),
+          shape: const StadiumBorder(),
         ),
         child: cargando
             ? const SizedBox(
@@ -42,9 +42,16 @@ class BotonGoogle extends StatelessWidget {
                     height: 22,
                   ),
                   const SizedBox(width: 10),
-                  const Text(
-                    'Continuar con Google',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  const Flexible(
+                    child: Text(
+                      'Continuar con Google',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
                   ),
                 ],
               ),

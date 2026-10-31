@@ -24,11 +24,9 @@ class SeguimientoClase {
 
   SeguimientoClase({
     List<(double, double)> tramos = const [],
-    double duracion = 0,
-    bool completada = false,
-  }) : _tramos = [...tramos]..sort((a, b) => a.$1.compareTo(b.$1)),
-       _duracion = duracion,
-       _completada = completada;
+    this._duracion = 0,
+    this._completada = false,
+  }) : _tramos = [...tramos]..sort((a, b) => a.$1.compareTo(b.$1));
 
   factory SeguimientoClase.desde(ProgresoClase? progreso) => SeguimientoClase(
     tramos: progreso?.tramos ?? const [],

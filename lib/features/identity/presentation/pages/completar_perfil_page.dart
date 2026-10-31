@@ -93,16 +93,19 @@ class _CompletarPerfilPageState extends State<CompletarPerfilPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            EncabezadoAutenticacion(
-              titulo: 'Completa tu perfil',
-              subtitulo:
-                  'Solo falta un paso. Entraste como '
-                  '${widget.autenticado.correo ?? 'usuario de Google'}.',
-            ),
+            const BarraAutenticacion(),
+            const SizedBox(height: 28),
             TarjetaVidrio(
+              capaTrasera: true,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  EncabezadoAutenticacion(
+                    titulo: 'Completa tu perfil',
+                    subtitulo:
+                        'Solo falta un paso. Entraste como '
+                        '${widget.autenticado.correo ?? 'usuario de Google'}.',
+                  ),
                   CampoVidrio(
                     hint: 'Nombre completo',
                     controller: _nombreController,
@@ -120,6 +123,7 @@ class _CompletarPerfilPageState extends State<CompletarPerfilPage> {
                   if (_error != null) MensajeErrorVidrio(mensaje: _error!),
                   BotonVidrio(
                     texto: 'Continuar',
+                    principal: true,
                     cargando: _cargando,
                     alPresionar: _guardar,
                   ),

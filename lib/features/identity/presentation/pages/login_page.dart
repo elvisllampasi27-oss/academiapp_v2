@@ -22,6 +22,9 @@ class LoginPage extends StatefulWidget {
   final CompletarPerfilService completarPerfilService;
   final VoidCallback onSesionIniciada;
 
+  /// Vuelve a la bienvenida (si se llegó desde ahí).
+  final VoidCallback? onVolver;
+
   const LoginPage({
     super.key,
     required this.iniciarSesionService,
@@ -30,6 +33,7 @@ class LoginPage extends StatefulWidget {
     required this.iniciarSesionGoogleService,
     required this.completarPerfilService,
     required this.onSesionIniciada,
+    this.onVolver,
   });
 
   @override
@@ -163,85 +167,79 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return FondoAutenticacion(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const EncabezadoAutenticacion(
-            titulo: 'Bienvenido a AcademiApp',
-            subtitulo: '¡Comienza tu preparación hoy!',
-          ),
-          TarjetaVidrio(
-            child: AutofillGroup(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Hola, ¡bienvenido! 👋',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+    final ocupado = _cargando || _cargandoGoogle;
+
+    return PopScope(
+      canPop: widget.onVolver == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) widget.onVolver?.call();
+      },
+      child: FondoAutenticacion(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BarraAutenticacion(alVolver: ocupado ? null : widget.onVolver),
+            const SizedBox(height: 28),
+            TarjetaVidrio(
+              capaTrasera: true,
+              child: AutofillGroup(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const EncabezadoAutenticacion(
+                      titulo: 'Iniciar sesión',
+                      subtitulo: 'Qué bueno verte de nuevo.',
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Inicia sesión para continuar.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white.withValues(alpha: 0.85),
+                    CampoVidrio(
+                      etiqueta: 'Correo',
+                      hint: 'tu@correo.com',
+                      controller: _correoController,
+                      tipoTeclado: TextInputType.emailAddress,
+                      accion: TextInputAction.next,
+                      autocompletado: const [AutofillHints.email],
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  CampoVidrio(
-                    hint: 'Correo electrónico',
-                    controller: _correoController,
-                    tipoTeclado: TextInputType.emailAddress,
-                    accion: TextInputAction.next,
-                    autocompletado: const [AutofillHints.email],
-                  ),
-                  const SizedBox(height: 16),
-                  CampoVidrio(
-                    hint: 'Contraseña',
-                    controller: _contrasenaController,
-                    esContrasena: true,
-                    accion: TextInputAction.done,
-                    autocompletado: const [AutofillHints.password],
-                    alEnviar: (_) => _iniciarSesion(),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_error != null) MensajeErrorVidrio(mensaje: _error!),
-                  BotonVidrio(
-                    texto: 'Iniciar sesión',
-                    cargando: _cargando,
-                    alPresionar: _iniciarSesion,
-                  ),
-                  const SizedBox(height: 4),
-                  Center(
-                    child: EnlaceTexto(
-                      texto: '¿Olvidaste tu contraseña?',
-                      alPresionar: _irARecuperar,
+                    const SizedBox(height: 16),
+                    CampoVidrio(
+                      etiqueta: 'Contraseña',
+                      hint: '••••••••',
+                      controller: _contrasenaController,
+                      esContrasena: true,
+                      accion: TextInputAction.done,
+                      autocompletado: const [AutofillHints.password],
+                      alEnviar: (_) => _iniciarSesion(),
                     ),
-                  ),
-                ],
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: EnlaceTexto(
+                        texto: '¿Olvidaste tu contraseña?',
+                        alPresionar: _irARecuperar,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    if (_error != null) MensajeErrorVidrio(mensaje: _error!),
+                    BotonVidrio(
+                      texto: 'Entrar',
+                      principal: true,
+                      cargando: _cargando,
+                      alPresionar: _cargandoGoogle ? null : _iniciarSesion,
+                    ),
+                    const SizedBox(height: 12),
+                    BotonGoogle(
+                      cargando: _cargandoGoogle,
+                      alPresionar: _cargando ? null : _iniciarConGoogle,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          const SeparadorTexto(texto: 'O continúa con'),
-          const SizedBox(height: 16),
-          BotonGoogle(
-            cargando: _cargandoGoogle,
-            alPresionar: _cargando ? null : _iniciarConGoogle,
-          ),
-          const SizedBox(height: 24),
-          const SeparadorTexto(texto: '¿No tienes una cuenta?'),
-          const SizedBox(height: 16),
-          BotonVidrio(
-            texto: 'Registrarse aquí',
-            alPresionar: _cargando ? null : _irARegistro,
-          ),
-        ],
+            const SizedBox(height: 20),
+            PreguntaConEnlace(
+              pregunta: '¿No tienes cuenta?',
+              enlace: 'Crear cuenta',
+              alPresionar: ocupado ? null : _irARegistro,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -59,8 +59,10 @@ function construirInstrucciones({ curso, tema, contenidos, material }) {
   lineas.push(
     '',
     'Cómo responder:',
+    '- Ve directo a la respuesta: no saludes, no te presentes y no menciones otras universidades.',
     '- En español claro y cercano, como un buen profesor de academia.',
-    '- Breve: lo necesario para resolver la duda (unas 150 palabras), salvo que pida más detalle.',
+    '- Breve: unas 120 palabras como máximo, salvo que el estudiante pida más detalle.',
+    '- Sin títulos (#). Puedes resaltar términos clave con **negritas** y usar listas cortas con guiones.',
     '- Si es un ejercicio, explica paso a paso y verifica el resultado.',
     '- Escribe las fórmulas en LaTeX entre signos de dólar, por ejemplo $x^2 + 1$.',
     '- Si la duda no es de este tema ni de la preparación preuniversitaria, dilo con amabilidad y vuelve al tema.',

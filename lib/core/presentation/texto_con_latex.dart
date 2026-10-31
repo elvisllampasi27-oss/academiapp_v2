@@ -10,7 +10,34 @@ class TextoConLatex extends StatelessWidget {
 
   const TextoConLatex(this.texto, {super.key, this.estilo});
 
-  static final _formula = RegExp(r'\$([^$\n]+?)\$');
+  /// `$$...$$` (en bloque) o `$...$` (en línea).
+  static final _formula = RegExp(r'\$\$([^$]+?)\$\$|\$([^$\n]+?)\$');
+  static final _negrita = RegExp(r'\*\*(.+?)\*\*');
+
+  /// Texto normal con `**negritas**` (las usa el tutor).
+  static List<InlineSpan> _texto(String texto) {
+    final partes = <InlineSpan>[];
+    var ultimo = 0;
+
+    for (final m in _negrita.allMatches(texto)) {
+      if (m.start > ultimo) {
+        partes.add(TextSpan(text: texto.substring(ultimo, m.start)));
+      }
+      partes.add(
+        TextSpan(
+          text: m.group(1),
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      );
+      ultimo = m.end;
+    }
+
+    if (ultimo < texto.length) {
+      partes.add(TextSpan(text: texto.substring(ultimo)));
+    }
+
+    return partes;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +45,7 @@ class TextoConLatex extends StatelessWidget {
         .merge(estilo)
         .copyWith(height: 1.5);
 
-    if (!texto.contains(r'$')) {
+    if (!texto.contains(r'$') && !texto.contains('**')) {
       return Text(texto, style: estiloBase);
     }
 
@@ -27,10 +54,10 @@ class TextoConLatex extends StatelessWidget {
 
     for (final coincidencia in _formula.allMatches(texto)) {
       if (coincidencia.start > ultimo) {
-        partes.add(TextSpan(text: texto.substring(ultimo, coincidencia.start)));
+        partes.addAll(_texto(texto.substring(ultimo, coincidencia.start)));
       }
 
-      final formula = coincidencia.group(1)!;
+      final formula = (coincidencia.group(1) ?? coincidencia.group(2)!).trim();
 
       partes.add(
         WidgetSpan(
@@ -50,7 +77,7 @@ class TextoConLatex extends StatelessWidget {
     }
 
     if (ultimo < texto.length) {
-      partes.add(TextSpan(text: texto.substring(ultimo)));
+      partes.addAll(_texto(texto.substring(ultimo)));
     }
 
     return Text.rich(TextSpan(style: estiloBase, children: partes));

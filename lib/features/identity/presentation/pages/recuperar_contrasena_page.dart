@@ -61,22 +61,23 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
   Widget build(BuildContext context) {
     return FondoAutenticacion(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              tooltip: 'Volver',
-              color: Colors.white,
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(context).pop(),
+          BarraAutenticacion(alVolver: () => Navigator.of(context).pop()),
+          const SizedBox(height: 28),
+          TarjetaVidrio(
+            capaTrasera: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const EncabezadoAutenticacion(
+                  titulo: 'Recupera tu contraseña',
+                  subtitulo: 'Te enviaremos un enlace para crear una nueva.',
+                ),
+                _enviado ? _confirmacion() : _formulario(),
+              ],
             ),
           ),
-          const EncabezadoAutenticacion(
-            titulo: 'Recupera tu contraseña',
-            subtitulo: 'Te enviaremos un enlace para crear una nueva.',
-          ),
-          TarjetaVidrio(child: _enviado ? _confirmacion() : _formulario()),
         ],
       ),
     );
@@ -87,7 +88,8 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CampoVidrio(
-          hint: 'Correo electrónico',
+          etiqueta: 'Correo',
+          hint: 'tu@correo.com',
           controller: _correoController,
           tipoTeclado: TextInputType.emailAddress,
           accion: TextInputAction.done,
@@ -98,6 +100,7 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
         if (_error != null) MensajeErrorVidrio(mensaje: _error!),
         BotonVidrio(
           texto: 'Enviar enlace',
+          principal: true,
           cargando: _cargando,
           alPresionar: _enviar,
         ),

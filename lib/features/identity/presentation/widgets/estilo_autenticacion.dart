@@ -2,14 +2,107 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-/// Componentes visuales de las pantallas de acceso.
-/// Estilo "glass" reutilizado de AcademiApp V1 (login.dart / singup.dart).
+/// Componentes visuales de las pantallas de acceso: "vidrio 2.0".
+/// Solo aquí se usa desenfoque (pantallas de entrada); dentro de la app los
+/// paneles son planos para que los celulares de gama baja vayan fluidos.
 
-const _bordeVidrio = Color(0x99FFFFFF);
-// Paleta neutra: solo blanco y negro translúcidos sobre la foto.
-const _rellenoTarjeta = Color(0x1AFFFFFF);
+const _bordeVidrio = Color(0x47FFFFFF);
+const _bordeCampo = Color(0x38FFFFFF);
+const _rellenoCampo = Color(0x14FFFFFF);
 const _rellenoVentana = Color(0x99000000);
-const _desenfoque = 12.0;
+const _textoSuave = Color(0xFFD4D4D8);
+const _desenfoque = 20.0;
+
+/// Relleno del vidrio: más claro arriba a la izquierda, como luz que entra.
+const _degradadoVidrio = LinearGradient(
+  begin: Alignment(-0.6, -1),
+  end: Alignment(0.6, 1),
+  colors: [Color(0x33FFFFFF), Color(0x12FFFFFF), Color(0x08FFFFFF)],
+  stops: [0, 0.45, 1],
+);
+
+const _degradadoVidrioSuave = LinearGradient(
+  begin: Alignment(-0.6, -1),
+  end: Alignment(0.6, 1),
+  colors: [Color(0x1FFFFFFF), Color(0x05FFFFFF)],
+);
+
+/// Vidrio con desenfoque, borde claro, brillo en el canto superior y sombra.
+class Vidrio extends StatelessWidget {
+  final Widget child;
+  final BorderRadius radio;
+  final EdgeInsetsGeometry? padding;
+  final bool suave;
+
+  const Vidrio({
+    super.key,
+    required this.child,
+    required this.radio,
+    this.padding,
+    this.suave = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final desenfoque = suave ? 8.0 : _desenfoque;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: radio,
+        boxShadow: suave
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x73000000),
+                  blurRadius: 60,
+                  offset: Offset(0, 24),
+                ),
+              ],
+      ),
+      child: ClipRRect(
+        borderRadius: radio,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: desenfoque, sigmaY: desenfoque),
+          child: Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: padding,
+                decoration: BoxDecoration(
+                  borderRadius: radio,
+                  gradient: suave ? _degradadoVidrioSuave : _degradadoVidrio,
+                  border: Border.all(
+                    color: suave ? const Color(0x29FFFFFF) : _bordeVidrio,
+                  ),
+                ),
+                child: child,
+              ),
+              if (!suave)
+                // Brillo del canto superior (el "inset" del diseño).
+                const Positioned(
+                  left: 18,
+                  right: 18,
+                  top: 0,
+                  height: 1,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Color(0x00FFFFFF),
+                          Color(0x73FFFFFF),
+                          Color(0x00FFFFFF),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class FondoAutenticacion extends StatelessWidget {
   final Widget child;
@@ -26,25 +119,13 @@ class FondoAutenticacion extends StatelessWidget {
             'assets/images/fondo_autenticacion.jpeg',
             fit: BoxFit.cover,
           ),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xAA000000),
-                  Color(0x33000000),
-                  Color(0x99000000),
-                ],
-              ),
-            ),
-          ),
+          const ColoredBox(color: Color(0x8C050609)),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
-                  vertical: 24,
+                  vertical: 20,
                 ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
@@ -55,6 +136,51 @@ class FondoAutenticacion extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Barra superior: volver (si hay) y la marca al centro.
+class BarraAutenticacion extends StatelessWidget {
+  final VoidCallback? alVolver;
+
+  const BarraAutenticacion({super.key, this.alVolver});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 44,
+          height: 44,
+          child: alVolver == null
+              ? null
+              : Vidrio(
+                  suave: true,
+                  radio: BorderRadius.circular(22),
+                  child: IconButton(
+                    tooltip: 'Volver',
+                    color: Colors.white,
+                    iconSize: 20,
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: alVolver,
+                  ),
+                ),
+        ),
+        const Expanded(
+          child: Text(
+            'AcademiApp',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ),
+        const SizedBox(width: 44),
+      ],
     );
   }
 }
@@ -77,46 +203,64 @@ class EncabezadoAutenticacion extends StatelessWidget {
         Text(
           titulo,
           style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+            fontSize: 32,
+            height: 1.05,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.8,
             color: Colors.white,
           ),
         ),
         const SizedBox(height: 6),
         Text(
           subtitulo,
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.white.withValues(alpha: 0.85),
-          ),
+          style: const TextStyle(fontSize: 14, color: _textoSuave),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
       ],
     );
   }
 }
 
+/// Tarjeta principal de vidrio. Con [capaTrasera] muestra una segunda hoja
+/// detrás, asomando por arriba (profundidad del diseño).
 class TarjetaVidrio extends StatelessWidget {
   final Widget child;
+  final bool capaTrasera;
 
-  const TarjetaVidrio({super.key, required this.child});
+  const TarjetaVidrio({
+    super.key,
+    required this.child,
+    this.capaTrasera = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: _desenfoque, sigmaY: _desenfoque),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: _rellenoTarjeta,
-            border: Border.all(color: _bordeVidrio, width: 0.6),
+    final tarjeta = Vidrio(
+      radio: BorderRadius.circular(30),
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 26),
+      child: child,
+    );
+
+    if (!capaTrasera) return tarjeta;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: 22,
+            right: 22,
+            top: -14,
+            bottom: 14,
+            child: Vidrio(
+              suave: true,
+              radio: BorderRadius.circular(30),
+              child: const SizedBox.expand(),
+            ),
           ),
-          child: child,
-        ),
+          tarjeta,
+        ],
       ),
     );
   }
@@ -124,6 +268,9 @@ class TarjetaVidrio extends StatelessWidget {
 
 class CampoVidrio extends StatefulWidget {
   final String hint;
+
+  /// Texto encima del campo (p. ej. "Correo").
+  final String? etiqueta;
   final TextEditingController controller;
   final bool esContrasena;
   final TextInputType? tipoTeclado;
@@ -135,6 +282,7 @@ class CampoVidrio extends StatefulWidget {
     super.key,
     required this.hint,
     required this.controller,
+    this.etiqueta,
     this.esContrasena = false,
     this.tipoTeclado,
     this.accion,
@@ -151,10 +299,11 @@ class _CampoVidrioState extends State<CampoVidrio> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final campo = Container(
       decoration: BoxDecoration(
-        border: Border.all(color: _bordeVidrio, width: 0.6),
-        borderRadius: BorderRadius.circular(9),
+        color: _rellenoCampo,
+        border: Border.all(color: _bordeCampo),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: TextField(
         controller: widget.controller,
@@ -163,15 +312,15 @@ class _CampoVidrioState extends State<CampoVidrio> {
         textInputAction: widget.accion,
         autofillHints: widget.autocompletado,
         onSubmitted: widget.alEnviar,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
+        style: const TextStyle(color: Colors.white, fontSize: 15),
         cursorColor: Colors.white,
         decoration: InputDecoration(
           hintText: widget.hint,
-          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.55)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 14,
+            horizontal: 16,
+            vertical: 15,
           ),
           suffixIcon: widget.esContrasena
               ? IconButton(
@@ -180,7 +329,7 @@ class _CampoVidrioState extends State<CampoVidrio> {
                       : 'Ocultar contraseña',
                   icon: Icon(
                     _oculto ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: Colors.white.withValues(alpha: 0.75),
                     size: 20,
                   ),
                   onPressed: () => setState(() => _oculto = !_oculto),
@@ -188,6 +337,21 @@ class _CampoVidrioState extends State<CampoVidrio> {
               : null,
         ),
       ),
+    );
+
+    final etiqueta = widget.etiqueta;
+    if (etiqueta == null) return campo;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          etiqueta,
+          style: const TextStyle(fontSize: 13, color: Color(0xFFE4E4E7)),
+        ),
+        const SizedBox(height: 6),
+        campo,
+      ],
     );
   }
 }
@@ -239,13 +403,14 @@ class SelectorVidrio extends StatelessWidget {
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => _abrir(context),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
           decoration: BoxDecoration(
-            border: Border.all(color: _bordeVidrio, width: 0.6),
-            borderRadius: BorderRadius.circular(9),
+            color: _rellenoCampo,
+            border: Border.all(color: _bordeCampo),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
             children: [
@@ -472,44 +637,57 @@ class BotonVidrio extends StatelessWidget {
   final bool cargando;
   final VoidCallback? alPresionar;
 
+  /// Botón sólido claro (acción principal) en lugar de vidrio.
+  final bool principal;
+
   const BotonVidrio({
     super.key,
     required this.texto,
     required this.alPresionar,
     this.cargando = false,
+    this.principal = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colorTexto = principal ? const Color(0xFF0B0C10) : Colors.white;
+
     return SizedBox(
       width: double.infinity,
+      height: 52,
       child: ElevatedButton(
         onPressed: cargando ? null : alPresionar,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white.withValues(alpha: 0.2),
-          disabledBackgroundColor: Colors.white.withValues(alpha: 0.12),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(9),
-            side: const BorderSide(color: _bordeVidrio, width: 0.6),
+          backgroundColor: principal
+              ? const Color(0xFFF4F4F5)
+              : Colors.white.withValues(alpha: 0.08),
+          disabledBackgroundColor: principal
+              ? const Color(0xB3F4F4F5)
+              : Colors.white.withValues(alpha: 0.05),
+          foregroundColor: colorTexto,
+          disabledForegroundColor: colorTexto,
+          elevation: principal ? 6 : 0,
+          shadowColor: Colors.black,
+          shape: StadiumBorder(
+            side: principal
+                ? BorderSide.none
+                : const BorderSide(color: _bordeVidrio),
           ),
         ),
         child: cargando
-            ? const SizedBox(
-                height: 16,
-                width: 16,
+            ? SizedBox(
+                height: 18,
+                width: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white,
+                  color: colorTexto,
                 ),
               )
             : Text(
                 texto,
                 style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
                 ),
               ),
       ),
@@ -528,21 +706,18 @@ class MensajeErrorVidrio extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.redAccent.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.redAccent.withValues(alpha: 0.6),
-          width: 0.6,
-        ),
+        color: const Color(0x2EFF8A5B),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0x8CFF8A5B)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: Color(0xFFFFB4AB), size: 18),
+          const Icon(Icons.error_outline, color: Color(0xFFFFB59A), size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               mensaje,
-              style: const TextStyle(color: Color(0xFFFFDAD6), fontSize: 13),
+              style: const TextStyle(color: Color(0xFFFFE1D6), fontSize: 13),
             ),
           ),
         ],
@@ -559,7 +734,7 @@ class SeparadorTexto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final linea = Expanded(
-      child: Divider(color: Colors.white.withValues(alpha: 0.5), thickness: 1),
+      child: Divider(color: Colors.white.withValues(alpha: 0.3), thickness: 1),
     );
 
     return Row(
@@ -569,7 +744,7 @@ class SeparadorTexto extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             texto,
-            style: const TextStyle(color: Colors.white, fontSize: 13),
+            style: const TextStyle(color: _textoSuave, fontSize: 13),
           ),
         ),
         linea,
@@ -580,28 +755,63 @@ class SeparadorTexto extends StatelessWidget {
 
 class EnlaceTexto extends StatelessWidget {
   final String texto;
-  final VoidCallback alPresionar;
+  final VoidCallback? alPresionar;
+  final bool resaltado;
 
   const EnlaceTexto({
     super.key,
     required this.texto,
     required this.alPresionar,
+    this.resaltado = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: alPresionar,
-      style: TextButton.styleFrom(foregroundColor: Colors.white),
+      style: TextButton.styleFrom(
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        minimumSize: const Size(44, 40),
+      ),
       child: Text(
         texto,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          decoration: TextDecoration.underline,
-          decorationColor: Colors.white,
+        style: TextStyle(
+          fontWeight: resaltado ? FontWeight.w700 : FontWeight.w500,
+          color: resaltado ? Colors.white : const Color(0xFFE4E4E7),
           fontSize: 13,
         ),
       ),
+    );
+  }
+}
+
+/// "¿No tienes cuenta? Crear cuenta": pregunta y enlace en una línea.
+class PreguntaConEnlace extends StatelessWidget {
+  final String pregunta;
+  final String enlace;
+  final VoidCallback? alPresionar;
+
+  const PreguntaConEnlace({
+    super.key,
+    required this.pregunta,
+    required this.enlace,
+    required this.alPresionar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Wrap: en pantallas angostas el enlace baja de línea en vez de cortarse.
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          pregunta,
+          style: const TextStyle(color: _textoSuave, fontSize: 14),
+        ),
+        EnlaceTexto(texto: enlace, alPresionar: alPresionar, resaltado: true),
+      ],
     );
   }
 }

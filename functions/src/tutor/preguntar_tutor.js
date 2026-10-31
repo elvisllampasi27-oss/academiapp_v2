@@ -22,7 +22,7 @@ const limiteDiario = () => Number(process.env.TUTOR_LIMITE_DIARIO) || 3;
  * cambiar (p. ej. a Anthropic) sin tocar la app.
  */
 const preguntarTutor = onCall(
-  { secrets: [GEMINI_API_KEY], timeoutSeconds: 60 },
+  { secrets: [GEMINI_API_KEY], timeoutSeconds: 90 },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');

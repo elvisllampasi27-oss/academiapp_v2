@@ -97,24 +97,20 @@ class _RegistroPageState extends State<RegistroPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              tooltip: 'Volver',
-              color: Colors.white,
-              icon: const Icon(Icons.arrow_back),
-              onPressed: _cargando ? null : () => Navigator.of(context).pop(),
-            ),
+          BarraAutenticacion(
+            alVolver: _cargando ? null : () => Navigator.of(context).pop(),
           ),
-          const EncabezadoAutenticacion(
-            titulo: 'Crea tu cuenta',
-            subtitulo: 'Tu preparación para la UNSCH empieza aquí.',
-          ),
+          const SizedBox(height: 28),
           TarjetaVidrio(
+            capaTrasera: true,
             child: AutofillGroup(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const EncabezadoAutenticacion(
+                    titulo: 'Crea tu cuenta',
+                    subtitulo: 'Tu preparación para la UNSCH empieza aquí.',
+                  ),
                   CampoVidrio(
                     hint: 'Nombre completo',
                     controller: _nombreController,
@@ -155,6 +151,7 @@ class _RegistroPageState extends State<RegistroPage> {
                   if (_error != null) MensajeErrorVidrio(mensaje: _error!),
                   BotonVidrio(
                     texto: 'Crear cuenta',
+                    principal: true,
                     cargando: _cargando,
                     alPresionar: _registrar,
                   ),

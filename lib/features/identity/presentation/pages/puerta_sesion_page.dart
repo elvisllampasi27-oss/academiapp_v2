@@ -45,8 +45,10 @@ import '../../domain/services/recuperar_contrasena_service.dart';
 import '../../domain/services/recuperar_sesion_estudiante_service.dart';
 import '../../domain/services/registrar_estudiante_service.dart';
 import '../../domain/services/resolver_estado_inicial_sesion_service.dart';
+import 'bienvenida_page.dart';
 import 'login_page.dart';
 import 'perfil_page.dart';
+import 'registro_page.dart';
 
 class PuertaSesionPage extends StatefulWidget {
   final ServicioAutenticacion servicioAutenticacion;
@@ -69,6 +71,9 @@ class PuertaSesionPage extends StatefulWidget {
 class _PuertaSesionPageState extends State<PuertaSesionPage> {
   late Future<EstadoSesionEstudiante> _estadoInicial;
 
+  /// Sin sesión se muestra primero la bienvenida; luego el login.
+  bool _mostrarLogin = false;
+
   @override
   void initState() {
     super.initState();
@@ -88,6 +93,22 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
     return resolver.resolver();
   }
 
+  RegistrarEstudianteService get _registrarService =>
+      RegistrarEstudianteService(
+        servicioAutenticacion: widget.servicioAutenticacion,
+        repositorioUsuario: widget.repositorioUsuario,
+      );
+
+  Future<void> _crearCuenta() async {
+    final registrado = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => RegistroPage(service: _registrarService),
+      ),
+    );
+
+    if (registrado == true && mounted) _alIniciarSesion();
+  }
+
   void _alIniciarSesion() {
     setState(() {
       _estadoInicial = _resolverEstado();
@@ -100,6 +121,7 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
     if (!mounted) return;
 
     setState(() {
+      _mostrarLogin = true;
       _estadoInicial = _resolverEstado();
     });
   }
@@ -127,15 +149,20 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
           );
         }
 
+        if (!_mostrarLogin) {
+          return BienvenidaPage(
+            onEmpezar: () => setState(() => _mostrarLogin = true),
+            onCrearCuenta: _crearCuenta,
+          );
+        }
+
         return LoginPage(
+          onVolver: () => setState(() => _mostrarLogin = false),
           iniciarSesionService: IniciarSesionEstudianteService(
             servicioAutenticacion: widget.servicioAutenticacion,
             repositorioUsuario: widget.repositorioUsuario,
           ),
-          registrarService: RegistrarEstudianteService(
-            servicioAutenticacion: widget.servicioAutenticacion,
-            repositorioUsuario: widget.repositorioUsuario,
-          ),
+          registrarService: _registrarService,
           recuperarContrasenaService: RecuperarContrasenaService(
             servicio: widget.servicioRecuperacion,
           ),

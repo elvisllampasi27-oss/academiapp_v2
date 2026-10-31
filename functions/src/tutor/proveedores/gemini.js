@@ -22,7 +22,7 @@ async function generarConGemini({ clave, modelo, instrucciones, mensajes }) {
       generationConfig: {
         temperature: 0.4,
         // Incluye el razonamiento interno del modelo, no solo la respuesta.
-        maxOutputTokens: 2048,
+        maxOutputTokens: 1536,
         // Poco "pensamiento": respuestas rápidas y más baratas.
         thinkingConfig: { thinkingLevel: 'low' },
       },

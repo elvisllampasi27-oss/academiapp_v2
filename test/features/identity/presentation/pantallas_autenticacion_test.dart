@@ -5,6 +5,7 @@ import 'package:academiapp_v2/features/identity/domain/services/iniciar_sesion_e
 import 'package:academiapp_v2/features/identity/domain/services/iniciar_sesion_google_service.dart';
 import 'package:academiapp_v2/features/identity/domain/services/recuperar_contrasena_service.dart';
 import 'package:academiapp_v2/features/identity/domain/services/registrar_estudiante_service.dart';
+import 'package:academiapp_v2/features/identity/presentation/pages/bienvenida_page.dart';
 import 'package:academiapp_v2/features/identity/presentation/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -58,7 +59,7 @@ void main() {
   testWidgets('pide el correo si se envia vacio', (tester) async {
     await mostrar(tester);
 
-    await tester.tap(find.text('Iniciar sesión'));
+    await tester.tap(find.text('Entrar'));
     await tester.pump();
 
     expect(find.text('Ingresa tu correo.'), findsOneWidget);
@@ -75,7 +76,7 @@ void main() {
 
     await tester.enterText(find.byType(TextField).at(0), 'a@b.pe');
     await tester.enterText(find.byType(TextField).at(1), 'mala123');
-    await tester.tap(find.text('Iniciar sesión'));
+    await tester.tap(find.text('Entrar'));
     await tester.pumpAndSettle();
 
     expect(find.text('Correo o contraseña incorrectos.'), findsOneWidget);
@@ -94,7 +95,7 @@ void main() {
 
     await tester.enterText(find.byType(TextField).at(0), 'a@b.pe');
     await tester.enterText(find.byType(TextField).at(1), 'buena123');
-    await tester.tap(find.text('Iniciar sesión'));
+    await tester.tap(find.text('Entrar'));
     await tester.pumpAndSettle();
 
     expect(sesionesIniciadas, 1);
@@ -105,7 +106,7 @@ void main() {
   ) async {
     await mostrar(tester);
 
-    await tester.tap(find.text('Registrarse aquí'));
+    await tester.tap(find.text('Crear cuenta'));
     await tester.pumpAndSettle();
 
     final campos = find.byType(TextField);
@@ -139,7 +140,7 @@ void main() {
   ) async {
     await mostrar(tester);
 
-    await tester.tap(find.text('Registrarse aquí'));
+    await tester.tap(find.text('Crear cuenta'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Carrera a la que postulas'));
@@ -217,5 +218,56 @@ void main() {
 
     expect(find.text('Inicio de sesión cancelado.'), findsNothing);
     expect(sesionesIniciadas, 0);
+  });
+
+  testWidgets('la bienvenida lleva al login o a crear cuenta', (tester) async {
+    var empezar = 0;
+    var crear = 0;
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BienvenidaPage(
+          onEmpezar: () => empezar++,
+          onCrearCuenta: () => crear++,
+        ),
+      ),
+    );
+
+    expect(find.text('Tu ingreso a la UNSCH empieza aquí'), findsOneWidget);
+
+    // Deslizar el círculo hasta el final.
+    await tester.drag(find.byIcon(Icons.arrow_forward), const Offset(600, 0));
+    await tester.pumpAndSettle();
+    expect(empezar, 1);
+
+    // Tocar también funciona.
+    await tester.tap(find.text('Desliza para empezar'));
+    await tester.pumpAndSettle();
+    expect(empezar, 2);
+
+    await tester.tap(find.text('Crear cuenta'));
+    expect(crear, 1);
+  });
+
+  testWidgets('un deslizamiento corto no empieza', (tester) async {
+    var empezar = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(20),
+            child: DeslizadorEmpezar(onCompletado: () => empezar++),
+          ),
+        ),
+      ),
+    );
+
+    await tester.drag(find.byIcon(Icons.arrow_forward), const Offset(60, 0));
+    await tester.pumpAndSettle();
+
+    expect(empezar, 0);
   });
 }
