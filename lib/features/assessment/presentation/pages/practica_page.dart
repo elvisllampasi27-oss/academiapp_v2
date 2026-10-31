@@ -4,7 +4,7 @@ import '../../domain/entities/correccion_intento.dart';
 import '../../domain/entities/evaluacion.dart';
 import '../../domain/entities/pregunta_presentada.dart';
 import '../../domain/services/practica_tema_service.dart';
-import '../widgets/texto_con_latex.dart';
+import '../../../../core/presentation/texto_con_latex.dart';
 
 /// Resolver una práctica: una pregunta a la vez y, al final, la corrección
 /// que devuelve el servidor (con la respuesta correcta y la explicación).

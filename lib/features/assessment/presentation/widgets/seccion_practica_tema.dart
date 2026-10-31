@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/colores_app.dart';
 import '../../domain/entities/evaluacion.dart';
 import '../../domain/services/practica_tema_service.dart';
 import '../pages/practica_page.dart';
 
-/// Bloque "Practicar" que se muestra dentro de la pantalla del tema.
+/// Bloque "Quiz del tema" dentro de la pantalla del tema.
+/// Mientras [habilitada] sea false (la clase no se terminó) no se puede
+/// empezar.
 class SeccionPracticaTema extends StatefulWidget {
   final PracticaTemaService service;
   final String temaId;
   final String versionId;
   final String tituloTema;
+  final bool habilitada;
 
   const SeccionPracticaTema({
     super.key,
@@ -17,6 +21,7 @@ class SeccionPracticaTema extends StatefulWidget {
     required this.temaId,
     required this.versionId,
     required this.tituloTema,
+    this.habilitada = true,
   });
 
   @override
@@ -30,11 +35,24 @@ class _SeccionPracticaTemaState extends State<SeccionPracticaTema> {
   );
 
   static String etiquetaNivel(String? nivel) => switch (nivel) {
-    'basica' => 'Práctica básica',
-    'intermedia' => 'Práctica intermedia',
-    'avanzada' => 'Práctica avanzada',
+    'basica' => 'Básico',
+    'intermedia' => 'Intermedio',
+    'avanzada' => 'Avanzado',
     _ => 'Práctica',
   };
+
+  void _empezar(Evaluacion practica) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PracticaPage(
+          service: widget.service,
+          evaluacion: practica,
+          titulo: 'Quiz · ${etiquetaNivel(practica.nivel)}',
+          subtitulo: widget.tituloTema,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,42 +64,98 @@ class _SeccionPracticaTemaState extends State<SeccionPracticaTema> {
         }
 
         final practicas = snapshot.data ?? const [];
+        final disponible =
+            widget.habilitada && !snapshot.hasError && practicas.isNotEmpty;
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 24),
-            const Text(
-              'Practicar',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            if (snapshot.hasError)
-              const Text('No se pudieron cargar las prácticas.')
-            else if (practicas.isEmpty)
-              const Text('Todavía no hay prácticas para este tema.')
-            else
-              for (final practica in practicas)
-                Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.quiz_outlined),
-                    title: Text(etiquetaNivel(practica.nivel)),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => PracticaPage(
-                          service: widget.service,
-                          evaluacion: practica,
-                          titulo: etiquetaNivel(practica.nivel),
-                          subtitulo: widget.tituloTema,
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Quiz del tema',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                  ),
+                    if (disponible) const _Etiqueta('Disponible'),
+                  ],
                 ),
-          ],
+                const SizedBox(height: 10),
+                if (snapshot.hasError)
+                  const Text('No se pudieron cargar las prácticas.')
+                else if (practicas.isEmpty)
+                  const Text(
+                    'Todavía no hay quiz para este tema.',
+                    style: TextStyle(color: ColoresApp.apagado),
+                  )
+                else if (!widget.habilitada) ...[
+                  const Text(
+                    'Termina la clase para activar el quiz.',
+                    style: TextStyle(color: ColoresApp.apagado),
+                  ),
+                  const SizedBox(height: 12),
+                  const FilledButton(
+                    onPressed: null,
+                    child: Text('Empezar quiz'),
+                  ),
+                ] else
+                  for (final practica in practicas)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${etiquetaNivel(practica.nivel)} · '
+                              'corrección al instante',
+                              style: const TextStyle(color: ColoresApp.apagado),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          FilledButton(
+                            onPressed: () => _empezar(practica),
+                            child: const Text('Empezar quiz'),
+                          ),
+                        ],
+                      ),
+                    ),
+              ],
+            ),
+          ),
         );
       },
+    );
+  }
+}
+
+class _Etiqueta extends StatelessWidget {
+  final String texto;
+
+  const _Etiqueta(this.texto);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: ColoresApp.ambar.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        texto,
+        style: const TextStyle(
+          color: ColoresApp.ambar,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

@@ -151,5 +151,31 @@ service cloud.firestore {
 
       allow write: if false;
     }
+
+    // PROGRESO DE LA CLASE (video): cada estudiante lee y escribe solo el
+    // suyo. Id: {uid}__{version}__{tema}.
+    match /progreso_clases/{progresoId} {
+
+      allow read: if request.auth != null
+                  && progresoId.matches(request.auth.uid + '__.*');
+
+      allow create, update: if request.auth != null
+                            && request.resource.data.usuarioId == request.auth.uid
+                            && progresoId == request.auth.uid + '__'
+                                 + request.resource.data.versionId + '__'
+                                 + request.resource.data.temaId
+                            && request.resource.data.tramos is list
+                            && request.resource.data.tramos.size() <= 400
+                            && request.resource.data.duracion is number
+                            && request.resource.data.completada is bool;
+
+      allow delete: if false;
+    }
+
+    // USO DEL TUTOR (límite diario): solo Cloud Functions.
+    match /uso_tutor/{usoId} {
+
+      allow read, write: if false;
+    }
   }
 }

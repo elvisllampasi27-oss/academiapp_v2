@@ -22,3 +22,38 @@ Uri? enlaceDeRecurso(Recurso recurso) {
 
   return uri;
 }
+
+/// ID de YouTube de un recurso de video, para reproducirlo dentro de la app.
+/// Acepta el ID suelto y los enlaces watch, youtu.be, shorts y embed.
+/// Devuelve null si no es un video de YouTube.
+String? idYoutube(Recurso recurso) {
+  if (recurso.tipo != TipoRecurso.video &&
+      recurso.tipo != TipoRecurso.grabacion) {
+    return null;
+  }
+
+  final ubicacion = recurso.ubicacion.trim();
+  final esId = RegExp(r'^[A-Za-z0-9_-]{11}$');
+
+  if (esId.hasMatch(ubicacion)) return ubicacion;
+
+  final uri = Uri.tryParse(ubicacion);
+  if (uri == null || uri.host.isEmpty) return null;
+
+  final host = uri.host.toLowerCase().replaceFirst('www.', '');
+  String? id;
+
+  if (host == 'youtu.be') {
+    id = uri.pathSegments.firstOrNull;
+  } else if (host == 'youtube.com' || host == 'm.youtube.com') {
+    final segmentos = uri.pathSegments;
+    if (segmentos.firstOrNull == 'watch') {
+      id = uri.queryParameters['v'];
+    } else if (segmentos.length >= 2 &&
+        const {'shorts', 'embed', 'live'}.contains(segmentos.first)) {
+      id = segmentos[1];
+    }
+  }
+
+  return id != null && esId.hasMatch(id) ? id : null;
+}

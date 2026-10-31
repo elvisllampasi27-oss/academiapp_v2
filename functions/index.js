@@ -15,3 +15,7 @@ setGlobalOptions({ region: 'us-central1', maxInstances: 10 });
 const { enviarIntentoEvaluacion } = require('./src/assessment/enviar_intento_evaluacion');
 
 exports.enviarIntentoEvaluacion = enviarIntentoEvaluacion;
+
+const { preguntarTutor } = require('./src/tutor/preguntar_tutor');
+
+exports.preguntarTutor = preguntarTutor;

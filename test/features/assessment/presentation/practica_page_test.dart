@@ -42,8 +42,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Practicar'), findsOneWidget);
-    await tester.tap(find.text('Práctica básica'));
+    expect(find.text('Quiz del tema'), findsOneWidget);
+    expect(find.text('Disponible'), findsOneWidget);
+    await tester.tap(find.text('Empezar quiz'));
     await tester.pumpAndSettle();
   }
 
@@ -111,9 +112,28 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('Todavía no hay prácticas para este tema.'),
-      findsOneWidget,
+    expect(find.text('Todavía no hay quiz para este tema.'), findsOneWidget);
+  });
+
+  testWidgets('bloqueado hasta terminar la clase', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SeccionPracticaTema(
+            service: service,
+            temaId: 'algebra-02',
+            versionId: 'version-1',
+            tituloTema: 'Polinomios',
+            habilitada: false,
+          ),
+        ),
+      ),
     );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Termina la clase para activar el quiz.'), findsOneWidget);
+    expect(find.text('Disponible'), findsNothing);
+    final boton = find.widgetWithText(FilledButton, 'Empezar quiz');
+    expect(tester.widget<FilledButton>(boton).onPressed, isNull);
   });
 }

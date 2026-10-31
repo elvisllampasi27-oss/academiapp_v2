@@ -57,3 +57,7 @@ functions/node_modules/
 # Banco de preguntas exportado de V1 y claves de cuentas de servicio
 tool/banco_v1.json
 **/*-admin.json
+
+# Claves del tutor para el emulador de Functions (nunca a git)
+functions/.secret.local
+functions/.env.local

@@ -13,6 +13,7 @@ import '../../../academic/domain/services/obtener_material_tema_service.dart';
 import '../../../academic/infrastructure/repositories/repositorio_contenido_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_curriculo_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_plan_academico_firestore.dart';
+import '../../../academic/infrastructure/repositories/repositorio_progreso_clase_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_recurso_firestore.dart';
 import '../../../academic/infrastructure/repositories/repositorio_version_academica_firestore.dart';
 import '../../../academic/presentation/pages/curso_detalle_page.dart';
@@ -28,6 +29,9 @@ import '../../../assessment/presentation/widgets/seccion_practica_tema.dart';
 import '../../../enrollment/domain/entities/matricula.dart';
 import '../../../enrollment/infrastructure/repositories/repositorio_matricula_firestore.dart';
 import '../../../student_model/infrastructure/repositories/repositorio_evidencia_firestore.dart';
+import '../../../tutor_rag/infrastructure/services/servicio_tutor_cloud_functions.dart';
+import '../../../tutor_rag/presentation/conversacion_tutor.dart';
+import '../../../tutor_rag/presentation/widgets/panel_tutor.dart';
 import '../../domain/entities/estado_sesion_estudiante.dart';
 import '../../domain/entities/usuario_academiapp.dart';
 import '../../domain/repositories/repositorio_usuario.dart';
@@ -189,6 +193,9 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
       _contextoAcademico = _cargarContextoAcademico();
     });
   }
+
+  late final _repositorioProgreso = RepositorioProgresoClaseFirestore();
+  late final _servicioTutor = ServicioTutorCloudFunctions();
 
   ConstruirMiRutaService get _servicioRuta =>
       ConstruirMiRutaService(repositorio: RepositorioEvidenciaFirestore());
@@ -374,28 +381,46 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
     Tema tema,
     Curso? curso,
   ) async {
+    final versionId = contexto.matricula.versionId;
+    final conversacion = ConversacionTutor(
+      servicio: _servicioTutor,
+      versionId: versionId,
+      temaId: tema.id,
+    );
+    final practica = PracticaTemaService(
+      repositorio: RepositorioEvaluacionFirestore(),
+      correccion: ServicioCorreccionCloudFunctions(),
+    );
+
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => TemaPage(
           tema: tema,
           curso: curso,
-          versionId: contexto.matricula.versionId,
+          versionId: versionId,
+          usuarioId: widget.usuario.uid,
           service: ObtenerMaterialTemaService(
             repositorioContenido: RepositorioContenidoFirestore(),
             repositorioRecurso: RepositorioRecursoFirestore(),
           ),
-          seccionExtra: SeccionPracticaTema(
-            service: PracticaTemaService(
-              repositorio: RepositorioEvaluacionFirestore(),
-              correccion: ServicioCorreccionCloudFunctions(),
-            ),
+          repositorioProgreso: _repositorioProgreso,
+          practica: (habilitada) => SeccionPracticaTema(
+            service: practica,
             temaId: tema.id,
-            versionId: contexto.matricula.versionId,
+            versionId: versionId,
             tituloTema: tema.titulo,
+            habilitada: habilitada,
+          ),
+          dudas: (cerrar) => PanelTutor(
+            conversacion: conversacion,
+            tituloTema: tema.titulo,
+            onCerrar: cerrar,
           ),
         ),
       ),
     );
+
+    conversacion.dispose();
 
     // Al volver puede haber practicado: se actualizan el día y la ruta.
     if (mounted) _recargar();
