@@ -119,6 +119,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // EVIDENCIAS (entrada del modelo del estudiante): las escribe
+    // Cloud Functions; el estudiante solo lee las suyas.
+    match /evidencias/{evidenciaId} {
+
+      allow read: if request.auth != null
+                  && resource.data.usuarioId == request.auth.uid;
+
+      allow write: if false;
+    }
+
     // PUBLICACIONES DE TEMAS
     match /publicaciones_temas/{publicacionId} {
 

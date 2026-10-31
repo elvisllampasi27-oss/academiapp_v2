@@ -10,6 +10,7 @@
  * Para probar puedes usar la plantilla: --archivo tool\preguntas.ejemplo.json
  *
  * Acepta también el formato de V1: { pregunta, opciones, respuestaCorrecta, explicacion }.
+ * Cada pregunta puede declarar "habilidades": ["id-habilidad", ...] (opcional).
  * Si vuelves a cargar una evaluación con menos preguntas, las sobrantes se desactivan.
  *
  * Uso:
@@ -29,6 +30,9 @@ function normalizarPregunta(p) {
     opciones: Array.isArray(p.opciones) ? p.opciones.map((o) => String(o).trim()) : [],
     correcta: p.correcta ?? p.respuestaCorrecta,
     explicacion: p.explicacion ? String(p.explicacion).trim() : null,
+    habilidades: Array.isArray(p.habilidades)
+      ? p.habilidades.map((h) => String(h).trim()).filter(Boolean)
+      : [],
   };
 }
 
@@ -71,6 +75,8 @@ function prepararEvaluaciones(archivo, idsTemas) {
           orden: j + 1,
           activa: true,
           opciones: p.opciones.map((texto, k) => ({ id: LETRAS[k], texto })),
+          // Habilidades que mide (opcional). Vacío = habilidad general del tema.
+          habilidades: p.habilidades,
         },
         clave: { opcionCorrectaId: LETRAS[p.correcta], explicacion: p.explicacion },
       });

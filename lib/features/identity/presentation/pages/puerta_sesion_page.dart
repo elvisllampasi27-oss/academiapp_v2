@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../academic/domain/entities/contexto_dia_estudiante.dart';
+import '../../../academic/domain/entities/curso.dart';
+import '../../../academic/domain/entities/tema.dart';
 import '../../../academic/domain/entities/version_academica.dart';
 import '../../../academic/domain/services/construir_dia_estudiante_service.dart';
 import '../../../academic/domain/services/obtener_material_tema_service.dart';
@@ -13,12 +15,15 @@ import '../../../academic/infrastructure/repositories/repositorio_tema_firestore
 import '../../../academic/infrastructure/repositories/repositorio_version_academica_firestore.dart';
 import '../../../academic/presentation/pages/home_page.dart';
 import '../../../academic/presentation/pages/tema_page.dart';
+import '../../../adaptive_engine/domain/services/construir_mi_ruta_service.dart';
+import '../../../adaptive_engine/presentation/pages/mi_ruta_page.dart';
 import '../../../assessment/domain/services/practica_tema_service.dart';
 import '../../../assessment/infrastructure/repositories/repositorio_evaluacion_firestore.dart';
 import '../../../assessment/infrastructure/services/servicio_correccion_cloud_functions.dart';
 import '../../../assessment/presentation/widgets/seccion_practica_tema.dart';
 import '../../../enrollment/domain/entities/matricula.dart';
 import '../../../enrollment/infrastructure/repositories/repositorio_matricula_firestore.dart';
+import '../../../student_model/infrastructure/repositories/repositorio_evidencia_firestore.dart';
 import '../../domain/entities/estado_sesion_estudiante.dart';
 import '../../domain/entities/usuario_academiapp.dart';
 import '../../domain/repositories/repositorio_usuario.dart';
@@ -249,32 +254,61 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
           versionAcademica: contexto.versionAcademica,
           diaEstudiante: contexto.diaEstudiante,
           onCerrarSesion: widget.onCerrarSesion,
-          onAbrirTema: (tema, curso) {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => TemaPage(
-                  tema: tema,
-                  curso: curso,
-                  versionId: contexto.matricula.versionId,
-                  service: ObtenerMaterialTemaService(
-                    repositorioContenido: RepositorioContenidoFirestore(),
-                    repositorioRecurso: RepositorioRecursoFirestore(),
-                  ),
-                  seccionExtra: SeccionPracticaTema(
-                    service: PracticaTemaService(
-                      repositorio: RepositorioEvaluacionFirestore(),
-                      correccion: ServicioCorreccionCloudFunctions(),
-                    ),
-                    temaId: tema.id,
-                    versionId: contexto.matricula.versionId,
-                    tituloTema: tema.titulo,
-                  ),
-                ),
-              ),
-            );
-          },
+          onAbrirTema: (tema, curso) => _abrirTema(contexto, tema, curso),
+          onAbrirMiRuta: () => _abrirMiRuta(contexto),
         );
       },
+    );
+  }
+
+  void _abrirTema(_ContextoAcademico contexto, Tema tema, Curso? curso) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TemaPage(
+          tema: tema,
+          curso: curso,
+          versionId: contexto.matricula.versionId,
+          service: ObtenerMaterialTemaService(
+            repositorioContenido: RepositorioContenidoFirestore(),
+            repositorioRecurso: RepositorioRecursoFirestore(),
+          ),
+          seccionExtra: SeccionPracticaTema(
+            service: PracticaTemaService(
+              repositorio: RepositorioEvaluacionFirestore(),
+              correccion: ServicioCorreccionCloudFunctions(),
+            ),
+            temaId: tema.id,
+            versionId: contexto.matricula.versionId,
+            tituloTema: tema.titulo,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _abrirMiRuta(_ContextoAcademico contexto) {
+    final temas = {for (final t in contexto.diaEstudiante.temas) t.id: t};
+    final cursos = {for (final c in contexto.diaEstudiante.cursos) c.id: c};
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MiRutaPage(
+          service: ConstruirMiRutaService(
+            repositorio: RepositorioEvidenciaFirestore(),
+          ),
+          usuarioId: widget.usuario.uid,
+          matriculaId: contexto.matricula.id,
+          describirTema: (temaId) {
+            final tema = temas[temaId];
+            if (tema == null) return null;
+            return (titulo: tema.titulo, curso: cursos[tema.cursoId]?.nombre);
+          },
+          onAbrirTema: (temaId) {
+            final tema = temas[temaId];
+            if (tema != null) _abrirTema(contexto, tema, cursos[tema.cursoId]);
+          },
+        ),
+      ),
     );
   }
 }

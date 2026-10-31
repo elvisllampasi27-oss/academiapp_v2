@@ -36,6 +36,17 @@ function calificar(preguntas, claves, respuestas) {
   return { total, correctas, incorrectas: total - correctas, puntaje, detalle };
 }
 
+/**
+ * Habilidades que mide una pregunta. Si el docente no definió ninguna,
+ * se usa la habilidad general del tema.
+ */
+function habilidadesDePregunta(pregunta, temaId) {
+  const definidas = Array.isArray(pregunta.habilidades)
+    ? pregunta.habilidades.filter((h) => typeof h === 'string' && h.trim())
+    : [];
+  return definidas.length ? [...new Set(definidas)] : [`${temaId}__general`];
+}
+
 /** Valida la forma de los datos que envía la app. Devuelve un mensaje de error o null. */
 function validarSolicitud(data) {
   if (!data || typeof data !== 'object') return 'Solicitud vacía.';
@@ -50,4 +61,4 @@ function validarSolicitud(data) {
   return null;
 }
 
-module.exports = { calificar, validarSolicitud };
+module.exports = { calificar, validarSolicitud, habilidadesDePregunta };

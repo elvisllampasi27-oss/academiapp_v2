@@ -186,7 +186,8 @@ class _PracticaPageState extends State<PracticaPage> {
                   seleccionada: elegida == opcion.id,
                   alPresionar: _enviando
                       ? null
-                      : () => setState(() => _elegidas[pregunta.id] = opcion.id),
+                      : () =>
+                            setState(() => _elegidas[pregunta.id] = opcion.id),
                 ),
               if (_error != null) ...[
                 const SizedBox(height: 12),

@@ -3,7 +3,7 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const { FieldValue } = require('firebase-admin/firestore');
-const { calificar, validarSolicitud } = require('./calificar');
+const { calificar, validarSolicitud, habilidadesDePregunta } = require('./calificar');
 
 /**
  * Recibe las respuestas del estudiante, corrige en el servidor (las claves
@@ -78,6 +78,15 @@ const enviarIntentoEvaluacion = onCall(async (request) => {
     throw new HttpsError('internal', 'La práctica está mal configurada.');
   }
 
+  // Número de intento del estudiante en esta evaluación (para la evidencia).
+  const previos = await db.collection('intentos_evaluacion')
+    .where('usuarioId', '==', uid)
+    .where('evaluacionId', '==', evaluacionId)
+    .count()
+    .get();
+  const numeroIntento = previos.data().count + 1;
+  const porPregunta = new Map(preguntas.map((p) => [p.id, p]));
+
   const ahora = FieldValue.serverTimestamp();
   const intentoRef = db.collection('intentos_evaluacion').doc();
   const lote = db.batch();
@@ -90,6 +99,7 @@ const enviarIntentoEvaluacion = onCall(async (request) => {
     versionId: evaluacion.versionId,
     tipo: evaluacion.tipo || 'practica',
     estado: 'completado',
+    numeroIntento,
     correctas: resultado.correctas,
     total: resultado.total,
     puntaje: resultado.puntaje,
@@ -111,6 +121,25 @@ const enviarIntentoEvaluacion = onCall(async (request) => {
       tiempoRespuestaMs: Number.isFinite(tiempo) && tiempo >= 0 ? Math.round(tiempo) : null,
       fecha: ahora,
     });
+
+    // Evidencia: una por habilidad que mide la pregunta. Es la entrada del
+    // modelo del estudiante (BKT). Solo el servidor puede escribirla.
+    const respuestaId = `${intentoRef.id}__${d.preguntaId}`;
+    for (const habilidadId of habilidadesDePregunta(porPregunta.get(d.preguntaId), evaluacion.temaId)) {
+      lote.set(db.collection('evidencias').doc(`${respuestaId}-${habilidadId}`), {
+        usuarioId: uid,
+        matriculaId: matricula.id,
+        respuestaId,
+        habilidadId,
+        temaId: evaluacion.temaId,
+        origen: evaluacion.tipo === 'simulacro' ? 'simulacro' : 'practica',
+        resultado: d.esCorrecta ? 'correcta' : 'incorrecta',
+        dificultad: d.dificultad || 'basica',
+        numeroIntento,
+        ayudaUtilizada: false,
+        fecha: ahora,
+      });
+    }
   }
 
   await lote.commit();

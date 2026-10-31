@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const { calificar, validarSolicitud } = require('../src/assessment/calificar');
+const { calificar, validarSolicitud, habilidadesDePregunta } = require('../src/assessment/calificar');
 
 const preguntas = [
   { id: 'p1', dificultad: 'basica', opciones: [{ id: 'a' }, { id: 'b' }] },
@@ -42,4 +42,12 @@ test('valida la forma de la solicitud', () => {
   assert.ok(validarSolicitud({ respuestas: {} }));
   assert.ok(validarSolicitud({ evaluacionId: 'e', respuestas: ['a'] }));
   assert.ok(validarSolicitud({ evaluacionId: 'e', respuestas: { p1: 1 } }));
+});
+
+test('sin habilidades definidas usa la habilidad general del tema', () => {
+  assert.deepStrictEqual(habilidadesDePregunta({}, 'algebra-02'), ['algebra-02__general']);
+  assert.deepStrictEqual(
+    habilidadesDePregunta({ habilidades: ['suma-matrices', 'suma-matrices', ''] }, 'x'),
+    ['suma-matrices'],
+  );
 });

@@ -12,6 +12,7 @@ class HomePage extends StatelessWidget {
   final ContextoDiaEstudiante diaEstudiante;
   final VoidCallback? onCerrarSesion;
   final void Function(Tema tema, Curso? curso)? onAbrirTema;
+  final VoidCallback? onAbrirMiRuta;
 
   const HomePage({
     super.key,
@@ -20,6 +21,7 @@ class HomePage extends StatelessWidget {
     required this.diaEstudiante,
     this.onCerrarSesion,
     this.onAbrirTema,
+    this.onAbrirMiRuta,
   });
 
   @override
@@ -28,6 +30,12 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('AcademiApp V2'),
         actions: [
+          if (onAbrirMiRuta != null)
+            IconButton(
+              tooltip: 'Mi Ruta',
+              icon: const Icon(Icons.route),
+              onPressed: onAbrirMiRuta,
+            ),
           if (onCerrarSesion != null)
             IconButton(
               tooltip: 'Cerrar sesión',
