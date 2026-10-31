@@ -1,22 +1,101 @@
 {
   "versionId": "version-1",
   "contenidos": [
-    {"temaId": "geografia-01", "orden": 1, "nombre": "Principios de la geografía"},
-    {"temaId": "geografia-01", "orden": 2, "nombre": "Evolución de la geografía"},
-    {"temaId": "geografia-01", "orden": 3, "nombre": "Espacio geográfico"},
-    {"temaId": "geografia-01", "orden": 4, "nombre": "Gestión de riesgos de desastres"},
-    {"temaId": "formacion_civica-01", "orden": 1, "nombre": "Persona natural y jurídica"},
-    {"temaId": "formacion_civica-01", "orden": 2, "nombre": "Capacidad de goce y de ejercicio"},
-    {"temaId": "formacion_civica-01", "orden": 3, "nombre": "Incapacidad absoluta y restringida"},
-    {"temaId": "razonamiento_verbal-02", "orden": 1, "nombre": "Morfema lexical"},
-    {"temaId": "razonamiento_verbal-02", "orden": 2, "nombre": "Morfema derivativo: prefijo y sufijo"},
-    {"temaId": "razonamiento_verbal-02", "orden": 3, "nombre": "Morfema flexivo"},
-    {"temaId": "lenguaje-02", "orden": 1, "nombre": "Lengua"},
-    {"temaId": "lenguaje-02", "orden": 2, "nombre": "Habla"},
-    {"temaId": "lenguaje-02", "orden": 3, "nombre": "Funciones del lenguaje"},
-    {"temaId": "literatura-02", "orden": 1, "nombre": "Clasicismo: \"La Odisea\" (Homero)"},
-    {"temaId": "literatura-02", "orden": 2, "nombre": "Medievalismo: \"La Divina Comedia\" (Dante Alighieri)"},
-    {"temaId": "literatura-02", "orden": 3, "nombre": "Renacimiento: \"Romeo y Julieta\" (Shakespeare)"}
+    {
+      "temaId": "geografia-01",
+      "orden": 1,
+      "nombre": "Principios de la geografía"
+    },
+    {
+      "temaId": "geografia-01",
+      "orden": 2,
+      "nombre": "Evolución de la geografía"
+    },
+    {
+      "temaId": "geografia-01",
+      "orden": 3,
+      "nombre": "Espacio geográfico"
+    },
+    {
+      "temaId": "geografia-01",
+      "orden": 4,
+      "nombre": "Gestión de riesgos de desastres"
+    },
+    {
+      "temaId": "formacion_civica-01",
+      "orden": 1,
+      "nombre": "Persona natural y jurídica"
+    },
+    {
+      "temaId": "formacion_civica-01",
+      "orden": 2,
+      "nombre": "Capacidad de goce y de ejercicio"
+    },
+    {
+      "temaId": "formacion_civica-01",
+      "orden": 3,
+      "nombre": "Incapacidad absoluta y restringida"
+    },
+    {
+      "temaId": "razonamiento_verbal-02",
+      "orden": 1,
+      "nombre": "Morfema lexical"
+    },
+    {
+      "temaId": "razonamiento_verbal-02",
+      "orden": 2,
+      "nombre": "Morfema derivativo: prefijo y sufijo"
+    },
+    {
+      "temaId": "razonamiento_verbal-02",
+      "orden": 3,
+      "nombre": "Morfema flexivo"
+    },
+    {
+      "temaId": "lenguaje-02",
+      "orden": 1,
+      "nombre": "Lengua"
+    },
+    {
+      "temaId": "lenguaje-02",
+      "orden": 2,
+      "nombre": "Habla"
+    },
+    {
+      "temaId": "lenguaje-02",
+      "orden": 3,
+      "nombre": "Funciones del lenguaje"
+    },
+    {
+      "temaId": "literatura-02",
+      "orden": 1,
+      "nombre": "Clasicismo: \"La Odisea\" (Homero)"
+    },
+    {
+      "temaId": "literatura-02",
+      "orden": 2,
+      "nombre": "Medievalismo: \"La Divina Comedia\" (Dante Alighieri)"
+    },
+    {
+      "temaId": "literatura-02",
+      "orden": 3,
+      "nombre": "Renacimiento: \"Romeo y Julieta\" (Shakespeare)"
+    },
+    {
+      "temaId": "algebra-02",
+      "orden": 1,
+      "nombre": "Polinomio: definición y términos"
+    },
+    {
+      "temaId": "algebra-02",
+      "orden": 2,
+      "nombre": "Grado relativo y grado absoluto"
+    },
+    {
+      "temaId": "algebra-02",
+      "orden": 3,
+      "nombre": "Valor numérico, suma de coeficientes y término independiente"
+    }
   ],
   "recursos": [
     {
@@ -30,6 +109,24 @@
       "tipo": "pdf",
       "titulo": "Separata del tema",
       "ubicacion": "PEGA_AQUI_EL_ENLACE_DEL_PDF"
+    },
+    {
+      "temaId": "algebra-02",
+      "tipo": "video",
+      "titulo": "Prueba: polinomios (Matemáticas con Juan)",
+      "ubicacion": "pRRaLT4H-9s"
+    },
+    {
+      "temaId": "algebra-02",
+      "tipo": "pdf",
+      "titulo": "Prueba: separata de polinomios (CIDEAD)",
+      "ubicacion": "https://www.matematicasonline.es/cidead/libros/4eso_opB/temas/03_polinomios.pdf"
+    },
+    {
+      "temaId": "algebra-02",
+      "tipo": "ejercicio",
+      "titulo": "Prueba: ejercicios de valor numérico",
+      "ubicacion": "https://www.uv.es/777Ch05OTIoPA==/esoProblemas/3eso5polinomios.pdf"
     }
   ]
 }
