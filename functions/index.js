@@ -19,3 +19,9 @@ exports.enviarIntentoEvaluacion = enviarIntentoEvaluacion;
 const { preguntarTutor } = require('./src/tutor/preguntar_tutor');
 
 exports.preguntarTutor = preguntarTutor;
+
+const examenes = require('./src/examenes/funciones');
+
+exports.revisarPreguntaExamen = examenes.revisarPreguntaExamen;
+exports.iniciarSimulacro = examenes.iniciarSimulacro;
+exports.enviarSimulacro = examenes.enviarSimulacro;

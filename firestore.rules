@@ -177,5 +177,41 @@ service cloud.firestore {
 
       allow read, write: if false;
     }
+
+    // EXÁMENES PASADOS: enunciados y opciones visibles; las claves y el
+    // índice para armar simulacros solo los lee Cloud Functions.
+    match /examenes/{examenId} {
+
+      allow read: if request.auth != null;
+
+      allow write: if false;
+    }
+
+    match /preguntas_examen/{preguntaId} {
+
+      allow read: if request.auth != null;
+
+      allow write: if false;
+    }
+
+    match /claves_examen/{preguntaId} {
+
+      allow read, write: if false;
+    }
+
+    match /indices/{indiceId} {
+
+      allow read, write: if false;
+    }
+
+    // EXAMEN TIPO ADMISIÓN: lo crea y corrige Cloud Functions; el estudiante
+    // solo lee los suyos.
+    match /simulacros/{simulacroId} {
+
+      allow read: if request.auth != null
+                  && resource.data.usuarioId == request.auth.uid;
+
+      allow write: if false;
+    }
   }
 }

@@ -64,3 +64,9 @@ functions/.env.local
 
 **/.secret.local
 **/.env.local
+
+# Imágenes de exámenes publicadas con Firebase Hosting (se generan con tool/cargar_examenes.js)
+/hosting/examenes/
+# Exámenes con claves (nunca a git)
+/examenes/
+/tool/examenes/

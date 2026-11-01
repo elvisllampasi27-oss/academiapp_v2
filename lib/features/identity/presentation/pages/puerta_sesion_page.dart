@@ -27,6 +27,9 @@ import '../../../assessment/infrastructure/repositories/repositorio_evaluacion_f
 import '../../../assessment/infrastructure/services/servicio_correccion_cloud_functions.dart';
 import '../../../assessment/presentation/widgets/seccion_practica_tema.dart';
 import '../../../enrollment/domain/entities/matricula.dart';
+import '../../../exams/infrastructure/repositorio_examenes_firestore.dart';
+import '../../../exams/infrastructure/servicio_examenes_cloud_functions.dart';
+import '../../../exams/presentation/pages/examenes_page.dart';
 import '../../../enrollment/infrastructure/repositories/repositorio_matricula_firestore.dart';
 import '../../../student_model/infrastructure/repositories/repositorio_evidencia_firestore.dart';
 import '../../../tutor_rag/infrastructure/services/servicio_tutor_cloud_functions.dart';
@@ -223,6 +226,8 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
 
   late final _repositorioProgreso = RepositorioProgresoClaseFirestore();
   late final _servicioTutor = ServicioTutorCloudFunctions();
+  late final _repositorioExamenes = RepositorioExamenesFirestore();
+  late final _servicioExamenes = ServicioExamenesCloudFunctions();
 
   ConstruirMiRutaService get _servicioRuta =>
       ConstruirMiRutaService(repositorio: RepositorioEvidenciaFirestore());
@@ -355,14 +360,13 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
                 onAbrirCurso: (curso) => _abrirCurso(contexto, curso),
               ),
             ),
-            const PestanaApp(
+            PestanaApp(
               etiqueta: 'Exámenes',
               icono: Icons.assignment_outlined,
-              contenido: PantallaProximamente(
-                titulo: 'Exámenes',
-                mensaje:
-                    'Muy pronto: exámenes pasados (Ordinario y Exonerados) '
-                    'y el examen tipo admisión.',
+              contenido: ExamenesPage(
+                repositorio: _repositorioExamenes,
+                servicio: _servicioExamenes,
+                hoy: DateTime.now(),
               ),
             ),
             PestanaApp(

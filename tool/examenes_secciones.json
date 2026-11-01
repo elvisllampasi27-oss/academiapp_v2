@@ -1,0 +1,51 @@
+{
+  "_comentario": "Secciones de cada examen pasado por número de pregunta (sirven para el resultado por área). La clave es <tipo>/<dd-mm-aaaa> como la carpeta.",
+  "exonerados/13-12-2020": [
+    { "nombre": "Comunicación", "desde": 1, "hasta": 10 },
+    { "nombre": "Matemática", "desde": 11, "hasta": 21 },
+    { "nombre": "Ciencias", "desde": 22, "hasta": 35 },
+    { "nombre": "Ciencias Sociales", "desde": 36, "hasta": 44 },
+    { "nombre": "Cívica", "desde": 45, "hasta": 46 },
+    { "nombre": "Cultura general", "desde": 47, "hasta": 50 }
+  ],
+  "exonerados/13-07-2021": [
+    { "nombre": "Comunicación", "desde": 1, "hasta": 10 },
+    { "nombre": "Matemática", "desde": 11, "hasta": 24 },
+    { "nombre": "Ciencias", "desde": 25, "hasta": 36 },
+    { "nombre": "Ciencias Sociales", "desde": 37, "hasta": 45 },
+    { "nombre": "Cívica", "desde": 46, "hasta": 47 },
+    { "nombre": "Cultura general", "desde": 48, "hasta": 50 }
+  ],
+  "exonerados/12-07-2022": [
+    { "nombre": "Comunicación", "desde": 1, "hasta": 10 },
+    { "nombre": "Matemática", "desde": 11, "hasta": 25 },
+    { "nombre": "Ciencias", "desde": 26, "hasta": 37 },
+    { "nombre": "Ciencias Sociales", "desde": 38, "hasta": 46 },
+    { "nombre": "Cívica", "desde": 47, "hasta": 49 },
+    { "nombre": "Cultura general", "desde": 50, "hasta": 51 }
+  ],
+  "exonerados/11-12-2022": [
+    { "nombre": "Comunicación", "desde": 1, "hasta": 10 },
+    { "nombre": "Matemática", "desde": 11, "hasta": 24 },
+    { "nombre": "Ciencias", "desde": 25, "hasta": 36 },
+    { "nombre": "Ciencias Sociales", "desde": 37, "hasta": 45 },
+    { "nombre": "Cívica", "desde": 46, "hasta": 47 },
+    { "nombre": "Cultura general", "desde": 48, "hasta": 50 }
+  ],
+  "exonerados/16-11-2025": [
+    { "nombre": "Comunicación", "desde": 1, "hasta": 18 },
+    { "nombre": "Matemática", "desde": 19, "hasta": 42 },
+    { "nombre": "Ciencias", "desde": 43, "hasta": 66 },
+    { "nombre": "Ciencias Sociales", "desde": 67, "hasta": 90 },
+    { "nombre": "Cívica", "desde": 91, "hasta": 96 },
+    { "nombre": "Cultura general", "desde": 97, "hasta": 100 }
+  ],
+  "exonerados/22-03-2026": [
+    { "nombre": "Comunicación", "desde": 1, "hasta": 18 },
+    { "nombre": "Matemática", "desde": 19, "hasta": 42 },
+    { "nombre": "Ciencias", "desde": 43, "hasta": 57 },
+    { "nombre": "Ciencias Sociales", "desde": 58, "hasta": 81 },
+    { "nombre": "Cívica", "desde": 82, "hasta": 86 },
+    { "nombre": "Cultura general", "desde": 87, "hasta": 91 }
+  ]
+}
