@@ -72,3 +72,5 @@ functions/.env.local
 /tool/examenes/
 
 .firebase/
+# Panel compilado (se genera con flutter build web)
+/hosting/admin/

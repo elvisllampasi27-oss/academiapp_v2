@@ -3,6 +3,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Administrador del panel: permiso "admin" en su token
+    // (se asigna con tool/hacer_admin.js).
+    function esAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
     // PERFIL DEL USUARIO
     match /usuarios/{userId} {
 
@@ -184,24 +190,24 @@ service cloud.firestore {
 
       allow read: if request.auth != null;
 
-      allow write: if false;
+      allow write: if esAdmin();
     }
 
     match /preguntas_examen/{preguntaId} {
 
       allow read: if request.auth != null;
 
-      allow write: if false;
+      allow write: if esAdmin();
     }
 
     match /claves_examen/{preguntaId} {
 
-      allow read, write: if false;
+      allow read, write: if esAdmin();
     }
 
     match /indices/{indiceId} {
 
-      allow read, write: if false;
+      allow read, write: if esAdmin();
     }
 
     // EXAMEN TIPO ADMISIÓN: lo crea y corrige Cloud Functions; el estudiante
