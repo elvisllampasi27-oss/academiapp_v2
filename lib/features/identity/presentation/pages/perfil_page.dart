@@ -6,11 +6,13 @@ import '../../domain/entities/usuario_academiapp.dart';
 class PerfilPage extends StatelessWidget {
   final UsuarioAcademiApp usuario;
   final VoidCallback onCerrarSesion;
+  final VoidCallback? onAbrirSeminarios;
 
   const PerfilPage({
     super.key,
     required this.usuario,
     required this.onCerrarSesion,
+    this.onAbrirSeminarios,
   });
 
   @override
@@ -76,6 +78,16 @@ class PerfilPage extends StatelessWidget {
               subtitle: Text(usuario.correo),
             ),
           ),
+          if (onAbrirSeminarios != null)
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.live_tv_outlined),
+                title: const Text('Seminarios en vivo'),
+                subtitle: const Text('Repasos por YouTube y sus grabaciones'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: onAbrirSeminarios,
+              ),
+            ),
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerLeft,

@@ -31,6 +31,8 @@ import '../../../exams/infrastructure/repositorio_examenes_firestore.dart';
 import '../../../exams/infrastructure/servicio_examenes_cloud_functions.dart';
 import '../../../exams/presentation/pages/examenes_page.dart';
 import '../../../enrollment/infrastructure/repositories/repositorio_matricula_firestore.dart';
+import '../../../seminars/infrastructure/repositorio_seminarios_firestore.dart';
+import '../../../seminars/presentation/seminarios_page.dart';
 import '../../../student_model/infrastructure/repositories/repositorio_evidencia_firestore.dart';
 import '../../../tutor_rag/infrastructure/services/servicio_tutor_cloud_functions.dart';
 import '../../../tutor_rag/presentation/conversacion_tutor.dart';
@@ -380,6 +382,13 @@ class _HomeConMatriculaState extends State<_HomeConMatricula> {
               contenido: PerfilPage(
                 usuario: widget.usuario,
                 onCerrarSesion: widget.onCerrarSesion,
+                onAbrirSeminarios: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => SeminariosPage(
+                      repositorio: RepositorioSeminariosFirestore(),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

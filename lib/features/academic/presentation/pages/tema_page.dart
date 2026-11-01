@@ -16,8 +16,8 @@ import '../../domain/repositories/repositorio_progreso_clase.dart';
 import '../../domain/services/obtener_material_tema_service.dart';
 import '../../domain/services/seguimiento_clase.dart';
 import '../utils/enlace_recurso.dart';
-import '../widgets/reproductor_clase.dart';
-import '../widgets/reproductor_youtube.dart';
+import '../../../../core/presentation/video/reproductor_clase.dart';
+import '../../../../core/presentation/video/reproductor_youtube.dart';
 
 typedef AbrirEnlace = Future<bool> Function(Uri enlace);
 

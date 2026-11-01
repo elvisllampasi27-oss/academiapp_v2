@@ -70,3 +70,5 @@ functions/.env.local
 # Exámenes con claves (nunca a git)
 /examenes/
 /tool/examenes/
+
+.firebase/

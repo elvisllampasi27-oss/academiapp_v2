@@ -5,7 +5,7 @@ import 'package:academiapp_v2/features/academic/domain/entities/recurso.dart';
 import 'package:academiapp_v2/features/academic/domain/entities/tema.dart';
 import 'package:academiapp_v2/features/academic/domain/services/obtener_material_tema_service.dart';
 import 'package:academiapp_v2/features/academic/presentation/pages/tema_page.dart';
-import 'package:academiapp_v2/features/academic/presentation/widgets/reproductor_clase.dart';
+import 'package:academiapp_v2/core/presentation/video/reproductor_clase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

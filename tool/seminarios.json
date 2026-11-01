@@ -1,0 +1,21 @@
+{
+  "_comentario": "Seminarios por YouTube. fecha = hora de Perú (AAAA-MM-DDTHH:MM). El mismo enlace sirve para el vivo y, al terminar, para la grabación. Los que digan PEGA_AQUI se omiten.",
+  "seminarios": [
+    {
+      "id": "prueba-polinomios",
+      "titulo": "Prueba: repaso de polinomios",
+      "cursoId": "algebra",
+      "fecha": "2026-10-30T19:00",
+      "duracionMinutos": 25,
+      "youtube": "pRRaLT4H-9s"
+    },
+    {
+      "id": "prueba-proximo",
+      "titulo": "Prueba: seminario próximo",
+      "cursoId": "aritmetica",
+      "fecha": "2026-11-07T19:00",
+      "duracionMinutos": 90,
+      "youtube": "pRRaLT4H-9s"
+    }
+  ]
+}
