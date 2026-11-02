@@ -19,6 +19,9 @@ class InicioPage extends StatelessWidget {
   final VoidCallback onVerRuta;
   final VoidCallback onAbrirPerfil;
 
+  /// Avisos del equipo (van arriba de "Hoy").
+  final Widget? avisos;
+
   /// Cuántas recomendaciones de "Reforzar" se muestran en el inicio.
   final int maximoRefuerzos;
 
@@ -31,6 +34,7 @@ class InicioPage extends StatelessWidget {
     required this.onAbrirTema,
     required this.onVerRuta,
     required this.onAbrirPerfil,
+    this.avisos,
     this.maximoRefuerzos = 2,
   });
 
@@ -96,6 +100,7 @@ class InicioPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
+          ?avisos,
           _TarjetaHoy(
             dia: dia,
             practicados: {for (final item in ruta) ?item.temaId},

@@ -499,3 +499,79 @@ class _PintorAnillo extends CustomPainter {
   bool shouldRepaint(_PintorAnillo old) =>
       old.valor != valor || old.color != color || old.grosor != grosor;
 }
+
+/// Barras verticales con su valor arriba y su etiqueta abajo. La última
+/// (el periodo actual) va resaltada.
+class GraficoBarras extends StatelessWidget {
+  final List<String> etiquetas;
+  final List<int> valores;
+  final double alto;
+
+  /// Cómo se escribe el valor sobre la barra (por defecto, el número).
+  final String Function(int valor)? formato;
+
+  const GraficoBarras({
+    super.key,
+    required this.etiquetas,
+    required this.valores,
+    this.alto = 200,
+    this.formato,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    final maximo = valores.fold(1, (m, v) => v > m ? v : m);
+    return SizedBox(
+      height: alto,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (final (i, valor) in valores.indexed)
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    formato?.call(valor) ?? '$valor',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: p.apagado, fontSize: 12),
+                  ),
+                  const SizedBox(height: 6),
+                  // La barra usa el alto que queda: nunca se desborda.
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: FractionallySizedBox(
+                        heightFactor: valor <= 0 ? 0.03 : valor / maximo,
+                        child: Container(
+                          width: 36,
+                          decoration: BoxDecoration(
+                            color: i == valores.length - 1
+                                ? p.acento
+                                : PaletaPanel.bordeFuerte,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(8),
+                              bottom: Radius.circular(4),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    i < etiquetas.length ? etiquetas[i] : '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: p.apagado, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

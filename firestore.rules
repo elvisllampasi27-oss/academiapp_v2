@@ -64,6 +64,31 @@ service cloud.firestore {
     // PAGOS DE PREMIUM: el estudiante registra el suyo como pendiente y el
     // administrador lo aprueba o rechaza. Id = metodo__operacion, así nadie
     // reclama la misma operación de Yape dos veces. Nunca se borran.
+    // Avisos del equipo (arriba del Inicio). El estudiante lee solo los
+    // activos; la app descarta los vencidos y los de otra versión.
+    match /avisos/{avisoId} {
+
+      allow read: if (request.auth != null && resource.data.activo == true)
+                  || esAdmin();
+
+      allow create, update: if esAdmin()
+                    && request.resource.data.keys().hasOnly([
+                         'titulo', 'mensaje', 'versionId', 'importante',
+                         'activo', 'hasta', 'creadoEn'])
+                    && request.resource.data.titulo is string
+                    && request.resource.data.titulo.size() >= 1
+                    && request.resource.data.titulo.size() <= 80
+                    && request.resource.data.mensaje is string
+                    && request.resource.data.mensaje.size() <= 600
+                    && request.resource.data.importante is bool
+                    && request.resource.data.activo is bool
+                    && request.resource.data.hasta is timestamp
+                    && (request.resource.data.get('versionId', null) == null
+                        || request.resource.data.versionId is string);
+
+      allow delete: if esAdmin();
+    }
+
     // Reportes que el estudiante manda con la bandera ("esta pregunta está
     // mal", "el video no carga"). Solo el suyo, siempre 'nuevo'; el
     // administrador cambia el estado y responde. Nunca se borran.

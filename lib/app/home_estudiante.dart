@@ -10,6 +10,7 @@ import '../features/adaptive_engine/domain/services/construir_mi_ruta_service.da
 import '../features/adaptive_engine/presentation/pages/mi_ruta_page.dart';
 import '../features/assessment/domain/services/practica_tema_service.dart';
 import '../features/assessment/presentation/widgets/seccion_practica_tema.dart';
+import '../features/avisos/presentation/avisos_inicio.dart';
 import '../features/exams/presentation/pages/examenes_page.dart';
 import '../features/identity/domain/entities/usuario_academiapp.dart';
 import '../features/identity/presentation/pages/perfil_page.dart';
@@ -135,6 +136,10 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                 onAbrirTema: (tema, curso) => _abrirTema(contexto, tema, curso),
                 onVerRuta: () => _pestana.value = 3,
                 onAbrirPerfil: () => _pestana.value = 4,
+                avisos: AvisosInicio(
+                  repositorio: _d.avisos,
+                  versionId: contexto.matricula.versionId,
+                ),
               ),
             ),
             PestanaApp(

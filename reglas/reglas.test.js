@@ -249,3 +249,27 @@ test('reportes: el estudiante manda el suyo como nuevo; el admin responde', asyn
   await assertSucceeds(updateDoc(doc(admin(), 'reportes/r1'), { estado: 'resuelto', respuesta: 'Corregida.' }));
   await assertFails(deleteDoc(doc(admin(), 'reportes/r1')));
 });
+
+test('avisos: el estudiante lee solo los activos; el admin los maneja', async () => {
+  const aviso = {
+    titulo: 'El lunes no hay clase',
+    mensaje: 'Feriado.',
+    versionId: null,
+    importante: false,
+    activo: true,
+    hasta: new Date('2026-11-10'),
+    creadoEn: serverTimestamp(),
+  };
+  await assertSucceeds(setDoc(doc(admin(), 'avisos/a1'), aviso));
+  await assertSucceeds(setDoc(doc(admin(), 'avisos/a2'), { ...aviso, activo: false }));
+  // Campos de más o título vacío: no.
+  await assertFails(setDoc(doc(admin(), 'avisos/a3'), { ...aviso, enlace: 'x' }));
+  await assertFails(setDoc(doc(admin(), 'avisos/a4'), { ...aviso, titulo: '' }));
+  // El estudiante no publica ni borra; lee el activo y no el pausado.
+  await assertFails(setDoc(doc(alumno(), 'avisos/a5'), aviso));
+  await assertSucceeds(getDoc(doc(alumno(), 'avisos/a1')));
+  await assertFails(getDoc(doc(alumno(), 'avisos/a2')));
+  await assertFails(getDoc(doc(anonimo(), 'avisos/a1')));
+  await assertFails(deleteDoc(doc(alumno(), 'avisos/a1')));
+  await assertSucceeds(deleteDoc(doc(admin(), 'avisos/a1')));
+});

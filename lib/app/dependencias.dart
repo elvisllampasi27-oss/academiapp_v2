@@ -16,6 +16,8 @@ import '../features/assessment/domain/repositories/repositorio_evaluacion.dart';
 import '../features/assessment/domain/repositories/servicio_correccion_evaluacion.dart';
 import '../features/assessment/infrastructure/repositories/repositorio_evaluacion_firestore.dart';
 import '../features/assessment/infrastructure/services/servicio_correccion_cloud_functions.dart';
+import '../features/avisos/domain/aviso.dart';
+import '../features/avisos/infrastructure/repositorio_avisos_firestore.dart';
 import '../features/enrollment/domain/repositories/repositorio_matricula.dart';
 import '../features/enrollment/infrastructure/repositories/repositorio_matricula_firestore.dart';
 import '../features/exams/domain/repositories/repositorio_examenes.dart';
@@ -71,6 +73,7 @@ class Dependencias {
   final RepositorioSeminarios seminarios;
   final RepositorioPremium premium;
   final RepositorioReportes reportes;
+  final RepositorioAvisos avisos;
 
   /// Foto del comprobante (galería). null si no se puede en este equipo.
   final Future<Uint8List?> Function()? elegirFoto;
@@ -97,6 +100,7 @@ class Dependencias {
     required this.seminarios,
     required this.premium,
     required this.reportes,
+    required this.avisos,
     this.elegirFoto,
   });
 
@@ -129,6 +133,7 @@ class Dependencias {
         comprobantes: ServicioComprobanteStorage(),
       ),
       reportes: RepositorioReportesFirestore(),
+      avisos: RepositorioAvisosFirestore(),
       elegirFoto: elegirFotoDeGaleria,
     );
   }

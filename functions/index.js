@@ -29,3 +29,7 @@ exports.enviarSimulacro = examenes.enviarSimulacro;
 const { generarPreguntas } = require('./src/contenido/generar_preguntas');
 
 exports.generarPreguntas = generarPreguntas;
+
+const { estadoSistema } = require('./src/sistema/estado');
+
+exports.estadoSistema = estadoSistema;

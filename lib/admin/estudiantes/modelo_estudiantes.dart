@@ -454,6 +454,9 @@ const _meses = [
 String fechaPanel(DateTime f) =>
     '${_diasCortos[f.weekday - 1]} ${f.day} ${_meses[f.month - 1]} ${f.year}';
 
+/// "oct".
+String mesBreve(DateTime f) => _meses[f.month - 1];
+
 /// "23 oct".
 String fechaBreve(DateTime f) => '${f.day} ${_meses[f.month - 1]}';
 

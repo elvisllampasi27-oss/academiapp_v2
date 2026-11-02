@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'analitica/analitica_page.dart';
+import 'avisos/avisos_page.dart';
+import 'avisos/repositorio_avisos_admin.dart';
 import 'bandeja/bandeja_page.dart';
 import 'bandeja/repositorio_bandeja.dart';
 import 'estudiantes/estudiantes_page.dart';
@@ -16,6 +19,8 @@ import 'pagos/pagos_page.dart';
 import 'pagos/repositorio_pagos_admin.dart';
 import 'logo_puntos.dart';
 import 'resumen/resumen_page.dart';
+import 'sistema/estado_sistema_page.dart';
+import 'sistema/sonda_sistema.dart';
 import 'tema_panel.dart';
 import 'versiones/repositorio_versiones_admin.dart';
 import 'versiones/versiones_page.dart';
@@ -23,19 +28,20 @@ import 'widgets_panel.dart';
 
 enum SeccionPanel {
   resumen,
+  analitica,
   estudiantes,
   pagos,
   cupones,
   versiones,
+  avisos,
   contenido,
   examenes,
   reportes,
+  estado,
   configuracion,
 }
 
 /// Estructura del panel: menú lateral por grupos y la sección elegida.
-/// Las secciones del siguiente bloque (avisos, analítica, estado) se
-/// agregan aquí.
 class ShellAdmin extends StatefulWidget {
   final String correo;
   final VoidCallback onSalir;
@@ -47,6 +53,8 @@ class ShellAdmin extends StatefulWidget {
   final RepositorioContenidoAdmin repositorioContenido;
   final GeneradorQuiz generadorQuiz;
   final RepositorioBandeja repositorioBandeja;
+  final RepositorioAvisosAdmin repositorioAvisos;
+  final SondaSistema sondaSistema;
   final DateTime Function() ahora;
 
   const ShellAdmin({
@@ -61,6 +69,8 @@ class ShellAdmin extends StatefulWidget {
     required this.repositorioContenido,
     required this.generadorQuiz,
     required this.repositorioBandeja,
+    required this.repositorioAvisos,
+    required this.sondaSistema,
     this.ahora = DateTime.now,
   });
 
@@ -118,6 +128,26 @@ class _ShellAdminState extends State<ShellAdmin> {
         pagos: widget.repositorioPagos,
         onVerPagos: () => _ir(SeccionPanel.pagos),
         correoAdmin: widget.correo,
+        ahora: widget.ahora,
+      ),
+      SeccionPanel.analitica => AnaliticaPage(
+        estudiantes: widget.repositorioEstudiantes,
+        pagos: widget.repositorioPagos,
+        onVerEstudiantes: _verEstudiantes,
+        ahora: widget.ahora,
+      ),
+      SeccionPanel.avisos => AvisosPage(
+        repositorio: widget.repositorioAvisos,
+        versiones: widget.repositorioEstudiantes.versiones,
+        ahora: widget.ahora,
+      ),
+      SeccionPanel.estado => EstadoSistemaPage(
+        sonda: widget.sondaSistema,
+        // Streams propios: los del menú ya tienen quien los escuche.
+        pagosPendientes: widget.repositorioPagos.pendientes(),
+        reportesNuevos: widget.repositorioBandeja.nuevos(),
+        onVerPagos: () => _ir(SeccionPanel.pagos),
+        onVerReportes: () => _ir(SeccionPanel.reportes),
         ahora: widget.ahora,
       ),
       SeccionPanel.estudiantes => switch (_fichaUid) {
@@ -222,7 +252,13 @@ class _MenuLateral extends StatelessWidget {
   });
 
   static const _grupos = [
-    ('GENERAL', [(SeccionPanel.resumen, 'Resumen', Icons.home_outlined)]),
+    (
+      'GENERAL',
+      [
+        (SeccionPanel.resumen, 'Resumen', Icons.home_outlined),
+        (SeccionPanel.analitica, 'Analítica', Icons.insights_outlined),
+      ],
+    ),
     (
       'ESTUDIANTES',
       [
@@ -234,6 +270,7 @@ class _MenuLateral extends StatelessWidget {
           'Versiones y matrículas',
           Icons.layers_outlined,
         ),
+        (SeccionPanel.avisos, 'Avisos', Icons.campaign_outlined),
       ],
     ),
     (
@@ -247,6 +284,11 @@ class _MenuLateral extends StatelessWidget {
       'SISTEMA',
       [
         (SeccionPanel.reportes, 'Reportes de la app', Icons.outlined_flag),
+        (
+          SeccionPanel.estado,
+          'Estado del sistema',
+          Icons.monitor_heart_outlined,
+        ),
         (SeccionPanel.configuracion, 'Configuración', Icons.settings_outlined),
       ],
     ),

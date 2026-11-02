@@ -624,3 +624,38 @@ Future<String?> pedirTexto(
     ),
   );
 }
+
+/// Pide confirmar una acción. Con [peligro] el botón va en rojo (eliminar).
+Future<bool> confirmarPanel(
+  BuildContext context, {
+  required String titulo,
+  required String mensaje,
+  required String confirmar,
+  bool peligro = false,
+}) async {
+  final p = PaletaPanel.de(context);
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(titulo),
+      content: SizedBox(width: 420, child: Text(mensaje)),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          style: peligro
+              ? FilledButton.styleFrom(
+                  backgroundColor: p.alerta,
+                  foregroundColor: Colors.white,
+                )
+              : null,
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(confirmar),
+        ),
+      ],
+    ),
+  );
+  return ok ?? false;
+}

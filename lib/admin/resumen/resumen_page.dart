@@ -454,61 +454,14 @@ class _GraficoSemanas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = PaletaPanel.de(context);
-    final maximo = porSemana.fold(1, (m, s) => s.$2 > m ? s.$2 : m);
-
     return TarjetaPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const TituloTarjeta('Matrículas por semana'),
-          SizedBox(
-            height: 200,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                for (final (i, (lunes, cantidad)) in porSemana.indexed)
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          '$cantidad',
-                          style: TextStyle(color: p.apagado, fontSize: 12),
-                        ),
-                        const SizedBox(height: 6),
-                        // La barra usa el alto que queda: nunca se desborda.
-                        Expanded(
-                          child: Align(
-                            alignment: Alignment.bottomCenter,
-                            child: FractionallySizedBox(
-                              heightFactor: cantidad == 0
-                                  ? 0.03
-                                  : cantidad / maximo,
-                              child: Container(
-                                width: 36,
-                                decoration: BoxDecoration(
-                                  color: i == porSemana.length - 1
-                                      ? p.acento
-                                      : PaletaPanel.bordeFuerte,
-                                  borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(8),
-                                    bottom: Radius.circular(4),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          fechaBreve(lunes),
-                          style: TextStyle(color: p.apagado, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
+          GraficoBarras(
+            etiquetas: [for (final (lunes, _) in porSemana) fechaBreve(lunes)],
+            valores: [for (final (_, cantidad) in porSemana) cantidad],
           ),
           const SizedBox(height: 8),
           Text(

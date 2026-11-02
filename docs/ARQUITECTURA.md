@@ -81,6 +81,18 @@ directo a la pregunta o al tema, y al resolver se escribe una respuesta que
 el estudiante ve en Perfil → "Mis reportes". Cada cambio queda en
 `registro_admin`. Nunca se borran.
 
+### Avisos, Analítica y Estado del sistema
+
+- **Avisos** (`avisos/{id}`): el panel los publica, pausa, edita o elimina.
+  El estudiante solo lee los activos; la app descarta los vencidos y los de
+  otra versión y los muestra arriba del Inicio (importantes primero).
+- **Analítica**: se calcula en el panel con lo que ya existe (estudiantes,
+  pagos aprobados, actividad de 30 días). No guarda nada nuevo.
+- **Estado del sistema**: revisa Firestore, Cloud Functions (función
+  `estadoSistema`, solo admin, dice si hay clave de Gemini sin devolverla) y
+  Storage, con tiempos de respuesta, lo pendiente (pagos y reportes) y la
+  lista de pasos antes de activar Blaze.
+
 ## Seguridad
 
 1. **Las respuestas correctas nunca llegan al celular** antes de responder:
