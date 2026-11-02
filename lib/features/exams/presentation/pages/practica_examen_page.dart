@@ -8,6 +8,13 @@ import '../../domain/repositories/servicio_examenes.dart';
 import '../../../../core/presentation/imagen_figura.dart';
 import '../widgets/opcion_examen.dart';
 
+/// Reportar la pregunta que se está viendo.
+typedef ReportarPreguntaExamen = void Function(
+  BuildContext context,
+  ExamenPasado examen,
+  PreguntaExamen pregunta,
+);
+
 /// Examen pasado en modo práctica: respondes y ves al instante si acertaste,
 /// la correcta y la solución.
 class PracticaExamenPage extends StatefulWidget {
@@ -15,11 +22,16 @@ class PracticaExamenPage extends StatefulWidget {
   final RepositorioExamenes repositorio;
   final ServicioExamenes servicio;
 
+  /// Reportar la pregunta que se está viendo (clave equivocada, figura que
+  /// no carga…). Lo compone quien abre la pantalla.
+  final ReportarPreguntaExamen? onReportar;
+
   const PracticaExamenPage({
     super.key,
     required this.examen,
     required this.repositorio,
     required this.servicio,
+    this.onReportar,
   });
 
   @override
@@ -96,7 +108,21 @@ class _PracticaExamenPageState extends State<PracticaExamenPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.examen.titulo)),
+      appBar: AppBar(
+        title: Text(widget.examen.titulo),
+        actions: [
+          if (widget.onReportar case final reportar?)
+            IconButton(
+              tooltip: 'Reportar esta pregunta',
+              onPressed: () async {
+                final preguntas = await _preguntas;
+                if (!context.mounted || _indice >= preguntas.length) return;
+                reportar(context, widget.examen, preguntas[_indice]);
+              },
+              icon: const Icon(Icons.outlined_flag),
+            ),
+        ],
+      ),
       body: FutureBuilder<List<PreguntaExamen>>(
         future: _preguntas,
         builder: (context, snapshot) {

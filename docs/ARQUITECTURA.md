@@ -70,6 +70,17 @@ eligen del computador en el mismo diálogo y se suben a Storage
   `firebase emulators:start --only functions,storage` y el panel/app con
   `--dart-define=EMULADOR_STORAGE=true`.
 
+### Reportes de la app
+
+El estudiante toca la bandera (en un tema, en una pregunta de examen o en
+Perfil → "Reportar un problema") y se crea `reportes/{id}` con su contexto
+(`examenId`/`preguntaId` o `versionId`/`temaId`). Las reglas solo dejan
+crear el suyo, en estado `nuevo` y con un mensaje de 5 a 1000 caracteres. En
+el panel, *Reportes de la app* los muestra con un contador en el menú, lleva
+directo a la pregunta o al tema, y al resolver se escribe una respuesta que
+el estudiante ve en Perfil → "Mis reportes". Cada cambio queda en
+`registro_admin`. Nunca se borran.
+
 ## Seguridad
 
 1. **Las respuestas correctas nunca llegan al celular** antes de responder:

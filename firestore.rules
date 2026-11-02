@@ -64,6 +64,37 @@ service cloud.firestore {
     // PAGOS DE PREMIUM: el estudiante registra el suyo como pendiente y el
     // administrador lo aprueba o rechaza. Id = metodo__operacion, así nadie
     // reclama la misma operación de Yape dos veces. Nunca se borran.
+    // Reportes que el estudiante manda con la bandera ("esta pregunta está
+    // mal", "el video no carga"). Solo el suyo, siempre 'nuevo'; el
+    // administrador cambia el estado y responde. Nunca se borran.
+    match /reportes/{reporteId} {
+
+      allow read: if (request.auth != null
+                      && resource.data.usuarioId == request.auth.uid)
+                  || esAdmin();
+
+      allow create: if request.auth != null
+                    && request.resource.data.usuarioId == request.auth.uid
+                    && request.resource.data.keys().hasOnly([
+                         'usuarioId', 'nombre', 'correo', 'tipo', 'mensaje',
+                         'contexto', 'estado', 'creadoEn'])
+                    && request.resource.data.estado == 'nuevo'
+                    && request.resource.data.creadoEn == request.time
+                    && request.resource.data.tipo in [
+                         'preguntaExamen', 'preguntaPractica', 'video',
+                         'material', 'app', 'otro']
+                    && request.resource.data.mensaje is string
+                    && request.resource.data.mensaje.size() >= 5
+                    && request.resource.data.mensaje.size() <= 1000
+                    && request.resource.data.contexto is map
+                    && request.resource.data.contexto.keys().hasOnly([
+                         'titulo', 'examenId', 'preguntaId', 'versionId',
+                         'temaId']);
+
+      allow update: if esAdmin();
+      allow delete: if false;
+    }
+
     match /pagos/{pagoId} {
 
       allow read: if (request.auth != null

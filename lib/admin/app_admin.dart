@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'acceso/puerta_admin.dart';
+import 'bandeja/repositorio_bandeja.dart';
 import 'contenido/repositorio_contenido_admin_firestore.dart';
 import 'estudiantes/repositorio_estudiantes_admin_firestore.dart';
 import 'examenes/repositorio_examenes_admin_firestore.dart';
@@ -25,6 +26,7 @@ class _AppAdminState extends State<AppAdmin> {
   final _versiones = RepositorioVersionesAdminFirestore();
   final _contenido = RepositorioContenidoAdminFirestore();
   final _generador = GeneradorQuizFunctions();
+  final _bandeja = RepositorioBandejaFirestore();
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +46,7 @@ class _AppAdminState extends State<AppAdmin> {
           repositorioVersiones: _versiones,
           repositorioContenido: _contenido,
           generadorQuiz: _generador,
+          repositorioBandeja: _bandeja,
         ),
       ),
     );

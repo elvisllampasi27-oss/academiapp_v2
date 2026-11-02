@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'bandeja/bandeja_page.dart';
+import 'bandeja/repositorio_bandeja.dart';
 import 'estudiantes/estudiantes_page.dart';
 import 'estudiantes/ficha_estudiante_page.dart';
 import 'estudiantes/modelo_estudiantes.dart';
@@ -27,11 +29,12 @@ enum SeccionPanel {
   versiones,
   contenido,
   examenes,
+  reportes,
   configuracion,
 }
 
 /// Estructura del panel: menú lateral por grupos y la sección elegida.
-/// Las secciones de los siguientes bloques (avisos, reportes…) se
+/// Las secciones del siguiente bloque (avisos, analítica, estado) se
 /// agregan aquí.
 class ShellAdmin extends StatefulWidget {
   final String correo;
@@ -43,6 +46,7 @@ class ShellAdmin extends StatefulWidget {
   final RepositorioVersionesAdmin repositorioVersiones;
   final RepositorioContenidoAdmin repositorioContenido;
   final GeneradorQuiz generadorQuiz;
+  final RepositorioBandeja repositorioBandeja;
   final DateTime Function() ahora;
 
   const ShellAdmin({
@@ -56,6 +60,7 @@ class ShellAdmin extends StatefulWidget {
     required this.repositorioVersiones,
     required this.repositorioContenido,
     required this.generadorQuiz,
+    required this.repositorioBandeja,
     this.ahora = DateTime.now,
   });
 
@@ -73,11 +78,22 @@ class _ShellAdminState extends State<ShellAdmin> {
   int _visita = 0;
 
   late final Stream<int> _pendientes = widget.repositorioPagos.pendientes();
+  late final Stream<int> _reportesNuevos = widget.repositorioBandeja.nuevos();
+
+  /// A dónde llevar Exámenes o Cursos y temas al venir de un reporte.
+  (String, String?)? _destino;
 
   void _ir(SeccionPanel s) => setState(() {
     _seccion = s;
     _fichaUid = null;
     _filtro = FiltroEstudiantes.todos;
+    _destino = null;
+    _visita++;
+  });
+
+  void _irA(SeccionPanel s, (String, String?) destino) => setState(() {
+    _seccion = s;
+    _destino = destino;
     _visita++;
   });
 
@@ -138,12 +154,27 @@ class _ShellAdminState extends State<ShellAdmin> {
         ahora: widget.ahora,
       ),
       SeccionPanel.contenido => ContenidoPage(
+        key: ValueKey(_visita),
         contenido: widget.repositorioContenido,
         estudiantes: widget.repositorioEstudiantes,
         generador: widget.generadorQuiz,
+        versionInicial: _destino?.$1,
+        temaInicial: _destino?.$2,
       ),
       SeccionPanel.examenes => ExamenesAdminPage(
+        key: ValueKey(_visita),
         repositorio: widget.repositorioExamenes,
+        examenInicial: _destino?.$1,
+        preguntaInicial: _destino?.$2,
+      ),
+      SeccionPanel.reportes => BandejaPage(
+        repositorio: widget.repositorioBandeja,
+        onAbrirEstudiante: _abrirEstudiante,
+        onIrPregunta: (examen, pregunta) =>
+            _irA(SeccionPanel.examenes, (examen, pregunta)),
+        onIrTema: (version, tema) =>
+            _irA(SeccionPanel.contenido, (version, tema)),
+        ahora: widget.ahora,
       ),
       SeccionPanel.configuracion => ConfiguracionPage(
         academia: widget.repositorioAcademia,
@@ -164,6 +195,7 @@ class _ShellAdminState extends State<ShellAdmin> {
             correo: widget.correo,
             onSalir: widget.onSalir,
             pendientes: _pendientes,
+            reportesNuevos: _reportesNuevos,
           ),
           Expanded(child: _pagina()),
         ],
@@ -178,6 +210,7 @@ class _MenuLateral extends StatelessWidget {
   final String correo;
   final VoidCallback onSalir;
   final Stream<int> pendientes;
+  final Stream<int> reportesNuevos;
 
   const _MenuLateral({
     required this.seccion,
@@ -185,6 +218,7 @@ class _MenuLateral extends StatelessWidget {
     required this.correo,
     required this.onSalir,
     required this.pendientes,
+    required this.reportesNuevos,
   });
 
   static const _grupos = [
@@ -211,7 +245,10 @@ class _MenuLateral extends StatelessWidget {
     ),
     (
       'SISTEMA',
-      [(SeccionPanel.configuracion, 'Configuración', Icons.settings_outlined)],
+      [
+        (SeccionPanel.reportes, 'Reportes de la app', Icons.outlined_flag),
+        (SeccionPanel.configuracion, 'Configuración', Icons.settings_outlined),
+      ],
     ),
   ];
 
@@ -273,7 +310,11 @@ class _MenuLateral extends StatelessWidget {
                       icono: icono,
                       activo: s == seccion,
                       onTap: () => onIr(s),
-                      contador: s == SeccionPanel.pagos ? pendientes : null,
+                      contador: switch (s) {
+                        SeccionPanel.pagos => pendientes,
+                        SeccionPanel.reportes => reportesNuevos,
+                        _ => null,
+                      },
                     ),
                 ],
               ],

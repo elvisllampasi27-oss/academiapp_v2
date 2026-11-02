@@ -14,6 +14,8 @@ import '../features/exams/presentation/pages/examenes_page.dart';
 import '../features/identity/domain/entities/usuario_academiapp.dart';
 import '../features/identity/presentation/pages/perfil_page.dart';
 import '../features/premium/presentation/premium_page.dart';
+import '../features/reportes/domain/reporte.dart';
+import '../features/reportes/presentation/reportar.dart';
 import '../features/seminars/presentation/seminarios_page.dart';
 import '../features/tutor/presentation/conversacion_tutor.dart';
 import '../features/tutor/presentation/widgets/panel_tutor.dart';
@@ -151,6 +153,15 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                 repositorio: _d.examenes,
                 servicio: _d.servicioExamenes,
                 hoy: DateTime.now(),
+                onReportar: (context, examen, pregunta) => _reportar(
+                  context,
+                  TipoReporte.preguntaExamen,
+                  ContextoReporte(
+                    titulo: '${examen.titulo} · pregunta ${pregunta.numero}',
+                    examenId: examen.id,
+                    preguntaId: pregunta.id,
+                  ),
+                ),
               ),
             ),
             PestanaApp(
@@ -180,11 +191,42 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                     ),
                   ),
                 ),
+                onReportar: () => _reportar(
+                  context,
+                  TipoReporte.app,
+                  const ContextoReporte(titulo: 'Desde el perfil'),
+                ),
+                onMisReportes: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => MisReportesPage(
+                      repositorio: _d.reportes,
+                      uid: widget.usuario.uid,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
         );
       },
+    );
+  }
+
+  void _reportar(
+    BuildContext context,
+    TipoReporte tipo,
+    ContextoReporte contexto,
+  ) {
+    mostrarReportar(
+      context,
+      repositorio: _d.reportes,
+      autor: AutorReporte(
+        uid: widget.usuario.uid,
+        nombre: widget.usuario.nombre,
+        correo: widget.usuario.correo,
+      ),
+      tipo: tipo,
+      contexto: contexto,
     );
   }
 
@@ -241,6 +283,15 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
             versionId: versionId,
             tituloTema: tema.titulo,
             habilitada: habilitada,
+          ),
+          onReportar: () => _reportar(
+            context,
+            TipoReporte.video,
+            ContextoReporte(
+              titulo: [?curso?.nombre, tema.titulo].join(' · '),
+              versionId: versionId,
+              temaId: tema.id,
+            ),
           ),
           dudas: (cerrar) => PanelTutor(
             conversacion: conversacion,

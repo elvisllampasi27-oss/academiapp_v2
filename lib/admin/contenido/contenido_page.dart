@@ -21,11 +21,17 @@ class ContenidoPage extends StatefulWidget {
   final RepositorioEstudiantesAdmin estudiantes;
   final GeneradorQuiz generador;
 
+  /// Para abrir directo un tema (desde un reporte).
+  final String? versionInicial;
+  final String? temaInicial;
+
   const ContenidoPage({
     super.key,
     required this.contenido,
     required this.estudiantes,
     required this.generador,
+    this.versionInicial,
+    this.temaInicial,
   });
 
   @override
@@ -45,6 +51,7 @@ class _ContenidoPageState extends State<ContenidoPage> {
   String? _cursoId;
   FiltroTemas _filtro = FiltroTemas.todos;
   Tema? _editando;
+  late String? _temaPendiente = widget.temaInicial;
   final _desplazamientoCursos = ScrollController();
 
   @override
@@ -75,6 +82,9 @@ class _ContenidoPageState extends State<ContenidoPage> {
         if (_versionId == null) {
           final porDefecto =
               versiones
+                  .where((v) => v.id == widget.versionInicial)
+                  .firstOrNull ??
+              versiones
                   .where((v) => v.estado == EstadoVersionAcademica.activa)
                   .firstOrNull ??
               versiones.first;
@@ -87,6 +97,12 @@ class _ContenidoPageState extends State<ContenidoPage> {
           futuro: _resumen!,
           onReintentar: _recargar,
           builder: (context, resumen) {
+            if (_temaPendiente case final id?) {
+              _temaPendiente = null;
+              _editando = resumen.curriculo.temas
+                  .where((t) => t.id == id)
+                  .firstOrNull;
+            }
             final editando = _editando;
             if (editando != null) {
               final curso = resumen.curriculo.cursos.firstWhere(

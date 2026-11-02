@@ -8,6 +8,8 @@ class PerfilPage extends StatelessWidget {
   final VoidCallback onCerrarSesion;
   final VoidCallback? onAbrirSeminarios;
   final VoidCallback? onAbrirPremium;
+  final VoidCallback? onReportar;
+  final VoidCallback? onMisReportes;
 
   const PerfilPage({
     super.key,
@@ -15,6 +17,8 @@ class PerfilPage extends StatelessWidget {
     required this.onCerrarSesion,
     this.onAbrirSeminarios,
     this.onAbrirPremium,
+    this.onReportar,
+    this.onMisReportes,
   });
 
   @override
@@ -101,6 +105,26 @@ class PerfilPage extends StatelessWidget {
                 subtitle: const Text('Repasos por YouTube y sus grabaciones'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: onAbrirSeminarios,
+              ),
+            ),
+          if (onReportar != null)
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.outlined_flag),
+                title: const Text('Reportar un problema'),
+                subtitle: const Text('Algo no funciona o está mal'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: onReportar,
+              ),
+            ),
+          if (onMisReportes != null)
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.forum_outlined),
+                title: const Text('Mis reportes'),
+                subtitle: const Text('Su estado y la respuesta del equipo'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: onMisReportes,
               ),
             ),
           const SizedBox(height: 16),

@@ -19,10 +19,16 @@ class ExamenesAdminPage extends StatefulWidget {
   /// Para subir figuras (por defecto, Firebase Storage).
   final ServicioImagenesAdmin? imagenes;
 
+  /// Para abrir directo un examen y una pregunta (desde un reporte).
+  final String? examenInicial;
+  final String? preguntaInicial;
+
   const ExamenesAdminPage({
     super.key,
     required this.repositorio,
     this.imagenes,
+    this.examenInicial,
+    this.preguntaInicial,
   });
 
   @override
@@ -41,7 +47,20 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
   String _busqueda = '';
   _Filtro _filtro = _Filtro.todas;
 
-  Future<void> _elegirExamen(ExamenAdmin examen) async {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.examenInicial case final id?) {
+      _examenes.then((examenes) {
+        final examen = examenes.where((e) => e.id == id).firstOrNull;
+        if (examen != null && mounted) {
+          _elegirExamen(examen, preguntaId: widget.preguntaInicial);
+        }
+      }, onError: (_) {});
+    }
+  }
+
+  Future<void> _elegirExamen(ExamenAdmin examen, {String? preguntaId}) async {
     setState(() {
       _examen = examen;
       _preguntas = null;
@@ -51,7 +70,10 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
     try {
       final preguntas = await widget.repositorio.preguntas(examen.id);
       if (!mounted || _examen?.id != examen.id) return;
-      setState(() => _preguntas = preguntas);
+      setState(() {
+        _preguntas = preguntas;
+        _editando = preguntas.where((p) => p.id == preguntaId).firstOrNull;
+      });
     } catch (_) {
       _avisar('No se pudieron cargar las preguntas.');
     } finally {

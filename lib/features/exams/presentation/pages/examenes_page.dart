@@ -14,12 +14,14 @@ class ExamenesPage extends StatefulWidget {
   final RepositorioExamenes repositorio;
   final ServicioExamenes servicio;
   final DateTime hoy;
+  final ReportarPreguntaExamen? onReportar;
 
   const ExamenesPage({
     super.key,
     required this.repositorio,
     required this.servicio,
     required this.hoy,
+    this.onReportar,
   });
 
   @override
@@ -38,6 +40,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
           examen: examen,
           repositorio: widget.repositorio,
           servicio: widget.servicio,
+          onReportar: widget.onReportar,
         ),
       ),
     );

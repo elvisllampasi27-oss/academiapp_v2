@@ -220,3 +220,32 @@ test('material del tutor y material de los temas: solo el administrador', async 
   await assertFails(setDoc(doc(alumno(), 'recursos/v1__algebra-02__video-2'), { temaId: 'algebra-02', activo: true }));
   await assertSucceeds(setDoc(doc(admin(), 'claves_preguntas/v1__q__p01'), { opcionCorrectaId: 'a' }));
 });
+
+test('reportes: el estudiante manda el suyo como nuevo; el admin responde', async () => {
+  const reporte = {
+    usuarioId: 'alumno',
+    nombre: 'Ana',
+    correo: 'a@b.pe',
+    tipo: 'preguntaExamen',
+    mensaje: 'La clave no coincide con la solución.',
+    contexto: { titulo: 'Exonerados 2025 · pregunta 3', examenId: 'e1', preguntaId: 'e1__p003' },
+    estado: 'nuevo',
+    creadoEn: serverTimestamp(),
+  };
+  await assertSucceeds(setDoc(doc(alumno(), 'reportes/r1'), reporte));
+  // Otro estado, otro dueño, mensaje vacío, campo extra o tipo inventado: no.
+  await assertFails(setDoc(doc(alumno(), 'reportes/r2'), { ...reporte, estado: 'resuelto' }));
+  await assertFails(setDoc(doc(otro(), 'reportes/r3'), reporte));
+  await assertFails(setDoc(doc(alumno(), 'reportes/r4'), { ...reporte, mensaje: 'x' }));
+  await assertFails(setDoc(doc(alumno(), 'reportes/r5'), { ...reporte, respuesta: 'listo' }));
+  await assertFails(setDoc(doc(alumno(), 'reportes/r6'), { ...reporte, tipo: 'spam' }));
+  await assertFails(setDoc(doc(anonimo(), 'reportes/r7'), reporte));
+  // Lo lee él y el admin; nadie más.
+  await assertSucceeds(getDoc(doc(alumno(), 'reportes/r1')));
+  await assertFails(getDoc(doc(otro(), 'reportes/r1')));
+  await assertSucceeds(getDoc(doc(admin(), 'reportes/r1')));
+  // El estudiante no se responde a sí mismo; el admin sí. Nadie borra.
+  await assertFails(updateDoc(doc(alumno(), 'reportes/r1'), { estado: 'resuelto' }));
+  await assertSucceeds(updateDoc(doc(admin(), 'reportes/r1'), { estado: 'resuelto', respuesta: 'Corregida.' }));
+  await assertFails(deleteDoc(doc(admin(), 'reportes/r1')));
+});

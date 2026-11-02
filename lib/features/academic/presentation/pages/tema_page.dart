@@ -49,6 +49,10 @@ class TemaPage extends StatefulWidget {
   /// Panel de dudas con el tutor (si está disponible).
   final Widget Function(VoidCallback cerrar)? dudas;
 
+  /// Reportar un problema con la clase o el material (lo compone quien abre
+  /// la pantalla).
+  final VoidCallback? onReportar;
+
   const TemaPage({
     super.key,
     required this.tema,
@@ -61,6 +65,7 @@ class TemaPage extends StatefulWidget {
     this.abrirEnlace = _abrirEnNavegador,
     this.practica,
     this.dudas,
+    this.onReportar,
   });
 
   @override
@@ -270,6 +275,14 @@ class _TemaPageState extends State<TemaPage> {
             ),
           ],
         ),
+        actions: [
+          if (widget.onReportar case final reportar?)
+            IconButton(
+              tooltip: 'Reportar un problema',
+              onPressed: reportar,
+              icon: const Icon(Icons.outlined_flag),
+            ),
+        ],
       ),
       body: Stack(
         children: [

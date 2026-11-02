@@ -29,6 +29,8 @@ import '../features/identity/domain/repositories/servicio_autenticacion_google.d
 import '../features/identity/domain/repositories/servicio_recuperacion_contrasena.dart';
 import '../features/identity/infrastructure/repositories/repositorio_usuario_firestore.dart';
 import '../features/identity/infrastructure/services/firebase_servicio_autenticacion.dart';
+import '../features/reportes/domain/reporte.dart';
+import '../features/reportes/infrastructure/repositorio_reportes_firestore.dart';
 import '../features/seminars/domain/seminario.dart';
 import '../features/premium/domain/repositorio_premium.dart';
 import '../features/premium/infrastructure/elegir_foto.dart';
@@ -68,6 +70,7 @@ class Dependencias {
   final ServicioExamenes servicioExamenes;
   final RepositorioSeminarios seminarios;
   final RepositorioPremium premium;
+  final RepositorioReportes reportes;
 
   /// Foto del comprobante (galería). null si no se puede en este equipo.
   final Future<Uint8List?> Function()? elegirFoto;
@@ -93,6 +96,7 @@ class Dependencias {
     required this.servicioExamenes,
     required this.seminarios,
     required this.premium,
+    required this.reportes,
     this.elegirFoto,
   });
 
@@ -124,6 +128,7 @@ class Dependencias {
       premium: RepositorioPremiumFirestore(
         comprobantes: ServicioComprobanteStorage(),
       ),
+      reportes: RepositorioReportesFirestore(),
       elegirFoto: elegirFotoDeGaleria,
     );
   }

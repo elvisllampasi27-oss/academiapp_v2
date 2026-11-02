@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
@@ -23,12 +24,25 @@ class ServicioImagenesStorage implements ServicioImagenesAdmin {
 
   ServicioImagenesStorage({this._storage});
 
-  FirebaseStorage get storage => _storage ??= FirebaseStorage.instance;
+  FirebaseStorage get storage => _storage ??= (FirebaseStorage.instance
+    // Sin esto, si Storage no responde (sin Blaze o sin emulador) la subida
+    // se reintenta por 10 minutos y el panel se queda "subiendo".
+    ..setMaxUploadRetryTime(const Duration(seconds: 15))
+    ..setMaxOperationRetryTime(const Duration(seconds: 15)));
 
   @override
   Future<String> subir({required String ruta, required Uint8List bytes}) async {
     final ref = storage.ref(ruta);
-    await ref.putData(bytes, SettableMetadata(contentType: tipoDeImagen(ruta)));
+    final tarea = ref.putData(
+      bytes,
+      SettableMetadata(contentType: tipoDeImagen(ruta)),
+    );
+    try {
+      await tarea.timeout(const Duration(seconds: 30));
+    } on TimeoutException {
+      await tarea.cancel();
+      throw StateError('Storage no respondió en 30 segundos.');
+    }
     return ref.getDownloadURL();
   }
 }
