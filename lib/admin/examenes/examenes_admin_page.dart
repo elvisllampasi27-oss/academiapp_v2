@@ -326,7 +326,12 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                Row(
+                                // Wrap: en columnas angostas baja a otra
+                                // línea en vez de desbordarse.
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 4,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     e.publicado
                                         ? const Insignia(
@@ -337,7 +342,6 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
                                             'Borrador',
                                             tono: TonoInsignia.acento,
                                           ),
-                                    const SizedBox(width: 8),
                                     Text(
                                       '${e.totalPreguntas} preguntas',
                                       style: TextStyle(
