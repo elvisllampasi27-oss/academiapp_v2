@@ -3,10 +3,12 @@
 /**
  * Proveedor Gemini (Google AI Studio). Llamada REST directa: sin SDK.
  * @param {{ clave: string, modelo?: string, instrucciones: string,
- *           mensajes: {rol: 'estudiante'|'tutor', texto: string}[] }} opciones
+ *           mensajes: {rol: 'estudiante'|'tutor', texto: string}[],
+ *           json?: boolean, maxTokens?: number }} opciones
+ *   json: pide la respuesta como JSON (para generar quizzes).
  * @returns {Promise<string>} texto de la respuesta
  */
-async function generarConGemini({ clave, modelo, instrucciones, mensajes }) {
+async function generarConGemini({ clave, modelo, instrucciones, mensajes, json = false, maxTokens = 1536 }) {
   const nombre = modelo || 'gemini-3.8-flash';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${nombre}:generateContent`;
 
@@ -22,9 +24,10 @@ async function generarConGemini({ clave, modelo, instrucciones, mensajes }) {
       generationConfig: {
         temperature: 0.4,
         // Incluye el razonamiento interno del modelo, no solo la respuesta.
-        maxOutputTokens: 1536,
+        maxOutputTokens: maxTokens,
         // Poco "pensamiento": respuestas rápidas y más baratas.
         thinkingConfig: { thinkingLevel: 'low' },
+        ...(json ? { responseMimeType: 'application/json' } : {}),
       },
     }),
   });

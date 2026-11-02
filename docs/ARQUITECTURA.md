@@ -85,9 +85,10 @@ panel se escribe junto con su entrada en `registro_admin` (mismo lote).
 | `versiones_academicas`, `planes_academicos` | admin (panel → Versiones) | una versión nueva copia el temario (y si se pide, el material) de otra |
 | `registro_admin` | admin (panel) | quién hizo qué; solo se agregan entradas |
 | `curriculos/{version}`, `publicaciones_version/{version}` | admin (panel) / scripts | temario y publicados en 1 lectura cada uno |
-| `contenidos`, `recursos` | admin / scripts | material de cada tema |
+| `contenidos` (por tema), `recursos` (por versión) | admin (panel → Cursos y temas) / scripts | video, separata y "qué aprenderás" |
+| `material_tutor/{version}__{tema}` | admin (panel) | texto que usan el tutor y la IA para generar quizzes |
 | `progreso_clases` | estudiante (el suyo) | id `{uid}__{version}__{tema}` |
-| `evaluaciones`, `preguntas` / `claves_preguntas` | admin / scripts | prácticas por tema |
+| `evaluaciones`, `preguntas` / `claves_preguntas` | admin (panel) / scripts | quiz por nivel; la IA solo propone borradores (`generarPreguntas`) |
 | `intentos_evaluacion`, `respuestas`, `evidencias` | servidor | entrada del BKT |
 | `examenes`, `preguntas_examen` / `claves_examen`, `indices` | admin / scripts | exámenes pasados |
 | `simulacros` | servidor | examen tipo admisión |

@@ -275,6 +275,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // MATERIAL DEL TUTOR (texto de la separata o teoría por tema): lo
+    // escribe el administrador y lo lee Cloud Functions.
+    match /material_tutor/{documento} {
+
+      allow read, write: if esAdmin();
+    }
+
     // USO DEL TUTOR (límite diario): solo Cloud Functions.
     match /uso_tutor/{usoId} {
 

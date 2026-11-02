@@ -212,3 +212,11 @@ test('versiones y temario: solo el administrador los crea y publica', async () =
   await assertSucceeds(getDoc(doc(admin(), 'claves_preguntas/p1')));
   await assertFails(getDoc(doc(alumno(), 'claves_preguntas/p1')));
 });
+
+test('material del tutor y material de los temas: solo el administrador', async () => {
+  await assertSucceeds(setDoc(doc(admin(), 'material_tutor/v1__algebra-02'), { texto: 'Un polinomio…' }));
+  await assertFails(getDoc(doc(alumno(), 'material_tutor/v1__algebra-02')));
+  await assertSucceeds(setDoc(doc(admin(), 'recursos/v1__algebra-02__video-1'), { temaId: 'algebra-02', activo: true }));
+  await assertFails(setDoc(doc(alumno(), 'recursos/v1__algebra-02__video-2'), { temaId: 'algebra-02', activo: true }));
+  await assertSucceeds(setDoc(doc(admin(), 'claves_preguntas/v1__q__p01'), { opcionCorrectaId: 'a' }));
+});

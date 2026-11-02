@@ -6,6 +6,8 @@ import 'estudiantes/modelo_estudiantes.dart';
 import 'estudiantes/repositorio_estudiantes_admin.dart';
 import 'examenes/examenes_admin_page.dart';
 import 'configuracion/configuracion_page.dart';
+import 'contenido/contenido_page.dart';
+import 'contenido/repositorio_contenido_admin.dart';
 import 'examenes/repositorio_examenes_admin.dart';
 import 'pagos/cupones_page.dart';
 import 'pagos/pagos_page.dart';
@@ -23,12 +25,13 @@ enum SeccionPanel {
   pagos,
   cupones,
   versiones,
+  contenido,
   examenes,
   configuracion,
 }
 
 /// Estructura del panel: menú lateral por grupos y la sección elegida.
-/// Las secciones de los siguientes bloques (versiones, contenido…) se
+/// Las secciones de los siguientes bloques (avisos, reportes…) se
 /// agregan aquí.
 class ShellAdmin extends StatefulWidget {
   final String correo;
@@ -38,6 +41,8 @@ class ShellAdmin extends StatefulWidget {
   final RepositorioPagosAdmin repositorioPagos;
   final RepositorioAcademiaAdmin repositorioAcademia;
   final RepositorioVersionesAdmin repositorioVersiones;
+  final RepositorioContenidoAdmin repositorioContenido;
+  final GeneradorQuiz generadorQuiz;
   final DateTime Function() ahora;
 
   const ShellAdmin({
@@ -49,6 +54,8 @@ class ShellAdmin extends StatefulWidget {
     required this.repositorioPagos,
     required this.repositorioAcademia,
     required this.repositorioVersiones,
+    required this.repositorioContenido,
+    required this.generadorQuiz,
     this.ahora = DateTime.now,
   });
 
@@ -130,6 +137,11 @@ class _ShellAdminState extends State<ShellAdmin> {
         onVerEstudiantes: () => _ir(SeccionPanel.estudiantes),
         ahora: widget.ahora,
       ),
+      SeccionPanel.contenido => ContenidoPage(
+        contenido: widget.repositorioContenido,
+        estudiantes: widget.repositorioEstudiantes,
+        generador: widget.generadorQuiz,
+      ),
       SeccionPanel.examenes => ExamenesAdminPage(
         repositorio: widget.repositorioExamenes,
       ),
@@ -192,7 +204,10 @@ class _MenuLateral extends StatelessWidget {
     ),
     (
       'CONTENIDO',
-      [(SeccionPanel.examenes, 'Exámenes', Icons.assignment_outlined)],
+      [
+        (SeccionPanel.contenido, 'Cursos y temas', Icons.menu_book_outlined),
+        (SeccionPanel.examenes, 'Exámenes', Icons.assignment_outlined),
+      ],
     ),
     (
       'SISTEMA',
