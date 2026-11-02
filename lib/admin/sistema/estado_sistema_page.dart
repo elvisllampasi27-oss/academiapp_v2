@@ -68,7 +68,7 @@ class _EstadoSistemaPageState extends State<EstadoSistemaPage> {
           titulo: 'Estado del sistema',
           subtitulo:
               'Si cada servicio responde y lo que está esperando al equipo. '
-              'Revisado a las ${horaCorta(_revisado)}.',
+              'Revisado a las ${horaCorta(_revisado)}',
           acciones: [
             OutlinedButton.icon(
               onPressed: _revisar,
