@@ -61,14 +61,14 @@ panel se escribe junto con su entrada en `registro_admin` (mismo lote).
 Quizzes y exámenes se cargan pegando o abriendo un JSON (el mismo formato de
 la V1 y de `tool/`). Antes de importar, el panel muestra cuántas traen LaTeX,
 imágenes, solución y qué preguntas se omiten y por qué
-(`lib/admin/importar/`). Las imágenes que vienen como nombre de archivo se
-leen de Hosting:
+(`lib/admin/importar/`). Las imágenes del JSON son nombres de archivo: se
+eligen del computador en el mismo diálogo y se suben a Storage
+(`temas/{version}/{tema}/` o `examenes/{tipo}/{dd-mm-aaaa}/`).
 
-- quizzes: `hosting/temas/{version}/{tema}/`
-- exámenes: `hosting/examenes/{tipo}/{dd-mm-aaaa}/`
-
-Se copian ahí y se publican con `firebase deploy --only hosting` (funciona en
-el plan gratis). Con Blaze se podrá subir directo a Storage.
+- **Con Blaze**: se suben directo a Firebase Storage (`storage.rules`).
+- **Hoy (plan gratis)**: se prueba con el emulador de Storage:
+  `firebase emulators:start --only functions,storage` y el panel/app con
+  `--dart-define=EMULADOR_STORAGE=true`.
 
 ## Seguridad
 

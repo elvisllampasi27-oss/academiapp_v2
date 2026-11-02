@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../core/enlaces.dart';
 import '../../core/presentation/imagen_figura.dart';
 import '../../core/presentation/texto_con_latex.dart';
 import '../../features/academic/domain/entities/curso.dart';
 import '../../features/academic/domain/entities/tema.dart';
 import '../importar/dialogo_importar_json.dart';
 import '../importar/importar_json.dart';
+import '../importar/subir_imagenes.dart';
 import '../tema_panel.dart';
 import '../widgets_panel.dart';
 import 'modelo_contenido.dart';
@@ -21,6 +23,9 @@ class EditorQuizPage extends StatefulWidget {
   final RepositorioContenidoAdmin repositorio;
   final GeneradorQuiz generador;
 
+  /// Para subir figuras (por defecto, Firebase Storage).
+  final ServicioImagenesAdmin? imagenes;
+
   /// El estado del quiz si se guardó; null si se salió sin guardar.
   final ValueChanged<QuizTema?> onVolver;
 
@@ -33,6 +38,7 @@ class EditorQuizPage extends StatefulWidget {
     required this.repositorio,
     required this.generador,
     required this.onVolver,
+    this.imagenes,
   });
 
   @override
@@ -133,17 +139,18 @@ class _EditorQuizPageState extends State<EditorQuizPage> {
     }
   }
 
-  /// Carpeta de Hosting de las figuras de este tema.
-  String get _carpeta => 'temas/${widget.versionId}/${widget.tema.id}/';
+  /// Carpeta de las figuras de este tema (Storage; Hosting de respaldo).
+  String get _carpeta => 'temas/${widget.versionId}/${widget.tema.id}';
 
   Future<void> _importar() async {
     final elegida = await mostrarImportarJson(
       context,
       titulo: 'Importar preguntas (JSON)',
       urlDeArchivo: (archivo) =>
-          '$urlHosting/$_carpeta${Uri.encodeComponent(archivo)}',
-      carpetaImagenes: 'hosting/$_carpeta',
+          '$urlHosting/$_carpeta/${Uri.encodeComponent(archivo)}',
+      carpetaImagenes: _carpeta,
       hayActuales: _preguntas.isNotEmpty,
+      imagenes: widget.imagenes ?? ServicioImagenesStorage(),
     );
     if (elegida == null || !mounted) return;
     setState(() {
@@ -375,7 +382,7 @@ class _TarjetaPregunta extends StatelessWidget {
               labelText: 'Figura (enlace https, opcional)',
             ),
           ),
-          if (pregunta.imagen.text.trim().startsWith('https://')) ...[
+          if (esEnlaceImagen(pregunta.imagen.text)) ...[
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerLeft,

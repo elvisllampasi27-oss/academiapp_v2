@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../core/presentation/colores_app.dart';
 import '../../core/presentation/texto.dart';
 import '../importar/dialogo_importar_json.dart';
 import '../importar/importar_json.dart';
+import '../importar/subir_imagenes.dart';
+import '../tema_panel.dart';
+import '../widgets_panel.dart';
 import 'editor_pregunta.dart';
 import 'modelo_examen_admin.dart';
 import 'repositorio_examenes_admin.dart';
@@ -14,7 +16,14 @@ enum _Filtro { todas, sinSolucion, inactivas }
 class ExamenesAdminPage extends StatefulWidget {
   final RepositorioExamenesAdmin repositorio;
 
-  const ExamenesAdminPage({super.key, required this.repositorio});
+  /// Para subir figuras (por defecto, Firebase Storage).
+  final ServicioImagenesAdmin? imagenes;
+
+  const ExamenesAdminPage({
+    super.key,
+    required this.repositorio,
+    this.imagenes,
+  });
 
   @override
   State<ExamenesAdminPage> createState() => _ExamenesAdminPageState();
@@ -102,7 +111,9 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
         publicado: !examen.publicado,
       );
       if (!mounted) return;
-      setState(() => _examenes = widget.repositorio.examenes());
+      setState(() {
+        _examenes = widget.repositorio.examenes();
+      });
     } catch (_) {
       _avisar('No se pudo cambiar el estado.');
     }
@@ -125,8 +136,9 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
       titulo: 'Importar ${tituloExamen(tipo, fecha)}',
       urlDeArchivo: (archivo) =>
           '$urlHosting/examenes/$tipo/$carpeta/${Uri.encodeComponent(archivo)}',
-      carpetaImagenes: 'hosting/examenes/$tipo/$carpeta/',
+      carpetaImagenes: 'examenes/$tipo/$carpeta',
       hayActuales: yaExiste,
+      imagenes: widget.imagenes ?? ServicioImagenesStorage(),
     );
     if (elegida == null || !mounted) return;
 
@@ -166,7 +178,9 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
         '${tituloExamen(tipo, fecha)}. Revísalo y publícalo.',
       );
       if (mounted) {
-        setState(() => _examenes = widget.repositorio.examenes());
+        setState(() {
+          _examenes = widget.repositorio.examenes();
+        });
       }
     } catch (e) {
       _avisar('No se pudo importar: $e');
@@ -197,65 +211,164 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(width: 290, child: _listaExamenes()),
-        const VerticalDivider(width: 1),
-        SizedBox(width: 380, child: _listaPreguntas()),
-        const VerticalDivider(width: 1),
-        Expanded(child: _editor()),
-      ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 28, 32, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          EncabezadoPanel(
+            titulo: 'Exámenes pasados',
+            subtitulo:
+                'Los estudiantes los practican y el examen tipo admisión toma '
+                'de aquí sus preguntas. Elige un examen y luego una pregunta.',
+            acciones: [
+              OutlinedButton.icon(
+                onPressed: () => setState(() {
+                  _examenes = widget.repositorio.examenes();
+                }),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Actualizar'),
+              ),
+              FilledButton.icon(
+                onPressed: () async => _importar(await _examenes),
+                icon: const Icon(Icons.data_object, size: 18),
+                label: const Text('Importar examen (JSON)'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  width: 300,
+                  child: TarjetaPanel(
+                    padding: const EdgeInsets.all(10),
+                    child: _listaExamenes(),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 380,
+                  child: TarjetaPanel(
+                    padding: EdgeInsets.zero,
+                    child: _listaPreguntas(),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TarjetaPanel(
+                    padding: EdgeInsets.zero,
+                    child: _editor(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _listaExamenes() {
+    final p = PaletaPanel.de(context);
     return FutureBuilder<List<ExamenAdmin>>(
       future: _examenes,
       builder: (context, snapshot) {
         final examenes = snapshot.data;
-
+        if (snapshot.hasError) {
+          return const Center(child: Text('No se pudieron cargar.'));
+        }
+        if (examenes == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (examenes.isEmpty) {
+          return Center(
+            child: Text(
+              'Todavía no hay exámenes. Importa uno.',
+              style: TextStyle(color: p.apagado),
+            ),
+          );
+        }
         return ListView(
-          padding: const EdgeInsets.all(16),
           children: [
-            const Text(
-              'Exámenes pasados',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () => _importar(examenes ?? const []),
-              icon: const Icon(Icons.data_object, size: 18),
-              label: const Text('Importar examen (JSON)'),
-            ),
-            const SizedBox(height: 12),
-            if (snapshot.hasError)
-              const Text('No se pudieron cargar los exámenes.')
-            else if (examenes == null)
-              const Center(child: CircularProgressIndicator())
-            else
-              for (final e in examenes)
-                Card(
-                  color: e.id == _examen?.id ? const Color(0x1FFFFFFF) : null,
-                  child: ListTile(
-                    title: Text(e.titulo),
-                    subtitle: Text(
-                      '${e.totalPreguntas} preguntas · '
-                      '${e.publicado ? 'publicado' : 'borrador'}',
+            for (final e in examenes)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Material(
+                  color: e.id == _examen?.id
+                      ? const Color(0x14FFFFFF)
+                      : Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: e.id == _examen?.id
+                          ? p.acento.withValues(alpha: 0.6)
+                          : Colors.transparent,
                     ),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
                     onTap: () => _elegirExamen(e),
-                    trailing: IconButton(
-                      tooltip: e.publicado
-                          ? 'Pasar a borrador (los estudiantes no lo ven)'
-                          : 'Publicar',
-                      icon: Icon(
-                        e.publicado
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  e.titulo,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    e.publicado
+                                        ? const Insignia(
+                                            'Publicado',
+                                            tono: TonoInsignia.secundario,
+                                          )
+                                        : const Insignia(
+                                            'Borrador',
+                                            tono: TonoInsignia.acento,
+                                          ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${e.totalPreguntas} preguntas',
+                                      style: TextStyle(
+                                        color: p.apagado,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: e.publicado
+                                ? 'Pasar a borrador (los estudiantes no lo ven)'
+                                : 'Publicar',
+                            icon: Icon(
+                              e.publicado
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              size: 20,
+                              color: p.apagado,
+                            ),
+                            onPressed: () => _cambiarEstado(e),
+                          ),
+                        ],
                       ),
-                      onPressed: () => _cambiarEstado(e),
                     ),
                   ),
                 ),
+              ),
           ],
         );
       },
@@ -264,10 +377,10 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
 
   Widget _listaPreguntas() {
     if (_examen == null) {
-      return const Center(
+      return Center(
         child: Text(
           'Elige un examen.',
-          style: TextStyle(color: ColoresApp.apagado),
+          style: TextStyle(color: PaletaPanel.de(context).apagado),
         ),
       );
     }
@@ -330,7 +443,10 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
               final p = visibles[i];
               return ListTile(
                 selected: p.id == _editando?.id,
-                selectedTileColor: const Color(0x1FFFFFFF),
+                selectedTileColor: const Color(0x14FFFFFF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 title: Text(
                   '#${p.numero} · ${p.seccion}',
                   style: const TextStyle(fontWeight: FontWeight.w600),
@@ -346,21 +462,21 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
                     if (p.imagen != null)
                       const Icon(Icons.image_outlined, size: 16),
                     if (!p.tieneSolucion)
-                      const Tooltip(
+                      Tooltip(
                         message: 'Sin solución',
                         child: Icon(
                           Icons.lightbulb_outline,
                           size: 16,
-                          color: ColoresApp.ambar,
+                          color: PaletaPanel.de(context).acento,
                         ),
                       ),
                     if (!p.activa)
-                      const Tooltip(
+                      Tooltip(
                         message: 'Inactiva',
                         child: Icon(
                           Icons.block,
                           size: 16,
-                          color: ColoresApp.naranja,
+                          color: PaletaPanel.de(context).alerta,
                         ),
                       ),
                   ],
@@ -380,10 +496,10 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
   Widget _editor() {
     final pregunta = _editando;
     if (pregunta == null) {
-      return const Center(
+      return Center(
         child: Text(
           'Elige una pregunta para editarla.',
-          style: TextStyle(color: ColoresApp.apagado),
+          style: TextStyle(color: PaletaPanel.de(context).apagado),
         ),
       );
     }

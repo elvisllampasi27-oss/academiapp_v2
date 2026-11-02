@@ -60,7 +60,9 @@ class _ResumenPageState extends State<ResumenPage> {
     ).wait;
   }
 
-  void _recargar() => setState(() => _datos = _cargar());
+  void _recargar() => setState(() {
+    _datos = _cargar();
+  });
 
   Future<void> _matricular(List<EstudianteAdmin> estudiantes) async {
     final hecho = await mostrarMatricular(

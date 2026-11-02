@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:academiapp_v2/admin/importar/dialogo_importar_json.dart';
 import 'package:academiapp_v2/admin/importar/importar_json.dart';
+import 'package:academiapp_v2/admin/importar/subir_imagenes.dart';
 import 'package:academiapp_v2/admin/tema_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -156,4 +158,77 @@ void main() {
     expect(elegida?.resultado.preguntas.single.correcta, 1);
     expect(elegida?.reemplazar, isFalse);
   });
+
+  testWidgets('sube las imágenes elegidas del computador por su nombre', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final subidas = <String>[];
+    ImportacionElegida? elegida;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: temaPanel(),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: FilledButton(
+                onPressed: () async {
+                  elegida = await mostrarImportarJson(
+                    context,
+                    titulo: 'Importar',
+                    urlDeArchivo: url,
+                    carpetaImagenes: 'temas/v1/t',
+                    imagenes: _ServicioFalso(subidas),
+                    elegirImagenes: () async => [
+                      ArchivoImagen('FIG.png', Uint8List(3)),
+                      ArchivoImagen('otra.png', Uint8List(3)),
+                    ],
+                    abrirArchivo: () async => jsonEncode([
+                      {
+                        'enunciado': 'Mira la figura',
+                        'opciones': ['1', '2'],
+                        'correcta': 0,
+                        'imagen': 'fig.png',
+                      },
+                    ]),
+                  );
+                },
+                child: const Text('abrir'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('abrir'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Abrir archivo .json'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Subir imágenes'));
+    await tester.pumpAndSettle();
+
+    expect(subidas, ['temas/v1/t/fig.png']);
+    expect(find.text('Las 1 imágenes están subidas.'), findsOneWidget);
+    await tester.tap(find.text('Importar 1 preguntas'));
+    await tester.pumpAndSettle();
+    expect(
+      elegida?.resultado.preguntas.single.imagen,
+      'http://localhost:9199/temas/v1/t/fig.png',
+    );
+  });
+}
+
+class _ServicioFalso implements ServicioImagenesAdmin {
+  final List<String> rutas;
+  _ServicioFalso(this.rutas);
+
+  @override
+  Future<String> subir({required String ruta, required Uint8List bytes}) async {
+    rutas.add(ruta);
+    return 'http://localhost:9199/$ruta';
+  }
 }

@@ -106,7 +106,9 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
       );
       if (!mounted) return;
       avisarPanel(context, 'Configuración guardada.');
-      setState(() => _datos = _cargar());
+      setState(() {
+        _datos = _cargar();
+      });
     } catch (e) {
       if (mounted) avisarPanel(context, 'No se pudo guardar: $e');
     } finally {
@@ -118,7 +120,9 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
   Widget build(BuildContext context) {
     return FuturoPanel(
       futuro: _datos,
-      onReintentar: () => setState(() => _datos = _cargar()),
+      onReintentar: () => setState(() {
+        _datos = _cargar();
+      }),
       builder: (context, datos) {
         final (_, acciones) = datos;
         final p = PaletaPanel.de(context);

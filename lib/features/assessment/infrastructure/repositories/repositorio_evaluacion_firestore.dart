@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../../core/enlaces.dart';
+
 import '../../domain/entities/evaluacion.dart';
 import '../../domain/entities/pregunta.dart';
 import '../../domain/entities/pregunta_presentada.dart';
@@ -68,7 +70,7 @@ class RepositorioEvaluacionFirestore implements RepositorioEvaluacion {
             DificultadPregunta.basica,
         orden: datos['orden'] as int,
         imagen: switch (datos['imagen']) {
-          final String url when url.startsWith('https://') => url,
+          final String url when esEnlaceImagen(url) => url,
           _ => null,
         },
         opciones: [

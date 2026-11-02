@@ -25,7 +25,9 @@ class CuponesPage extends StatefulWidget {
 class _CuponesPageState extends State<CuponesPage> {
   late Future<List<Cupon>> _cupones = widget.repositorio.cupones();
 
-  void _recargar() => setState(() => _cupones = widget.repositorio.cupones());
+  void _recargar() => setState(() {
+    _cupones = widget.repositorio.cupones();
+  });
 
   Future<void> _editar([Cupon? cupon]) async {
     final guardado = await showDialog<bool>(

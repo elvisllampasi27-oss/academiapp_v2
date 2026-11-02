@@ -33,8 +33,22 @@ class PreguntaImportada {
 
   bool get tieneImagen => imagen != null || imagenSolucion != null;
 
-  /// Archivos de imagen que hay que subir a Hosting (no los enlaces https
-  /// que ya venían en el JSON).
+  /// Copia con las imágenes ya subidas: [subidas] va de la dirección
+  /// provisional (por nombre de archivo) a la dirección real.
+  PreguntaImportada conImagenes(Map<String, String> subidas) =>
+      PreguntaImportada(
+        numero: numero,
+        enunciado: enunciado,
+        opciones: opciones,
+        correcta: correcta,
+        solucion: solucion,
+        imagen: subidas[imagen] ?? imagen,
+        imagenSolucion: subidas[imagenSolucion] ?? imagenSolucion,
+        seccion: seccion,
+      );
+
+  /// Archivos de imagen que hay que subir (no los enlaces https que ya
+  /// venían en el JSON).
   List<String> archivosEn(String carpetaUrl) => [
     for (final url in [imagen, imagenSolucion])
       if (url != null && url.startsWith(carpetaUrl))
@@ -70,6 +84,13 @@ class ResultadoImportacion {
     required this.avisos,
     this.secciones = const [],
   });
+
+  ResultadoImportacion conImagenes(Map<String, String> subidas) =>
+      ResultadoImportacion(
+        preguntas: [for (final p in preguntas) p.conImagenes(subidas)],
+        avisos: avisos,
+        secciones: secciones,
+      );
 
   int get conLatex => preguntas.where((p) => p.tieneLatex).length;
   int get conImagen => preguntas.where((p) => p.tieneImagen).length;

@@ -1,3 +1,5 @@
+import '../../core/enlaces.dart';
+
 /// Modelos del panel: a diferencia de la app del estudiante, aquí la
 /// pregunta incluye la respuesta correcta y la solución.
 class ExamenAdmin {
@@ -72,7 +74,7 @@ class PreguntaAdmin {
       return 'Marca cuál es la alternativa correcta.';
     }
     for (final url in [imagen, imagenSolucion]) {
-      if (url != null && !(Uri.tryParse(url)?.isScheme('https') ?? false)) {
+      if (url != null && !esEnlaceImagen(url)) {
         return 'Las imágenes deben ser enlaces https.';
       }
     }

@@ -1,3 +1,4 @@
+import '../../core/enlaces.dart';
 import '../../features/academic/domain/entities/curriculo.dart';
 
 /// Material de los temas tal como lo administra el panel (Dart puro).
@@ -153,7 +154,7 @@ class PreguntaPractica {
     if (correcta < 0 || correcta >= opciones.length) {
       return 'Marca la respuesta correcta.';
     }
-    if (imagen != null && !enlaceValido(imagen!)) {
+    if (imagen != null && !esEnlaceImagen(imagen!)) {
       return 'La imagen debe ser un enlace https.';
     }
     return null;

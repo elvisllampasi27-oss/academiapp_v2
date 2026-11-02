@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../tema_panel.dart';
 import '../widgets_panel.dart';
 import 'importar_json.dart';
+import 'subir_imagenes.dart';
 
 /// Lo que eligió el administrador al importar.
 class ImportacionElegida {
@@ -35,11 +36,13 @@ Future<ImportacionElegida?> mostrarImportarJson(
   required String titulo,
   required String Function(String archivo) urlDeArchivo,
 
-  /// Carpeta de Hosting donde van las imágenes, p. ej.
-  /// "hosting/temas/version-1/algebra-02/". Se muestra como ayuda.
+  /// Carpeta donde se suben las imágenes, p. ej. "temas/version-1/algebra-02".
   required String carpetaImagenes,
   bool hayActuales = false,
+  ServicioImagenesAdmin? imagenes,
   Future<String?> Function() abrirArchivo = _abrirArchivoJson,
+  Future<List<ArchivoImagen>> Function() elegirImagenes =
+      elegirImagenesDelComputador,
 }) {
   return showDialog<ImportacionElegida>(
     context: context,
@@ -48,7 +51,9 @@ Future<ImportacionElegida?> mostrarImportarJson(
       urlDeArchivo: urlDeArchivo,
       carpetaImagenes: carpetaImagenes,
       hayActuales: hayActuales,
+      imagenes: imagenes,
       abrirArchivo: abrirArchivo,
+      elegirImagenes: elegirImagenes,
     ),
   );
 }
@@ -58,7 +63,9 @@ class DialogoImportarJson extends StatefulWidget {
   final String Function(String archivo) urlDeArchivo;
   final String carpetaImagenes;
   final bool hayActuales;
+  final ServicioImagenesAdmin? imagenes;
   final Future<String?> Function() abrirArchivo;
+  final Future<List<ArchivoImagen>> Function() elegirImagenes;
 
   const DialogoImportarJson({
     super.key,
@@ -67,6 +74,8 @@ class DialogoImportarJson extends StatefulWidget {
     required this.carpetaImagenes,
     required this.hayActuales,
     required this.abrirArchivo,
+    required this.elegirImagenes,
+    this.imagenes,
   });
 
   @override
@@ -78,6 +87,11 @@ class _DialogoImportarJsonState extends State<DialogoImportarJson> {
   ResultadoImportacion? _resultado;
   String? _error;
   late bool _reemplazar = widget.hayActuales;
+
+  /// Dirección provisional (por nombre de archivo) -> dirección subida.
+  final _subidas = <String, String>{};
+  final _subiendo = <String>{};
+  String? _avisoImagenes;
 
   static const _ejemplo = '''{
   "preguntas": [
@@ -123,6 +137,51 @@ class _DialogoImportarJsonState extends State<DialogoImportarJson> {
     } catch (e) {
       if (mounted) setState(() => _error = 'No se pudo abrir el archivo: $e');
     }
+  }
+
+  /// Sube las imágenes elegidas cuyo nombre coincide con las del JSON.
+  Future<void> _subirImagenes(Set<String> faltan) async {
+    final servicio = widget.imagenes;
+    if (servicio == null) return;
+    final List<ArchivoImagen> elegidas;
+    try {
+      elegidas = await widget.elegirImagenes();
+    } catch (e) {
+      setState(() => _avisoImagenes = 'No se pudo abrir: $e');
+      return;
+    }
+    final porNombre = {for (final n in faltan) n.toLowerCase(): n};
+    final sobran = <String>[];
+    var errores = 0;
+    for (final a in elegidas) {
+      final nombre = porNombre[a.nombre.toLowerCase()];
+      if (nombre == null) {
+        sobran.add(a.nombre);
+        continue;
+      }
+      setState(() => _subiendo.add(nombre));
+      try {
+        final url = await servicio.subir(
+          ruta: '${widget.carpetaImagenes}/$nombre',
+          bytes: a.bytes,
+        );
+        _subidas[widget.urlDeArchivo(nombre)] = url;
+      } catch (_) {
+        errores++;
+      }
+      if (mounted) setState(() => _subiendo.remove(nombre));
+    }
+    if (!mounted) return;
+    setState(() {
+      _avisoImagenes = [
+        if (errores > 0)
+          'No se pudieron subir $errores imágenes. Subir archivos necesita el '
+              'plan Blaze; para probar ahora abre el panel con el emulador '
+              '(--dart-define=EMULADOR_STORAGE=true).',
+        if (sobran.isNotEmpty)
+          'No están en el JSON (no se usan): ${sobran.join(', ')}.',
+      ].join(' ');
+    });
   }
 
   @override
@@ -236,11 +295,15 @@ class _DialogoImportarJsonState extends State<DialogoImportarJson> {
                   ),
                   const SizedBox(width: 10),
                   FilledButton.icon(
-                    onPressed: r == null || r.preguntas.isEmpty
+                    onPressed:
+                        r == null || r.preguntas.isEmpty || _subiendo.isNotEmpty
                         ? null
                         : () => Navigator.pop(
                             context,
-                            ImportacionElegida(r, reemplazar: _reemplazar),
+                            ImportacionElegida(
+                              r.conImagenes(_subidas),
+                              reemplazar: _reemplazar,
+                            ),
                           ),
                     icon: const Icon(Icons.check, size: 18),
                     label: Text(
@@ -278,22 +341,7 @@ class _DialogoImportarJsonState extends State<DialogoImportarJson> {
             Insignia('${r.avisos.length} avisos', tono: TonoInsignia.alerta),
         ],
       ),
-      if (archivos.isNotEmpty)
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: p.acento.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: p.acento.withValues(alpha: 0.3)),
-          ),
-          child: Text(
-            '${archivos.length} imágenes se leen de Hosting. Cópialas a '
-            '${widget.carpetaImagenes} y ejecuta: firebase deploy --only '
-            'hosting. Las que salen como "no encontrada" aún no están '
-            'subidas.',
-            style: const TextStyle(height: 1.45),
-          ),
-        ),
+      if (archivos.isNotEmpty) _seccionImagenes(archivos),
       for (final a in r.avisos)
         Text('• $a', style: TextStyle(color: p.alerta, fontSize: 13)),
       for (final x in r.preguntas)
@@ -336,13 +384,13 @@ class _DialogoImportarJsonState extends State<DialogoImportarJson> {
                   ],
                 ),
               ),
-              for (final url in [?x.imagen, ?x.imagenSolucion])
+              for (final provisional in [?x.imagen, ?x.imagenSolucion])
                 Padding(
                   padding: const EdgeInsets.only(left: 8),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
-                      url,
+                      _subidas[provisional] ?? provisional,
                       width: 64,
                       height: 48,
                       fit: BoxFit.cover,
@@ -352,7 +400,7 @@ class _DialogoImportarJsonState extends State<DialogoImportarJson> {
                         alignment: Alignment.center,
                         color: p.alerta.withValues(alpha: 0.12),
                         child: Text(
-                          'no encontrada',
+                          'por subir',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: p.alerta, fontSize: 10),
                         ),
@@ -364,5 +412,78 @@ class _DialogoImportarJsonState extends State<DialogoImportarJson> {
           ),
         ),
     ];
+  }
+
+  Widget _seccionImagenes(Set<String> archivos) {
+    final p = PaletaPanel.de(context);
+    final faltan = {
+      for (final n in archivos)
+        if (!_subidas.containsKey(widget.urlDeArchivo(n))) n,
+    };
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: p.acento.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: p.acento.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  faltan.isEmpty
+                      ? 'Las ${archivos.length} imágenes están subidas.'
+                      : 'Imágenes: ${archivos.length - faltan.length} de '
+                            '${archivos.length} subidas. Elige los archivos '
+                            'del computador (puedes elegir varios a la vez).',
+                  style: const TextStyle(height: 1.4),
+                ),
+              ),
+              if (faltan.isNotEmpty && widget.imagenes != null)
+                FilledButton.tonalIcon(
+                  onPressed: _subiendo.isNotEmpty
+                      ? null
+                      : () => _subirImagenes(faltan),
+                  icon: const Icon(
+                    Icons.add_photo_alternate_outlined,
+                    size: 18,
+                  ),
+                  label: const Text('Subir imágenes'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final n in archivos)
+                Chip(
+                  avatar: _subiendo.contains(n)
+                      ? const SizedBox.square(
+                          dimension: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          faltan.contains(n)
+                              ? Icons.cloud_upload_outlined
+                              : Icons.check_circle,
+                          size: 16,
+                          color: faltan.contains(n) ? p.apagado : p.secundario,
+                        ),
+                  label: Text(n, style: const TextStyle(fontSize: 12)),
+                ),
+            ],
+          ),
+          if (_avisoImagenes case final aviso? when aviso.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(aviso, style: TextStyle(color: p.alerta, fontSize: 13)),
+          ],
+        ],
+      ),
+    );
   }
 }

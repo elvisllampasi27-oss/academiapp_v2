@@ -68,8 +68,9 @@ class _PremiumPageState extends State<PremiumPage> {
     super.dispose();
   }
 
-  void _recargar() =>
-      setState(() => _estado = widget.repositorio.cargar(widget.uid));
+  void _recargar() => setState(() {
+    _estado = widget.repositorio.cargar(widget.uid);
+  });
 
   Future<void> _aplicarCupon() async {
     final codigo = normalizarCodigo(_codigo.text);

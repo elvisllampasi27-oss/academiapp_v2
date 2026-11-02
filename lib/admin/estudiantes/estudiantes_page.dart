@@ -67,7 +67,9 @@ class _EstudiantesPageState extends State<EstudiantesPage> {
     return (estudiantes, versiones, temarios);
   }
 
-  void _recargar() => setState(() => _datos = _cargar());
+  void _recargar() => setState(() {
+    _datos = _cargar();
+  });
 
   void _cambiar(VoidCallback cambio) => setState(() {
     cambio();

@@ -43,7 +43,9 @@ class _VersionesPageState extends State<VersionesPage> {
   Future<_Datos> _cargar() =>
       (widget.estudiantes.versiones(), widget.estudiantes.estudiantes()).wait;
 
-  void _recargar() => setState(() => _datos = _cargar());
+  void _recargar() => setState(() {
+    _datos = _cargar();
+  });
 
   @override
   Widget build(BuildContext context) {
