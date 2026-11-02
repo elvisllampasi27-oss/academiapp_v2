@@ -26,7 +26,9 @@ class PaletaPanel extends ThemeExtension<PaletaPanel> {
   static const panel = Color(0x0AFFFFFF);
   static const borde = Color(0x17FFFFFF);
   static const bordeFuerte = Color(0x2BFFFFFF);
-  static const linea = Color(0x0FFFFFFF);
+
+  /// Línea inferior de filas y tablas (visible, sin gritar).
+  static const linea = Color(0x1CFFFFFF);
 
   const PaletaPanel({
     required this.fondo,

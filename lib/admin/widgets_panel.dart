@@ -225,6 +225,8 @@ class Insignia extends StatelessWidget {
       ),
       child: Text(
         texto,
+        maxLines: 1,
+        softWrap: false,
         style: TextStyle(
           color: color,
           fontSize: 12,

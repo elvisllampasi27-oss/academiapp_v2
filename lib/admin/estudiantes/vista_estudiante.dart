@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../tema_panel.dart';
 import '../widgets_panel.dart';
 import 'modelo_estudiantes.dart';
 
@@ -21,20 +22,42 @@ Insignia insigniaSituacion(SituacionEstudiante s) => switch (s) {
   SituacionEstudiante.sinMatricula => const Insignia('Sin matrícula'),
 };
 
-/// "23 oct · día 9", "2 nov · inicia mañana" o "—".
-String textoInicio(EstudianteAdmin e, DateTime hoy) {
-  final m = e.matricula;
-  if (m == null) return '—';
-  final inicio = m.fechaInicioAcademico;
-  final dia = diaAcademico(inicio, hoy);
-  if (dia > 0) return '${fechaBreve(inicio)} · día $dia';
-  final hoySolo = DateTime(hoy.year, hoy.month, hoy.day);
-  final faltan = DateTime(
-    inicio.year,
-    inicio.month,
-    inicio.day,
-  ).difference(hoySolo).inDays;
-  return '${fechaBreve(inicio)} · ${faltan == 1 ? 'inicia mañana' : 'en $faltan días'}';
+/// Estado en las tablas: punto de color y texto en una línea.
+class PuntoSituacion extends StatelessWidget {
+  final SituacionEstudiante situacion;
+
+  const PuntoSituacion(this.situacion, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    final (texto, color) = switch (situacion) {
+      SituacionEstudiante.activo => ('Activa', p.secundario),
+      SituacionEstudiante.programado => ('Programada', p.acento),
+      SituacionEstudiante.suspendido => ('Suspendida', p.alerta),
+      SituacionEstudiante.finalizado => ('Finalizada', p.tenue),
+      SituacionEstudiante.sinMatricula => ('Sin matrícula', p.tenue),
+    };
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            texto,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// Elige una fecha de inicio (los domingos no son día académico).

@@ -257,6 +257,15 @@ void main() {
       expect(fin.fecha, DateTime(2026, 11, 7)); // sábado
     });
 
+    test('avance del ciclo: día de hoy sobre el total de días', () {
+      final e = estudiante('A', m: matricula(inicio: DateTime(2026, 10, 30)));
+      final a = avanceCiclo(e, curriculo, hoy)!; // vie 30 y sáb 31: 2 de 2
+      expect((a.dia, a.total), (2, 2));
+      expect(a.fraccion, 1);
+      expect(avanceCiclo(e, null, hoy)!.total, isNull);
+      expect(avanceCiclo(estudiante('B'), curriculo, hoy), isNull);
+    });
+
     test('dominio promedio por curso y temas para reforzar', () {
       ItemMiRuta item(String tema, double valor) => ItemMiRuta(
         temaId: tema,

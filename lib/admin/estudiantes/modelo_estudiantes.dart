@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../../core/presentation/texto.dart';
 import '../../features/academic/domain/entities/curriculo.dart';
 import '../../features/academic/domain/entities/version_academica.dart';
@@ -342,6 +344,34 @@ FinTemario? finTemario(Curriculo curriculo, DateTime inicio) {
   final ultimo = dias.lastOrNull?.fecha;
   if (ultimo == null) return null;
   return FinTemario(dias: dias.length, temas: secuencia.length, fecha: ultimo);
+}
+
+/// Avance del ciclo de un estudiante: en qué día va y de cuántos.
+class AvanceCiclo {
+  final int dia;
+
+  /// null si el temario de su versión no está cargado.
+  final int? total;
+
+  const AvanceCiclo(this.dia, this.total);
+
+  double? get fraccion => total == null || total == 0
+      ? null
+      : (dia / total!).clamp(0, 1).toDouble();
+}
+
+AvanceCiclo? avanceCiclo(
+  EstudianteAdmin e,
+  Curriculo? curriculo,
+  DateTime hoy,
+) {
+  final m = e.matricula;
+  if (m == null) return null;
+  final total = curriculo == null
+      ? null
+      : finTemario(curriculo, m.fechaInicioAcademico)?.dias;
+  final dia = diaAcademico(m.fechaInicioAcademico, hoy);
+  return AvanceCiclo(total == null ? dia : math.min(dia, total), total);
 }
 
 /// Dominio promedio por curso y los temas más flojos, a partir de la ruta

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../features/academic/domain/entities/curriculo.dart';
 import '../../features/academic/domain/entities/version_academica.dart';
 import '../tema_panel.dart';
 import '../widgets_panel.dart';
@@ -9,6 +10,12 @@ import 'matricular_dialogo.dart';
 import 'modelo_estudiantes.dart';
 import 'repositorio_estudiantes_admin.dart';
 import 'vista_estudiante.dart';
+
+typedef _Datos = (
+  List<EstudianteAdmin>,
+  List<VersionAcademica>,
+  Map<String, Curriculo>,
+);
 
 /// Lista de estudiantes con filtros. Al tocar uno se abre su ficha.
 class EstudiantesPage extends StatefulWidget {
@@ -32,15 +39,32 @@ class EstudiantesPage extends StatefulWidget {
 class _EstudiantesPageState extends State<EstudiantesPage> {
   static const _porPagina = 25;
 
-  late Future<(List<EstudianteAdmin>, List<VersionAcademica>)> _datos =
-      _cargar();
+  late Future<_Datos> _datos = _cargar();
   late FiltroEstudiantes _filtro = widget.filtroInicial;
   String _texto = '';
   String? _versionId;
   int _pagina = 0;
 
-  Future<(List<EstudianteAdmin>, List<VersionAcademica>)> _cargar() =>
-      (widget.repositorio.estudiantes(), widget.repositorio.versiones()).wait;
+  /// Estudiantes, versiones y el temario de cada versión con matrículas
+  /// (1 lectura por versión) para saber de cuántos días es su ciclo.
+  Future<_Datos> _cargar() async {
+    final (estudiantes, versiones) = await (
+      widget.repositorio.estudiantes(),
+      widget.repositorio.versiones(),
+    ).wait;
+    final ids = {for (final e in estudiantes) ?e.matricula?.versionId};
+    final temarios = <String, Curriculo>{};
+    Future<void> leer(String id) async {
+      try {
+        temarios[id] = await widget.repositorio.curriculo(id);
+      } catch (_) {
+        // Sin temario cargado: se muestra el día sin el total.
+      }
+    }
+
+    await Future.wait([for (final id in ids) leer(id)]);
+    return (estudiantes, versiones, temarios);
+  }
 
   void _recargar() => setState(() => _datos = _cargar());
 
@@ -68,7 +92,7 @@ class _EstudiantesPageState extends State<EstudiantesPage> {
       futuro: _datos,
       onReintentar: _recargar,
       builder: (context, datos) {
-        final (estudiantes, versiones) = datos;
+        final (estudiantes, versiones, temarios) = datos;
         final hoy = widget.ahora();
         final filtrados = filtrarEstudiantes(
           estudiantes,
@@ -110,6 +134,7 @@ class _EstudiantesPageState extends State<EstudiantesPage> {
               estudiantes: visibles,
               hoy: hoy,
               nombreVersion: nombreVersion,
+              temarios: temarios,
               onAbrir: widget.onAbrir,
             ),
             _pie(filtrados.length, pagina, paginas),
@@ -199,148 +224,287 @@ class _EstudiantesPageState extends State<EstudiantesPage> {
   }
 }
 
-class _Tabla extends StatelessWidget {
+class _Tabla extends StatefulWidget {
   final List<EstudianteAdmin> estudiantes;
   final DateTime hoy;
   final Map<String, String> nombreVersion;
+  final Map<String, Curriculo> temarios;
   final ValueChanged<String> onAbrir;
 
   const _Tabla({
     required this.estudiantes,
     required this.hoy,
     required this.nombreVersion,
+    required this.temarios,
     required this.onAbrir,
   });
 
+  @override
+  State<_Tabla> createState() => _TablaState();
+}
+
+class _TablaState extends State<_Tabla> {
+  /// Anchos fijos: la columna Estudiante toma lo que sobre. Si la ventana es
+  /// angosta, la tabla se desliza de lado en vez de partir las palabras.
   static const _columnas = [
-    ('ESTUDIANTE', 3),
-    ('CARRERA', 2),
-    ('VERSIÓN', 2),
-    ('MATRÍCULA', 1),
-    ('INICIO · DÍA', 2),
-    ('ÚLTIMA ACTIVIDAD', 2),
-    ('ESTADO', 1),
+    ('ESTUDIANTE', null),
+    ('CARRERA', 200.0),
+    ('VERSIÓN', 160.0),
+    ('INICIO', 90.0),
+    ('AVANCE DEL CICLO', 230.0),
+    ('ÚLTIMA ACTIVIDAD', 150.0),
+    ('ESTADO', 140.0),
   ];
+  static const _anchoMinimo = 1280.0;
+
+  final _desplazamiento = ScrollController();
 
   @override
-  Widget build(BuildContext context) {
-    final p = PaletaPanel.de(context);
+  void dispose() {
+    _desplazamiento.dispose();
+    super.dispose();
+  }
 
-    Widget fila(List<Widget> celdas, {VoidCallback? onTap}) => InkWell(
+  Widget _fila(
+    List<Widget> celdas, {
+    VoidCallback? onTap,
+    bool cabecera = false,
+  }) {
+    return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: PaletaPanel.linea)),
+        padding: EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: cabecera ? 14 : 13,
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: cabecera ? PaletaPanel.bordeFuerte : PaletaPanel.linea,
+            ),
+          ),
         ),
         child: Row(
           children: [
             for (var i = 0; i < celdas.length; i++)
-              Expanded(
-                flex: _columnas[i].$2,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: celdas[i],
+              if (_columnas[i].$2 case final ancho?)
+                SizedBox(
+                  width: ancho,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: celdas[i],
+                  ),
+                )
+              else
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: celdas[i],
+                  ),
                 ),
-              ),
           ],
         ),
       ),
     );
+  }
 
+  Text _unaLinea(String texto, TextStyle estilo) => Text(
+    texto,
+    style: estilo,
+    maxLines: 1,
+    softWrap: false,
+    overflow: TextOverflow.ellipsis,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    final hoy = widget.hoy;
     final apagado = TextStyle(color: p.apagado, fontSize: 13);
 
     return TarjetaPanel(
       padding: EdgeInsets.zero,
       child: LayoutBuilder(
         builder: (context, c) {
-          final ancho = c.maxWidth < 1000 ? 1000.0 : c.maxWidth;
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: ancho,
-              child: Column(
-                children: [
-                  fila([
-                    for (final (titulo, _) in _columnas)
-                      Text(
-                        titulo,
-                        style: TextStyle(
-                          color: p.tenue,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                  ]),
-                  if (estudiantes.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Text(
-                        'Ningún estudiante coincide con los filtros.',
-                        style: apagado,
-                      ),
-                    ),
-                  for (final e in estudiantes)
-                    fila(onTap: () => onAbrir(e.uid), [
-                      Row(
-                        children: [
-                          AvatarIniciales(e.nombre),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  e.nombre,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  e.correo,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: p.apagado,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
+          final ancho = c.maxWidth < _anchoMinimo ? _anchoMinimo : c.maxWidth;
+          return Scrollbar(
+            controller: _desplazamiento,
+            thumbVisibility: c.maxWidth < _anchoMinimo,
+            child: SingleChildScrollView(
+              controller: _desplazamiento,
+              scrollDirection: Axis.horizontal,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: c.maxWidth < _anchoMinimo ? 12 : 0,
+                ),
+                child: SizedBox(
+                  width: ancho,
+                  child: Column(
+                    children: [
+                      _fila(cabecera: true, [
+                        for (final (titulo, _) in _columnas)
+                          _unaLinea(
+                            titulo,
+                            TextStyle(
+                              color: p.tenue,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
                             ),
                           ),
-                        ],
-                      ),
-                      Text(e.carrera ?? '—', style: apagado),
-                      Text(
-                        nombreVersion[e.matricula?.versionId] ??
-                            e.matricula?.versionId ??
-                            '—',
-                        style: apagado,
-                      ),
-                      Text(
-                        e.matricula == null
-                            ? '—'
-                            : fechaBreve(e.matricula!.fechaMatricula),
-                      ),
-                      Text(textoInicio(e, hoy)),
-                      Text(
-                        haceCuanto(e.ultimaActividad, hoy),
-                        style: TextStyle(
-                          color: sinActividad(e, hoy) ? p.alerta : p.texto,
+                      ]),
+                      if (widget.estudiantes.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Text(
+                            'Ningún estudiante coincide con los filtros.',
+                            style: apagado,
+                          ),
                         ),
-                      ),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: insigniaSituacion(situacion(e, hoy)),
-                      ),
-                    ]),
-                ],
+                      for (final e in widget.estudiantes)
+                        _fila(onTap: () => widget.onAbrir(e.uid), [
+                          Row(
+                            children: [
+                              AvatarIniciales(e.nombre),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _unaLinea(
+                                      e.nombre,
+                                      const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    _unaLinea(
+                                      e.correo,
+                                      TextStyle(color: p.apagado, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          _unaLinea(e.carrera ?? '—', apagado),
+                          _unaLinea(
+                            widget.nombreVersion[e.matricula?.versionId] ??
+                                e.matricula?.versionId ??
+                                '—',
+                            apagado,
+                          ),
+                          _unaLinea(
+                            e.matricula == null
+                                ? '—'
+                                : fechaBreve(e.matricula!.fechaInicioAcademico),
+                            TextStyle(color: p.texto, fontSize: 13),
+                          ),
+                          _AvanceCelda(
+                            situacion: situacion(e, hoy),
+                            avance: avanceCiclo(
+                              e,
+                              widget.temarios[e.matricula?.versionId],
+                              hoy,
+                            ),
+                            inicio: e.matricula?.fechaInicioAcademico,
+                            hoy: hoy,
+                          ),
+                          _unaLinea(
+                            haceCuanto(e.ultimaActividad, hoy),
+                            TextStyle(
+                              fontSize: 13,
+                              color: sinActividad(e, hoy) ? p.alerta : p.texto,
+                            ),
+                          ),
+                          PuntoSituacion(situacion(e, hoy)),
+                        ]),
+                    ],
+                  ),
+                ),
               ),
             ),
           );
         },
       ),
+    );
+  }
+}
+
+/// Barra que crece cada día del ciclo (como un medidor) y su porcentaje.
+class _AvanceCelda extends StatelessWidget {
+  final SituacionEstudiante situacion;
+  final AvanceCiclo? avance;
+  final DateTime? inicio;
+  final DateTime hoy;
+
+  const _AvanceCelda({
+    required this.situacion,
+    required this.avance,
+    required this.inicio,
+    required this.hoy,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    final a = avance;
+    if (a == null) {
+      return Text('—', style: TextStyle(color: p.tenue));
+    }
+
+    final String texto;
+    if (situacion == SituacionEstudiante.programado && inicio != null) {
+      final faltan = DateTime(
+        inicio!.year,
+        inicio!.month,
+        inicio!.day,
+      ).difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
+      texto = faltan <= 1 ? 'Empieza mañana' : 'Empieza en $faltan días';
+    } else {
+      texto = a.total == null ? 'Día ${a.dia}' : 'Día ${a.dia} de ${a.total}';
+    }
+    final fraccion = a.fraccion ?? 0;
+    final color = switch (situacion) {
+      SituacionEstudiante.suspendido => p.alerta,
+      SituacionEstudiante.finalizado => p.tenue,
+      _ => p.acento,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                texto,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
+            if (a.fraccion != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${(fraccion * 100).round()} %',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 7),
+        BarraAvance(fraccion, color: color, alto: 5),
+      ],
     );
   }
 }

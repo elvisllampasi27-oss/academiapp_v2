@@ -136,7 +136,8 @@ void main() {
 
     expect(find.text('Ana Quispe'), findsOneWidget);
     expect(find.text('Beto Ramos'), findsOneWidget);
-    expect(find.text('26 oct · día 6'), findsOneWidget);
+    expect(find.text('Día 6'), findsOneWidget);
+    expect(find.text('Sin matrícula'), findsOneWidget);
 
     await tester.tap(find.text('Registrados sin matrícula'));
     await tester.pumpAndSettle();

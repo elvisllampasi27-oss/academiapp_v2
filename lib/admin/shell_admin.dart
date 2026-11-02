@@ -6,6 +6,7 @@ import 'estudiantes/modelo_estudiantes.dart';
 import 'estudiantes/repositorio_estudiantes_admin.dart';
 import 'examenes/examenes_admin_page.dart';
 import 'examenes/repositorio_examenes_admin.dart';
+import 'logo_puntos.dart';
 import 'resumen/resumen_page.dart';
 import 'tema_panel.dart';
 import 'widgets_panel.dart';
@@ -154,26 +155,7 @@ class _MenuLateral extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Row(
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: p.dorado,
-                    ),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Text(
-                    'A',
-                    style: TextStyle(
-                      color: p.sobreAcento,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
+                const LogoPuntos(),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
