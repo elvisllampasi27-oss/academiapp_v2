@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'graficos.dart';
 import 'tema_panel.dart';
 
 /// Piezas visuales comunes del panel (mismo aspecto en todas las secciones).
@@ -98,12 +99,16 @@ class TituloTarjeta extends StatelessWidget {
   }
 }
 
-/// Cifra grande con su explicación (fila de indicadores).
+/// Cifra grande con su explicación, una píldora opcional arriba a la
+/// derecha y una mini gráfica de tendencia.
 class IndicadorPanel extends StatelessWidget {
   final String etiqueta;
   final String valor;
   final String? nota;
   final Color? color;
+  final String? pildora;
+  final Color? colorPildora;
+  final List<double>? tendencia;
   final VoidCallback? onTap;
 
   const IndicadorPanel({
@@ -112,31 +117,78 @@ class IndicadorPanel extends StatelessWidget {
     required this.valor,
     this.nota,
     this.color,
+    this.pildora,
+    this.colorPildora,
+    this.tendencia,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final p = PaletaPanel.de(context);
+    final tonoPildora = colorPildora ?? p.apagado;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         child: TarjetaPanel(
           padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(etiqueta, style: TextStyle(color: p.apagado, fontSize: 13)),
-              const SizedBox(height: 6),
-              Text(
-                valor,
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  color: color ?? p.texto,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      etiqueta,
+                      style: TextStyle(color: p.apagado, fontSize: 13),
+                    ),
+                  ),
+                  if (pildora case final texto?)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: tonoPildora.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        texto,
+                        style: TextStyle(
+                          color: tonoPildora,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Text(
+                      valor,
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        color: color ?? p.texto,
+                      ),
+                    ),
+                  ),
+                  if (tendencia case final serie? when serie.length > 1)
+                    SizedBox(
+                      width: 84,
+                      height: 30,
+                      child: CustomPaint(
+                        painter: PintorTendencia(serie, color ?? p.acento),
+                      ),
+                    ),
+                ],
               ),
               if (nota case final n?)
                 Text(n, style: TextStyle(color: p.tenue, fontSize: 12)),
@@ -423,4 +475,78 @@ void avisarPanel(BuildContext context, String mensaje) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(mensaje)));
+}
+
+/// "elvis.llampasi.27@unsch.edu.pe" -> "Elvis Llampasi".
+String nombreDesdeCorreo(String correo) {
+  final partes = correo
+      .split('@')
+      .first
+      .split(RegExp(r'[._\-]+'))
+      .where((p) => p.isNotEmpty && int.tryParse(p) == null)
+      .take(2)
+      .map((p) => '${p[0].toUpperCase()}${p.substring(1).toLowerCase()}');
+  final nombre = partes.join(' ');
+  return nombre.isEmpty ? correo : nombre;
+}
+
+/// "Buenos días" hasta las 12, "Buenas tardes" hasta las 19.
+String saludoPara(DateTime ahora) => ahora.hour < 12
+    ? 'Buenos días'
+    : ahora.hour < 19
+    ? 'Buenas tardes'
+    : 'Buenas noches';
+
+/// Título grande con el degradado dorado del panel.
+class TituloDorado extends StatelessWidget {
+  final String texto;
+  final double tamano;
+
+  const TituloDorado(this.texto, {super.key, this.tamano = 30});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    return ShaderMask(
+      blendMode: BlendMode.srcIn,
+      shaderCallback: (r) => LinearGradient(colors: p.dorado).createShader(r),
+      child: Text(
+        texto,
+        style: TextStyle(fontSize: tamano, fontWeight: FontWeight.w800),
+      ),
+    );
+  }
+}
+
+/// Píldora con un punto de color: "● Datos al día".
+class PildoraEstado extends StatelessWidget {
+  final String texto;
+  final Color color;
+
+  const PildoraEstado(this.texto, {super.key, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 6),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          texto,
+          style: TextStyle(color: color, fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
 }

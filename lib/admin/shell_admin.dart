@@ -8,6 +8,7 @@ import 'examenes/examenes_admin_page.dart';
 import 'examenes/repositorio_examenes_admin.dart';
 import 'resumen/resumen_page.dart';
 import 'tema_panel.dart';
+import 'widgets_panel.dart';
 
 enum SeccionPanel { resumen, estudiantes, examenes }
 
@@ -19,8 +20,6 @@ class ShellAdmin extends StatefulWidget {
   final VoidCallback onSalir;
   final RepositorioEstudiantesAdmin repositorioEstudiantes;
   final RepositorioExamenesAdmin repositorioExamenes;
-  final PaletaPanel paleta;
-  final ValueChanged<PaletaPanel> onPaleta;
   final DateTime Function() ahora;
 
   const ShellAdmin({
@@ -29,8 +28,6 @@ class ShellAdmin extends StatefulWidget {
     required this.onSalir,
     required this.repositorioEstudiantes,
     required this.repositorioExamenes,
-    required this.paleta,
-    required this.onPaleta,
     this.ahora = DateTime.now,
   });
 
@@ -72,6 +69,7 @@ class _ShellAdminState extends State<ShellAdmin> {
         repositorio: widget.repositorioEstudiantes,
         onAbrirEstudiante: _abrirEstudiante,
         onVerEstudiantes: _verEstudiantes,
+        correoAdmin: widget.correo,
         ahora: widget.ahora,
       ),
       SeccionPanel.estudiantes => switch (_fichaUid) {
@@ -106,8 +104,6 @@ class _ShellAdminState extends State<ShellAdmin> {
             onIr: _ir,
             correo: widget.correo,
             onSalir: widget.onSalir,
-            paleta: widget.paleta,
-            onPaleta: widget.onPaleta,
           ),
           Expanded(child: _pagina()),
         ],
@@ -121,19 +117,13 @@ class _MenuLateral extends StatelessWidget {
   final ValueChanged<SeccionPanel> onIr;
   final String correo;
   final VoidCallback onSalir;
-  final PaletaPanel paleta;
-  final ValueChanged<PaletaPanel> onPaleta;
 
   const _MenuLateral({
     required this.seccion,
     required this.onIr,
     required this.correo,
     required this.onSalir,
-    required this.paleta,
-    required this.onPaleta,
   });
-
-  static const _salir = '__salir__';
 
   static const _grupos = [
     ('GENERAL', [(SeccionPanel.resumen, 'Resumen', Icons.home_outlined)]),
@@ -169,13 +159,17 @@ class _MenuLateral extends StatelessWidget {
                   height: 32,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: p.texto,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: p.dorado,
+                    ),
                     borderRadius: BorderRadius.circular(9),
                   ),
                   child: Text(
                     'A',
                     style: TextStyle(
-                      color: p.fondo,
+                      color: p.sobreAcento,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -227,77 +221,44 @@ class _MenuLateral extends StatelessWidget {
           ),
           const Divider(),
           const SizedBox(height: 8),
-          PopupMenuButton<String>(
-            tooltip: 'Cuenta y apariencia',
-            onSelected: (id) =>
-                id == _salir ? onSalir() : onPaleta(PaletaPanel.porId(id)),
-            itemBuilder: (_) => [
-              const PopupMenuItem(
-                enabled: false,
-                child: Text('Apariencia del panel'),
-              ),
-              for (final opcion in PaletaPanel.todas)
-                CheckedPopupMenuItem(
-                  value: opcion.id,
-                  checked: opcion.id == paleta.id,
-                  child: Row(
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: p.acento,
+                  child: Text(
+                    correo.isEmpty ? '?' : correo[0].toUpperCase(),
+                    style: TextStyle(
+                      color: p.sobreAcento,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      for (final c in [
-                        opcion.barra,
-                        opcion.acento,
-                        opcion.secundario,
-                      ])
-                        Container(
-                          width: 14,
-                          height: 14,
-                          margin: const EdgeInsets.only(right: 4),
-                          decoration: BoxDecoration(
-                            color: c,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: PaletaPanel.bordeFuerte),
-                          ),
-                        ),
-                      const SizedBox(width: 8),
-                      Text(opcion.nombre),
+                      Text(
+                        nombreDesdeCorreo(correo),
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        'Administrador',
+                        style: TextStyle(color: p.tenue, fontSize: 12),
+                      ),
                     ],
                   ),
                 ),
-              const PopupMenuDivider(),
-              const PopupMenuItem(
-                value: _salir,
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.logout),
-                  title: Text('Salir'),
+                IconButton(
+                  tooltip: 'Salir ($correo)',
+                  onPressed: onSalir,
+                  icon: Icon(Icons.logout, size: 19, color: p.apagado),
                 ),
-              ),
-            ],
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: p.acento,
-                    child: Text(
-                      correo.isEmpty ? '?' : correo[0].toUpperCase(),
-                      style: TextStyle(
-                        color: p.sobreAcento,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      correo,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: p.apagado, fontSize: 13),
-                    ),
-                  ),
-                  Icon(Icons.unfold_more, size: 18, color: p.tenue),
-                ],
-              ),
+              ],
             ),
           ),
         ],

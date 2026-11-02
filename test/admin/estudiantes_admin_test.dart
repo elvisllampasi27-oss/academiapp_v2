@@ -67,6 +67,12 @@ class RepositorioFalso implements RepositorioEstudiantesAdmin {
   ];
 
   @override
+  Future<List<ActividadDia>> actividadReciente({int dias = 14}) async => [
+    for (var i = 0; i < dias; i++)
+      ActividadDia(DateTime(2026, 10, 19 + i), i % 4, i % 3 == 0 ? 1 : 0),
+  ];
+
+  @override
   Future<FichaEstudiante> ficha(String uid) async => FichaEstudiante(
     estudiante: ana,
     matriculas: [ana.matricula!],
@@ -106,7 +112,7 @@ class RepositorioFalso implements RepositorioEstudiantesAdmin {
 }
 
 Widget envolver(Widget pagina) => MaterialApp(
-  theme: temaPanel(PaletaPanel.marino),
+  theme: temaPanel(),
   home: Scaffold(body: pagina),
 );
 
@@ -185,13 +191,16 @@ void main() {
           repositorio: RepositorioFalso(),
           onAbrirEstudiante: (_) {},
           onVerEstudiantes: (f) => pedido = f,
+          correoAdmin: 'elvis.llampasi.27@unsch.edu.pe',
           ahora: () => hoy,
         ),
       ),
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Buenos días, Elvis'), findsOneWidget);
     expect(find.text('Matriculados activos'), findsOneWidget);
+    expect(find.text('Actividad de los últimos 14 días'), findsOneWidget);
     expect(find.text('1 con cuenta y sin matrícula'), findsOneWidget);
     expect(
       find.text('Matriculó a Ana Quispe en Ciclo 2026-II'),

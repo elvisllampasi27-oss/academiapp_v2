@@ -282,6 +282,42 @@ ResumenPanel calcularResumen(
   );
 }
 
+/// Actividad de un día: prácticas resueltas y exámenes tipo admisión.
+class ActividadDia {
+  final DateTime dia;
+  final int practicas;
+  final int simulacros;
+
+  const ActividadDia(this.dia, this.practicas, this.simulacros);
+}
+
+/// Cuenta por día los últimos [dias] días (hoy incluido), con ceros en los
+/// días sin actividad.
+List<ActividadDia> agruparActividad({
+  required List<DateTime> practicas,
+  required List<DateTime> simulacros,
+  required DateTime hoy,
+  int dias = 14,
+}) {
+  final base = _dia(hoy);
+  final indice = <DateTime, int>{
+    for (var i = 0; i < dias; i++)
+      DateTime(base.year, base.month, base.day - (dias - 1 - i)): i,
+  };
+  final p = List.filled(dias, 0);
+  final s = List.filled(dias, 0);
+  for (final f in practicas) {
+    if (indice[_dia(f)] case final i?) p[i]++;
+  }
+  for (final f in simulacros) {
+    if (indice[_dia(f)] case final i?) s[i]++;
+  }
+  return [
+    for (final MapEntry(key: dia, value: i) in indice.entries)
+      ActividadDia(dia, p[i], s[i]),
+  ];
+}
+
 /// Cuándo termina el temario de una versión si se empieza en [inicio].
 class FinTemario {
   final int dias;

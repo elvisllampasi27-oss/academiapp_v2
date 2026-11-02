@@ -74,6 +74,38 @@ class RepositorioEstudiantesAdminFirestore
   }
 
   @override
+  Future<List<ActividadDia>> actividadReciente({int dias = 14}) async {
+    final hoy = DateTime.now();
+    final desde = Timestamp.fromDate(
+      DateTime(hoy.year, hoy.month, hoy.day - (dias - 1)),
+    );
+    // Solo se leen los documentos de esos días (un índice simple por campo).
+    final (practicas, simulacros) = await (
+      db
+          .collection('intentos_evaluacion')
+          .where('fechaFin', isGreaterThanOrEqualTo: desde)
+          .get(),
+      db
+          .collection('simulacros')
+          .where('terminadoEn', isGreaterThanOrEqualTo: desde)
+          .get(),
+    ).wait;
+    List<DateTime> fechas(
+      QuerySnapshot<Map<String, dynamic>> q,
+      String campo,
+    ) => [
+      for (final d in q.docs)
+        if (d.data()[campo] case final Timestamp t) t.toDate(),
+    ];
+    return agruparActividad(
+      practicas: fechas(practicas, 'fechaFin'),
+      simulacros: fechas(simulacros, 'terminadoEn'),
+      hoy: hoy,
+      dias: dias,
+    );
+  }
+
+  @override
   Future<FichaEstudiante> ficha(String uid) async {
     final (perfil, matriculasSnap, simulacrosSnap, registroSnap) = await (
       db.collection('usuarios').doc(uid).get(),

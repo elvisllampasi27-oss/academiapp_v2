@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 import '../estudiantes/matricular_dialogo.dart';
 import '../estudiantes/modelo_estudiantes.dart';
 import '../estudiantes/repositorio_estudiantes_admin.dart';
+import '../graficos.dart';
 import '../tema_panel.dart';
 import '../widgets_panel.dart';
+
+typedef _Datos = (List<EstudianteAdmin>, List<AccionAdmin>, List<ActividadDia>);
 
 /// Primera pantalla del panel: cifras del día, lo que requiere atención y
 /// las últimas acciones.
@@ -14,6 +17,7 @@ class ResumenPage extends StatefulWidget {
   final RepositorioEstudiantesAdmin repositorio;
   final ValueChanged<String> onAbrirEstudiante;
   final ValueChanged<FiltroEstudiantes> onVerEstudiantes;
+  final String correoAdmin;
   final DateTime Function() ahora;
 
   const ResumenPage({
@@ -21,6 +25,7 @@ class ResumenPage extends StatefulWidget {
     required this.repositorio,
     required this.onAbrirEstudiante,
     required this.onVerEstudiantes,
+    this.correoAdmin = '',
     this.ahora = DateTime.now,
   });
 
@@ -29,12 +34,17 @@ class ResumenPage extends StatefulWidget {
 }
 
 class _ResumenPageState extends State<ResumenPage> {
-  late Future<(List<EstudianteAdmin>, List<AccionAdmin>)> _datos = _cargar();
+  late Future<_Datos> _datos = _cargar();
+  late DateTime _leido = widget.ahora();
 
-  Future<(List<EstudianteAdmin>, List<AccionAdmin>)> _cargar() => (
-    widget.repositorio.estudiantes(),
-    widget.repositorio.accionesRecientes(),
-  ).wait;
+  Future<_Datos> _cargar() {
+    _leido = widget.ahora();
+    return (
+      widget.repositorio.estudiantes(),
+      widget.repositorio.accionesRecientes(),
+      widget.repositorio.actividadReciente(),
+    ).wait;
+  }
 
   void _recargar() => setState(() => _datos = _cargar());
 
@@ -57,64 +67,108 @@ class _ResumenPageState extends State<ResumenPage> {
       futuro: _datos,
       onReintentar: _recargar,
       builder: (context, datos) {
-        final (estudiantes, acciones) = datos;
+        final (estudiantes, acciones, actividad) = datos;
         final hoy = widget.ahora();
         final r = calcularResumen(estudiantes, hoy);
         final p = PaletaPanel.de(context);
         final matriculados = r.activos + r.programados;
+        final porcentajeHoy = matriculados == 0
+            ? 0
+            : (r.activosHoy * 100 / matriculados).round();
+        final nombre = nombreDesdeCorreo(widget.correoAdmin).split(' ').first;
+        final hora =
+            '${_leido.hour}:${_leido.minute.toString().padLeft(2, '0')}';
 
         return PaginaPanel(
           children: [
-            EncabezadoPanel(
-              titulo: 'Resumen',
-              subtitulo: fechaPanel(hoy),
-              acciones: [
-                OutlinedButton.icon(
-                  onPressed: _recargar,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Actualizar'),
+            Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        TituloDorado(
+                          nombre.isEmpty
+                              ? saludoPara(hoy)
+                              : '${saludoPara(hoy)}, $nombre',
+                        ),
+                        PildoraEstado(
+                          'Datos al día · $hora',
+                          color: p.secundario,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      fechaPanel(hoy),
+                      style: TextStyle(color: p.apagado, fontSize: 14),
+                    ),
+                  ],
                 ),
-                FilledButton.icon(
-                  onPressed: () => _matricular(estudiantes),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Matricular estudiante'),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _recargar,
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('Actualizar'),
+                    ),
+                    FilledButton.icon(
+                      onPressed: () => _matricular(estudiantes),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Matricular estudiante'),
+                    ),
+                  ],
                 ),
               ],
             ),
             RejillaPanel(
-              anchoMinimo: 190,
+              anchoMinimo: 230,
               children: [
                 IndicadorPanel(
                   etiqueta: 'Matriculados activos',
                   valor: '${r.activos}',
-                  nota: '+${r.nuevasEstaSemana} esta semana',
+                  pildora: '+${r.nuevasEstaSemana} esta semana',
+                  colorPildora: p.secundario,
+                  tendencia: [for (final (_, n) in r.porSemana) n.toDouble()],
+                  nota: 'matrículas nuevas por semana',
                   onTap: () =>
                       widget.onVerEstudiantes(FiltroEstudiantes.activos),
                 ),
                 IndicadorPanel(
                   etiqueta: 'Activos hoy',
                   valor: '${r.activosHoy}',
+                  pildora: '$porcentajeHoy %',
+                  colorPildora: p.acento,
+                  tendencia: [
+                    for (final d in actividad) d.practicas.toDouble(),
+                  ],
                   nota: 'de $matriculados matriculados',
-                  color: p.secundario,
-                ),
-                IndicadorPanel(
-                  etiqueta: 'Por empezar',
-                  valor: '${r.programados}',
-                  nota: 'matrícula programada',
-                  onTap: () =>
-                      widget.onVerEstudiantes(FiltroEstudiantes.programados),
                 ),
                 IndicadorPanel(
                   etiqueta: 'Sin actividad',
                   valor: '${r.sinActividad.length}',
-                  nota: '$diasSinActividad días o más',
+                  pildora: '$diasSinActividad+ días',
+                  colorPildora: r.sinActividad.isEmpty ? null : p.alerta,
                   color: r.sinActividad.isEmpty ? null : p.alerta,
+                  nota: 'activos que no abren la app',
                   onTap: () =>
                       widget.onVerEstudiantes(FiltroEstudiantes.sinActividad),
                 ),
                 IndicadorPanel(
                   etiqueta: 'Registrados sin matrícula',
                   valor: '${r.sinMatricula}',
+                  pildora: '${r.programados} por empezar',
                   nota: 'tienen cuenta en la app',
                   color: r.sinMatricula == 0 ? null : p.acento,
                   onTap: () =>
@@ -123,14 +177,55 @@ class _ResumenPageState extends State<ResumenPage> {
               ],
             ),
             DosColumnas(
-              principal: ColumnaPanel(
-                children: [_atencion(r), _ultimasAcciones(acciones, hoy)],
-              ),
+              principal: _graficoActividad(actividad),
               lateral: _GraficoSemanas(porSemana: r.porSemana),
+            ),
+            DosColumnas(
+              flexPrincipal: 3,
+              principal: _atencion(r),
+              lateral: _ultimasAcciones(acciones, hoy),
             ),
           ],
         );
       },
+    );
+  }
+
+  Widget _graficoActividad(List<ActividadDia> actividad) {
+    final p = PaletaPanel.de(context);
+    final series = [
+      SerieGrafico(
+        nombre: 'Prácticas',
+        valores: [for (final d in actividad) d.practicas.toDouble()],
+        color: p.acento,
+        relleno: true,
+      ),
+      SerieGrafico(
+        nombre: 'Exámenes tipo admisión',
+        valores: [for (final d in actividad) d.simulacros.toDouble()],
+        color: p.texto,
+      ),
+    ];
+    final total = actividad.fold(0, (t, d) => t + d.practicas);
+    return TarjetaPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TituloTarjeta('Actividad de los últimos ${actividad.length} días'),
+          LeyendaGrafico(series),
+          const SizedBox(height: 12),
+          GraficoArea(
+            etiquetas: [for (final d in actividad) fechaBreve(d.dia)],
+            series: series,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$total prácticas resueltas en el periodo. Pasa el mouse sobre el '
+            'gráfico para ver cada día.',
+            style: TextStyle(color: p.tenue, fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 
@@ -230,6 +325,13 @@ class _ResumenPageState extends State<ResumenPage> {
 
   Widget _ultimasAcciones(List<AccionAdmin> acciones, DateTime hoy) {
     final p = PaletaPanel.de(context);
+    IconData icono(String tipo) => switch (tipo) {
+      'matricula' => Icons.how_to_reg_outlined,
+      'inicio' => Icons.event_outlined,
+      'estado' => Icons.pause_circle_outline,
+      _ => Icons.bolt_outlined,
+    };
+
     return TarjetaPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -240,20 +342,63 @@ class _ResumenPageState extends State<ResumenPage> {
               'Aquí aparecerá cada matrícula y cambio que hagas.',
               style: TextStyle(color: p.apagado),
             ),
-          for (final a in acciones)
+          for (final (k, a) in acciones.indexed)
             InkWell(
+              borderRadius: BorderRadius.circular(10),
               onTap: a.usuarioId == null
                   ? null
                   : () => widget.onAbrirEstudiante(a.usuarioId!),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+              child: IntrinsicHeight(
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(child: Text(a.descripcion)),
+                    SizedBox(
+                      width: 64,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Text(
+                          haceCuanto(a.fecha, hoy),
+                          style: TextStyle(color: p.tenue, fontSize: 11),
+                        ),
+                      ),
+                    ),
+                    // Línea de tiempo: punto con ícono y trazo hacia abajo.
+                    Column(
+                      children: [
+                        const SizedBox(height: 6),
+                        Container(
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            color: p.acento.withValues(alpha: 0.14),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(icono(a.tipo), size: 14, color: p.acento),
+                        ),
+                        if (k < acciones.length - 1)
+                          Expanded(
+                            child: Container(
+                              width: 1,
+                              color: PaletaPanel.borde,
+                            ),
+                          ),
+                      ],
+                    ),
                     const SizedBox(width: 12),
-                    Text(
-                      haceCuanto(a.fecha, hoy),
-                      style: TextStyle(color: p.tenue, fontSize: 12),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(a.descripcion),
+                            Text(
+                              a.adminCorreo,
+                              style: TextStyle(color: p.tenue, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),

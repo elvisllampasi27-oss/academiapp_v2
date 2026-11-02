@@ -14,6 +14,9 @@ abstract class RepositorioEstudiantesAdmin {
 
   Future<List<AccionAdmin>> accionesRecientes({int limite = 8});
 
+  /// Prácticas y exámenes tipo admisión por día (últimos [dias] días).
+  Future<List<ActividadDia>> actividadReciente({int dias = 14});
+
   Future<FichaEstudiante> ficha(String uid);
 
   Future<void> matricular({

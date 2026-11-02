@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Colores del panel. Hay cuatro paletas formales; se elige en el menú de
-/// la cuenta y se recuerda en esta computadora.
+/// Colores del panel: grafito oscuro con acento ámbar (un solo tema).
 @immutable
 class PaletaPanel extends ThemeExtension<PaletaPanel> {
-  final String id;
-  final String nombre;
-
   final Color fondo;
   final Color barra;
   final Color dialogo;
@@ -14,24 +10,25 @@ class PaletaPanel extends ThemeExtension<PaletaPanel> {
   final Color apagado;
   final Color tenue;
 
-  /// Botón principal, selección y lo que pide acción.
+  /// Botón principal, selección y la serie principal de los gráficos.
   final Color acento;
   final Color sobreAcento;
 
-  /// Datos buenos o informativos (dominio alto, matrícula activa).
+  /// Lo que está bien (matrícula activa, dominio alto, "al día").
   final Color secundario;
 
   /// Alertas (sin actividad, suspendido, dominio bajo).
   final Color alerta;
 
+  /// Degradado dorado de los títulos grandes.
+  final List<Color> dorado;
+
   static const panel = Color(0x0AFFFFFF);
-  static const borde = Color(0x1AFFFFFF);
-  static const bordeFuerte = Color(0x2EFFFFFF);
+  static const borde = Color(0x17FFFFFF);
+  static const bordeFuerte = Color(0x2BFFFFFF);
   static const linea = Color(0x0FFFFFFF);
 
   const PaletaPanel({
-    required this.id,
-    required this.nombre,
     required this.fondo,
     required this.barra,
     required this.dialogo,
@@ -42,75 +39,25 @@ class PaletaPanel extends ThemeExtension<PaletaPanel> {
     required this.sobreAcento,
     required this.secundario,
     required this.alerta,
+    required this.dorado,
   });
 
-  static const marino = PaletaPanel(
-    id: 'marino',
-    nombre: 'Azul marino y café',
-    fondo: Color(0xFF0A1322),
-    barra: Color(0xFF0D182B),
-    dialogo: Color(0xFF132036),
-    texto: Color(0xFFEEF2F7),
-    apagado: Color(0xFF9EABBF),
-    tenue: Color(0xFF8391A6),
-    acento: Color(0xFFC99D6B),
-    sobreAcento: Color(0xFF1F140A),
-    secundario: Color(0xFF8DB4E2),
-    alerta: Color(0xFFE58A6E),
+  static const ambar = PaletaPanel(
+    fondo: Color(0xFF111215),
+    barra: Color(0xFF15161A),
+    dialogo: Color(0xFF1C1D22),
+    texto: Color(0xFFEDEDEF),
+    apagado: Color(0xFFA0A1A8),
+    tenue: Color(0xFF85868E),
+    acento: Color(0xFFE8913A),
+    sobreAcento: Color(0xFF1C1206),
+    secundario: Color(0xFF5FCF8A),
+    alerta: Color(0xFFEF6F5E),
+    dorado: [Color(0xFFF2C487), Color(0xFFD98A3D)],
   );
-
-  static const verdeAzulado = PaletaPanel(
-    id: 'teal',
-    nombre: 'Verde azulado',
-    fondo: Color(0xFF07191B),
-    barra: Color(0xFF0A2023),
-    dialogo: Color(0xFF102B2E),
-    texto: Color(0xFFECF5F4),
-    apagado: Color(0xFF97B2B0),
-    tenue: Color(0xFF7C9997),
-    acento: Color(0xFF3FBFAE),
-    sobreAcento: Color(0xFF03201C),
-    secundario: Color(0xFF93C8E6),
-    alerta: Color(0xFFEE8C70),
-  );
-
-  static const cafe = PaletaPanel(
-    id: 'cafe',
-    nombre: 'Café',
-    fondo: Color(0xFF17110C),
-    barra: Color(0xFF1D1610),
-    dialogo: Color(0xFF271E16),
-    texto: Color(0xFFF5EFE8),
-    apagado: Color(0xFFB5A796),
-    tenue: Color(0xFF9A8B7A),
-    acento: Color(0xFFD7A56D),
-    sobreAcento: Color(0xFF24170A),
-    secundario: Color(0xFFE6CDA8),
-    alerta: Color(0xFFE8835F),
-  );
-
-  static const cafeVerde = PaletaPanel(
-    id: 'bosque',
-    nombre: 'Café con verde',
-    fondo: Color(0xFF11140F),
-    barra: Color(0xFF161A13),
-    dialogo: Color(0xFF1E2319),
-    texto: Color(0xFFF1F2EA),
-    apagado: Color(0xFFAAAF9E),
-    tenue: Color(0xFF8E9381),
-    acento: Color(0xFF8CC28A),
-    sobreAcento: Color(0xFF0E1F0D),
-    secundario: Color(0xFFD2A675),
-    alerta: Color(0xFFE58A6E),
-  );
-
-  static const todas = [marino, verdeAzulado, cafe, cafeVerde];
-
-  static PaletaPanel porId(String? id) =>
-      todas.where((p) => p.id == id).firstOrNull ?? marino;
 
   static PaletaPanel de(BuildContext context) =>
-      Theme.of(context).extension<PaletaPanel>() ?? marino;
+      Theme.of(context).extension<PaletaPanel>() ?? ambar;
 
   @override
   PaletaPanel copyWith() => this;
@@ -120,7 +67,7 @@ class PaletaPanel extends ThemeExtension<PaletaPanel> {
       other == null || t < 0.5 ? this : other;
 }
 
-ThemeData temaPanel(PaletaPanel p) {
+ThemeData temaPanel([PaletaPanel p = PaletaPanel.ambar]) {
   final redondeado = RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(12),
   );
@@ -156,14 +103,14 @@ ThemeData temaPanel(PaletaPanel p) {
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         side: const BorderSide(color: PaletaPanel.borde),
       ),
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: p.dialogo,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         side: const BorderSide(color: PaletaPanel.bordeFuerte),
       ),
     ),
@@ -210,6 +157,14 @@ ThemeData temaPanel(PaletaPanel p) {
       ),
       checkmarkColor: p.sobreAcento,
       shape: const StadiumBorder(),
+    ),
+    tooltipTheme: TooltipThemeData(
+      decoration: BoxDecoration(
+        color: p.dialogo,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: PaletaPanel.bordeFuerte),
+      ),
+      textStyle: TextStyle(color: p.texto, fontSize: 12),
     ),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: p.dialogo,

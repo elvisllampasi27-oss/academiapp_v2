@@ -52,7 +52,7 @@ compartir estado vivo con otra.
 Una carpeta por sección (`resumen/`, `estudiantes/`, `examenes/`…), cada una
 con su modelo (Dart puro, probado), su repositorio (interfaz + Firestore) y sus
 pantallas. Reutiliza el dominio de la app (calendario, BKT, cálculo del
-inicio) en lugar de repetirlo. `tema_panel.dart` tiene las 4 paletas;
+inicio) en lugar de repetirlo. `tema_panel.dart` tiene el tema (grafito y ámbar), `graficos.dart` los gráficos dibujados a mano;
 `widgets_panel.dart`, las piezas visuales comunes. Cada cambio hecho desde el
 panel se escribe junto con su entrada en `registro_admin` (mismo lote).
 

@@ -1,5 +1,7 @@
 import 'package:academiapp_v2/admin/estudiantes/matricular_dialogo.dart';
 import 'package:academiapp_v2/admin/estudiantes/modelo_estudiantes.dart';
+import 'package:academiapp_v2/admin/graficos.dart';
+import 'package:academiapp_v2/admin/widgets_panel.dart';
 import 'package:academiapp_v2/features/academic/domain/entities/curriculo.dart';
 import 'package:academiapp_v2/features/academic/domain/entities/curso.dart';
 import 'package:academiapp_v2/features/academic/domain/entities/tema.dart';
@@ -296,5 +298,36 @@ void main() {
     expect(haceCuanto(DateTime(2026, 10, 26), hoy), 'Hace 6 días');
     expect(haceCuanto(null, hoy), '—');
     expect(fechaPanel(DateTime(2026, 10, 23)), 'vie 23 oct 2026');
+  });
+
+  test('actividad por día: los últimos días con ceros donde no hubo', () {
+    final dias = agruparActividad(
+      practicas: [
+        DateTime(2026, 11, 1, 8),
+        DateTime(2026, 11, 1, 9),
+        DateTime(2026, 10, 30),
+        DateTime(2026, 10, 1), // fuera del periodo
+      ],
+      simulacros: [DateTime(2026, 10, 31, 19)],
+      hoy: hoy,
+      dias: 3,
+    );
+
+    expect(dias.map((d) => d.dia.day), [30, 31, 1]);
+    expect(dias.map((d) => d.practicas), [1, 0, 2]);
+    expect(dias.map((d) => d.simulacros), [0, 1, 0]);
+  });
+
+  test('techo del eje y saludo del panel', () {
+    expect(techoEje(7), 8);
+    expect(techoEje(23), 25);
+    expect(techoEje(140), 150);
+    expect(techoEje(0), 4);
+    expect(
+      nombreDesdeCorreo('elvis.llampasi.27@unsch.edu.pe'),
+      'Elvis Llampasi',
+    );
+    expect(saludoPara(DateTime(2026, 11, 1, 22)), 'Buenas noches');
+    expect(saludoPara(DateTime(2026, 11, 1, 9)), 'Buenos días');
   });
 }
