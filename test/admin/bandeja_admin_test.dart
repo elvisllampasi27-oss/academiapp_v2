@@ -81,7 +81,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Gracias, ya corregimos la pregunta.'));
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Resolver'));
+    // El "Resolver" del diálogo (el de la tarjeta queda detrás).
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Resolver'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(falso.hechos, ['r1 resuelto Gracias, ya corregimos la pregunta.']);
