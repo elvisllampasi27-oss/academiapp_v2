@@ -7,6 +7,8 @@ import 'matricular_dialogo.dart';
 import 'modelo_estudiantes.dart';
 import 'repositorio_estudiantes_admin.dart';
 import 'vista_estudiante.dart';
+import '../../features/premium/domain/pago.dart';
+import '../pagos/repositorio_pagos_admin.dart';
 
 /// Seguimiento de un estudiante: matrícula, avance, dominio y lo que se
 /// hizo con él desde el panel.
@@ -14,6 +16,9 @@ class FichaEstudiantePage extends StatefulWidget {
   final String uid;
   final RepositorioEstudiantesAdmin repositorio;
   final VoidCallback onVolver;
+
+  /// Plan y pagos del estudiante (null en pruebas que no los necesitan).
+  final RepositorioPagosAdmin? pagos;
   final DateTime Function() ahora;
 
   const FichaEstudiantePage({
@@ -21,6 +26,7 @@ class FichaEstudiantePage extends StatefulWidget {
     required this.uid,
     required this.repositorio,
     required this.onVolver,
+    this.pagos,
     this.ahora = DateTime.now,
   });
 
@@ -30,10 +36,13 @@ class FichaEstudiantePage extends StatefulWidget {
 
 class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
   late Future<FichaEstudiante> _ficha = widget.repositorio.ficha(widget.uid);
+  late Future<List<Pago>>? _pagos = widget.pagos?.pagosDe(widget.uid);
   bool _ocupado = false;
 
-  void _recargar() =>
-      setState(() => _ficha = widget.repositorio.ficha(widget.uid));
+  void _recargar() => setState(() {
+    _ficha = widget.repositorio.ficha(widget.uid);
+    _pagos = widget.pagos?.pagosDe(widget.uid);
+  });
 
   Future<void> _hacer(Future<void> Function() accion, String hecho) async {
     setState(() => _ocupado = true);
@@ -102,6 +111,27 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
         estado: estado,
       ),
       suspender ? 'Matrícula suspendida.' : 'Matrícula reactivada.',
+    );
+  }
+
+  Future<void> _darPremium(EstudianteAdmin e) async {
+    final repositorio = widget.pagos;
+    if (repositorio == null) return;
+    final eleccion = await showDialog<(int, String)>(
+      context: context,
+      builder: (_) => const _DialogoPremium(),
+    );
+    if (eleccion == null) return;
+    final (dias, motivo) = eleccion;
+    await _hacer(
+      () => repositorio.darPremium(
+        uid: e.uid,
+        nombre: e.nombre,
+        correo: e.correo,
+        dias: dias,
+        motivo: motivo,
+      ),
+      'Premium actualizado.',
     );
   }
 
@@ -233,6 +263,7 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
           principal: ColumnaPanel(
             children: [
               _matricula(f, s),
+              if (widget.pagos != null) _plan(e, hoy),
               TarjetaPanel(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -279,6 +310,55 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
             if (f.fin case final fin?)
               FilaDato('Fin estimado', fechaPanel(fin.fecha)),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _plan(EstudianteAdmin e, DateTime hoy) {
+    final p = PaletaPanel.de(context);
+    final premium = e.esPremiumEn(hoy);
+    return TarjetaPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TituloTarjeta(
+            'Plan',
+            extra: premium
+                ? const Insignia('Premium', tono: TonoInsignia.acento)
+                : const Insignia('Gratis'),
+          ),
+          if (premium) FilaDato('Vence', fechaPanel(e.premiumHasta!)),
+          FutureBuilder<List<Pago>>(
+            future: _pagos,
+            builder: (context, s) {
+              final pagos = s.data;
+              if (pagos == null) return const SizedBox(height: 8);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final pago in pagos.take(6))
+                    FilaDato(
+                      '${fechaBreve(pago.creadoEn)} · '
+                      '${pago.metodo == MetodoPago.yape || pago.metodo == MetodoPago.plin ? 'S/ ${pago.monto} ${pago.metodo.etiqueta}' : pago.metodo.etiqueta}',
+                      switch (pago.estado) {
+                        EstadoPago.pendiente => 'Por revisar',
+                        EstadoPago.aprobado => 'Aprobado',
+                        EstadoPago.rechazado => 'Rechazado',
+                      },
+                    ),
+                  if (pagos.isEmpty)
+                    Text('Sin pagos.', style: TextStyle(color: p.apagado)),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _ocupado ? null : () => _darPremium(e),
+            icon: const Icon(Icons.workspace_premium_outlined, size: 18),
+            label: Text(premium ? 'Extender Premium' : 'Dar Premium'),
+          ),
         ],
       ),
     );
@@ -409,6 +489,78 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Días de Premium y el motivo (cortesía, compensación…).
+class _DialogoPremium extends StatefulWidget {
+  const _DialogoPremium();
+
+  @override
+  State<_DialogoPremium> createState() => _DialogoPremiumState();
+}
+
+class _DialogoPremiumState extends State<_DialogoPremium> {
+  final _motivo = TextEditingController();
+  int _dias = 90;
+
+  @override
+  void dispose() {
+    _motivo.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Dar o extender Premium'),
+      content: SizedBox(
+        width: 420,
+        child: ColumnaPanel(
+          espacio: 14,
+          children: [
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final d in const [7, 30, 90])
+                  ChoiceChip(
+                    label: Text('$d días'),
+                    selected: _dias == d,
+                    onSelected: (_) => setState(() => _dias = d),
+                  ),
+              ],
+            ),
+            TextField(
+              controller: _motivo,
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(
+                labelText: 'Motivo',
+                hintText: 'Pagó en efectivo, cortesía, compensación…',
+              ),
+            ),
+            Text(
+              'Si ya es Premium, los días se suman a los que le quedan.',
+              style: TextStyle(
+                color: PaletaPanel.de(context).tenue,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: _motivo.text.trim().isEmpty
+              ? null
+              : () => Navigator.pop(context, (_dias, _motivo.text.trim())),
+          child: const Text('Confirmar'),
+        ),
+      ],
     );
   }
 }

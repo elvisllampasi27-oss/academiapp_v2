@@ -5,22 +5,35 @@ import 'estudiantes/ficha_estudiante_page.dart';
 import 'estudiantes/modelo_estudiantes.dart';
 import 'estudiantes/repositorio_estudiantes_admin.dart';
 import 'examenes/examenes_admin_page.dart';
+import 'configuracion/configuracion_page.dart';
 import 'examenes/repositorio_examenes_admin.dart';
+import 'pagos/cupones_page.dart';
+import 'pagos/pagos_page.dart';
+import 'pagos/repositorio_pagos_admin.dart';
 import 'logo_puntos.dart';
 import 'resumen/resumen_page.dart';
 import 'tema_panel.dart';
 import 'widgets_panel.dart';
 
-enum SeccionPanel { resumen, estudiantes, examenes }
+enum SeccionPanel {
+  resumen,
+  estudiantes,
+  pagos,
+  cupones,
+  examenes,
+  configuracion,
+}
 
 /// Estructura del panel: menú lateral por grupos y la sección elegida.
-/// Las secciones de los siguientes bloques (pagos, versiones, contenido…)
-/// se agregan aquí.
+/// Las secciones de los siguientes bloques (versiones, contenido…) se
+/// agregan aquí.
 class ShellAdmin extends StatefulWidget {
   final String correo;
   final VoidCallback onSalir;
   final RepositorioEstudiantesAdmin repositorioEstudiantes;
   final RepositorioExamenesAdmin repositorioExamenes;
+  final RepositorioPagosAdmin repositorioPagos;
+  final RepositorioAcademiaAdmin repositorioAcademia;
   final DateTime Function() ahora;
 
   const ShellAdmin({
@@ -29,6 +42,8 @@ class ShellAdmin extends StatefulWidget {
     required this.onSalir,
     required this.repositorioEstudiantes,
     required this.repositorioExamenes,
+    required this.repositorioPagos,
+    required this.repositorioAcademia,
     this.ahora = DateTime.now,
   });
 
@@ -44,6 +59,8 @@ class _ShellAdminState extends State<ShellAdmin> {
   /// Cambia cada vez que se entra a Estudiantes desde otro lado, para que
   /// la lista se vuelva a leer con el filtro pedido.
   int _visita = 0;
+
+  late final Stream<int> _pendientes = widget.repositorioPagos.pendientes();
 
   void _ir(SeccionPanel s) => setState(() {
     _seccion = s;
@@ -70,6 +87,8 @@ class _ShellAdminState extends State<ShellAdmin> {
         repositorio: widget.repositorioEstudiantes,
         onAbrirEstudiante: _abrirEstudiante,
         onVerEstudiantes: _verEstudiantes,
+        pagos: widget.repositorioPagos,
+        onVerPagos: () => _ir(SeccionPanel.pagos),
         correoAdmin: widget.correo,
         ahora: widget.ahora,
       ),
@@ -79,6 +98,7 @@ class _ShellAdminState extends State<ShellAdmin> {
           uid: uid,
           repositorio: widget.repositorioEstudiantes,
           onVolver: () => setState(() => _fichaUid = null),
+          pagos: widget.repositorioPagos,
           ahora: widget.ahora,
         ),
         null => EstudiantesPage(
@@ -89,8 +109,23 @@ class _ShellAdminState extends State<ShellAdmin> {
           ahora: widget.ahora,
         ),
       },
+      SeccionPanel.pagos => PagosPage(
+        pagos: widget.repositorioPagos,
+        academia: widget.repositorioAcademia,
+        onAbrirEstudiante: _abrirEstudiante,
+        ahora: widget.ahora,
+      ),
+      SeccionPanel.cupones => CuponesPage(
+        repositorio: widget.repositorioAcademia,
+        ahora: widget.ahora,
+      ),
       SeccionPanel.examenes => ExamenesAdminPage(
         repositorio: widget.repositorioExamenes,
+      ),
+      SeccionPanel.configuracion => ConfiguracionPage(
+        academia: widget.repositorioAcademia,
+        estudiantes: widget.repositorioEstudiantes,
+        ahora: widget.ahora,
       ),
     };
   }
@@ -105,6 +140,7 @@ class _ShellAdminState extends State<ShellAdmin> {
             onIr: _ir,
             correo: widget.correo,
             onSalir: widget.onSalir,
+            pendientes: _pendientes,
           ),
           Expanded(child: _pagina()),
         ],
@@ -118,23 +154,33 @@ class _MenuLateral extends StatelessWidget {
   final ValueChanged<SeccionPanel> onIr;
   final String correo;
   final VoidCallback onSalir;
+  final Stream<int> pendientes;
 
   const _MenuLateral({
     required this.seccion,
     required this.onIr,
     required this.correo,
     required this.onSalir,
+    required this.pendientes,
   });
 
   static const _grupos = [
     ('GENERAL', [(SeccionPanel.resumen, 'Resumen', Icons.home_outlined)]),
     (
       'ESTUDIANTES',
-      [(SeccionPanel.estudiantes, 'Estudiantes', Icons.group_outlined)],
+      [
+        (SeccionPanel.estudiantes, 'Estudiantes', Icons.group_outlined),
+        (SeccionPanel.pagos, 'Pagos', Icons.receipt_long_outlined),
+        (SeccionPanel.cupones, 'Cupones y becas', Icons.sell_outlined),
+      ],
     ),
     (
       'CONTENIDO',
       [(SeccionPanel.examenes, 'Exámenes', Icons.assignment_outlined)],
+    ),
+    (
+      'SISTEMA',
+      [(SeccionPanel.configuracion, 'Configuración', Icons.settings_outlined)],
     ),
   ];
 
@@ -196,6 +242,7 @@ class _MenuLateral extends StatelessWidget {
                       icono: icono,
                       activo: s == seccion,
                       onTap: () => onIr(s),
+                      contador: s == SeccionPanel.pagos ? pendientes : null,
                     ),
                 ],
               ],
@@ -255,11 +302,15 @@ class _ItemMenu extends StatelessWidget {
   final bool activo;
   final VoidCallback onTap;
 
+  /// Número en vivo a la derecha (p. ej. pagos por revisar).
+  final Stream<int>? contador;
+
   const _ItemMenu({
     required this.etiqueta,
     required this.icono,
     required this.activo,
     required this.onTap,
+    this.contador,
   });
 
   @override
@@ -280,13 +331,43 @@ class _ItemMenu extends StatelessWidget {
               children: [
                 Icon(icono, size: 19, color: activo ? p.acento : color),
                 const SizedBox(width: 12),
-                Text(
-                  etiqueta,
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: activo ? FontWeight.w700 : FontWeight.w500,
+                Expanded(
+                  child: Text(
+                    etiqueta,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: activo ? FontWeight.w700 : FontWeight.w500,
+                    ),
                   ),
                 ),
+                if (contador case final numeros?)
+                  StreamBuilder<int>(
+                    stream: numeros,
+                    builder: (context, s) {
+                      final n = s.data ?? 0;
+                      if (n == 0) return const SizedBox.shrink();
+                      return Container(
+                        constraints: const BoxConstraints(minWidth: 22),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: p.acento,
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                        child: Text(
+                          '$n',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: p.sobreAcento,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
               ],
             ),
           ),

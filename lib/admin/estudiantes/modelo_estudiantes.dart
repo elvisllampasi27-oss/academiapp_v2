@@ -17,6 +17,7 @@ class EstudianteAdmin {
   final String? carrera;
   final DateTime? registro;
   final DateTime? ultimaActividad;
+  final DateTime? premiumHasta;
   final Matricula? matricula;
 
   const EstudianteAdmin({
@@ -26,8 +27,12 @@ class EstudianteAdmin {
     this.carrera,
     this.registro,
     this.ultimaActividad,
+    this.premiumHasta,
     this.matricula,
   });
+
+  bool esPremiumEn(DateTime ahora) =>
+      premiumHasta != null && premiumHasta!.isAfter(ahora);
 }
 
 /// Lo que hizo el administrador desde el panel (colección registro_admin).
@@ -185,7 +190,9 @@ enum FiltroEstudiantes {
   programados('Programados'),
   suspendidos('Suspendidos'),
   sinMatricula('Registrados sin matrícula'),
-  sinActividad('Sin actividad $diasSinActividad+ días');
+  sinActividad('Sin actividad $diasSinActividad+ días'),
+  premium('Premium'),
+  gratis('Gratis');
 
   final String etiqueta;
   const FiltroEstudiantes(this.etiqueta);
@@ -215,6 +222,8 @@ List<EstudianteAdmin> filtrarEstudiantes(
       FiltroEstudiantes.suspendidos => s == SituacionEstudiante.suspendido,
       FiltroEstudiantes.sinMatricula => s == SituacionEstudiante.sinMatricula,
       FiltroEstudiantes.sinActividad => sinActividad(e, hoy),
+      FiltroEstudiantes.premium => e.esPremiumEn(hoy),
+      FiltroEstudiantes.gratis => !e.esPremiumEn(hoy),
     };
   }).toList()..sort(
     (a, b) => normalizarTexto(a.nombre).compareTo(normalizarTexto(b.nombre)),
@@ -228,6 +237,10 @@ class ResumenPanel {
   final int sinMatricula;
   final int activosHoy;
   final int nuevasEstaSemana;
+  final int premium;
+
+  /// Premium que vence en los próximos 7 días.
+  final List<EstudianteAdmin> premiumPorVencer;
   final List<EstudianteAdmin> sinActividad;
 
   /// Matrículas por semana (lunes de cada semana), de la más antigua a hoy.
@@ -239,6 +252,8 @@ class ResumenPanel {
     required this.sinMatricula,
     required this.activosHoy,
     required this.nuevasEstaSemana,
+    required this.premium,
+    required this.premiumPorVencer,
     required this.sinActividad,
     required this.porSemana,
   });
@@ -279,6 +294,14 @@ ResumenPanel calcularResumen(
       return u != null && _dia(u) == _dia(hoy);
     }).length,
     nuevasEstaSemana: conteo[lunesActual] ?? 0,
+    premium: lista.where((e) => e.esPremiumEn(hoy)).length,
+    premiumPorVencer: lista
+        .where(
+          (e) =>
+              e.esPremiumEn(hoy) &&
+              e.premiumHasta!.isBefore(hoy.add(const Duration(days: 7))),
+        )
+        .toList(),
     sinActividad: lista.where((e) => sinActividad(e, hoy)).toList(),
     porSemana: [for (final l in inicios) (l, conteo[l]!)],
   );

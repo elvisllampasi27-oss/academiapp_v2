@@ -10,6 +10,7 @@ import '../../features/adaptive_engine/domain/entities/item_mi_ruta.dart';
 import '../../features/adaptive_engine/domain/services/construir_mi_ruta_service.dart';
 import '../../features/enrollment/domain/entities/matricula.dart';
 import '../../features/student_model/infrastructure/repositories/repositorio_evidencia_firestore.dart';
+import '../registro_admin.dart';
 import 'modelo_estudiantes.dart';
 import 'repositorio_estudiantes_admin.dart';
 
@@ -298,7 +299,7 @@ class RepositorioEstudiantesAdminFirestore
     }
   }
 
-  String get _correo => auth.currentUser?.email ?? 'admin';
+  String get _correo => correoAdmin(auth);
 
   void _registrar(
     WriteBatch lote, {
@@ -306,14 +307,15 @@ class RepositorioEstudiantesAdminFirestore
     required String descripcion,
     String? usuarioId,
   }) {
-    lote.set(db.collection('registro_admin').doc(), {
-      'tipo': tipo,
-      'descripcion': descripcion,
-      'usuarioId': ?usuarioId,
-      'adminUid': auth.currentUser?.uid,
-      'adminCorreo': _correo,
-      'fecha': FieldValue.serverTimestamp(),
-    });
+    lote.set(
+      db.collection('registro_admin').doc(),
+      entradaRegistro(
+        auth,
+        tipo: tipo,
+        descripcion: descripcion,
+        usuarioId: usuarioId,
+      ),
+    );
   }
 
   EstudianteAdmin _estudiante(
@@ -328,6 +330,7 @@ class RepositorioEstudiantesAdminFirestore
       carrera: datos['carreraPostulada'] as String?,
       registro: (datos['fechaCreacion'] as Timestamp?)?.toDate(),
       ultimaActividad: (datos['ultimaActividad'] as Timestamp?)?.toDate(),
+      premiumHasta: (datos['premiumHasta'] as Timestamp?)?.toDate(),
       matricula: matricula,
     );
   }

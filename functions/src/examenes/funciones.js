@@ -4,6 +4,7 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const { FieldValue, Timestamp } = require('firebase-admin/firestore');
 const { verificarEstudiante } = require('../comun/estudiante');
+const { leerConfiguracion, esPremium } = require('../comun/plan');
 const { esFinDeSemanaLima, elegirPreguntas, calificarExamen } = require('./reglas');
 
 const PREGUNTAS_SIMULACRO = () => Number(process.env.SIMULACRO_PREGUNTAS) || 20;
@@ -86,6 +87,17 @@ const iniciarSimulacro = onCall(async (request) => {
     simulacroRef = vigente.ref;
     datos = vigente.data();
   } else {
+    const [usuarioSnap, configuracion] = await Promise.all([
+      db.collection('usuarios').doc(uid).get(),
+      leerConfiguracion(db),
+    ]);
+    if (configuracion.simulacroSoloPremium && !esPremium(usuarioSnap.data())) {
+      throw new HttpsError(
+        'permission-denied',
+        'El examen tipo admisión es para Premium. Hazte Premium desde tu Perfil.',
+      );
+    }
+
     if (!esFinDeSemanaLima() && process.env.SIMULACRO_CUALQUIER_DIA !== 'true') {
       throw new HttpsError('failed-precondition', 'El examen tipo admisión se da sábados y domingos.');
     }

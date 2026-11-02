@@ -9,12 +9,10 @@ const {
   MAXIMO_HISTORIAL, validarConsulta, fechaLima, construirInstrucciones,
 } = require('./consulta');
 const { generarConGemini } = require('./proveedores/gemini');
+const { leerConfiguracion, esPremium, limiteTutor } = require('../comun/plan');
 
 // En el emulador se lee de functions/.secret.local (nunca se sube a git).
 const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
-
-/** Dudas por estudiante y día (gratis). Se puede cambiar con TUTOR_LIMITE_DIARIO. */
-const limiteDiario = () => Number(process.env.TUTOR_LIMITE_DIARIO) || 3;
 
 /**
  * Responde una duda del estudiante sobre un tema publicado, con el material
@@ -37,7 +35,8 @@ const preguntarTutor = onCall(
     const pregunta = request.data.pregunta.trim();
     const historial = (request.data.historial || []).slice(-MAXIMO_HISTORIAL);
 
-    const [usuarioSnap, matriculas, publicacion, curriculoSnap, contenidosSnap, materialSnap] =
+    const [usuarioSnap, matriculas, publicacion, curriculoSnap, contenidosSnap, materialSnap,
+      configuracion] =
       await Promise.all([
         db.collection('usuarios').doc(uid).get(),
         db.collection('matriculas')
@@ -53,6 +52,7 @@ const preguntarTutor = onCall(
           .get(),
         // Texto de la separata (opcional), cargado por el equipo académico.
         db.collection('material_tutor').doc(`${versionId}__${temaId}`).get(),
+        leerConfiguracion(db),
       ]);
 
     const usuario = usuarioSnap.data();
@@ -84,8 +84,10 @@ const preguntarTutor = onCall(
       );
     }
 
-    // Límite diario: se descuenta antes de llamar a la IA y se devuelve si falla.
-    const limite = limiteDiario();
+    // Límite diario según el plan (panel → Configuración). Se descuenta
+    // antes de llamar a la IA y se devuelve si falla.
+    const premium = esPremium(usuario);
+    const limite = limiteTutor(configuracion, premium);
     const usoRef = db.collection('uso_tutor').doc(`${uid}__${fechaLima()}`);
     const usadas = await db.runTransaction(async (tx) => {
       const uso = await tx.get(usoRef);
@@ -101,9 +103,12 @@ const preguntarTutor = onCall(
     });
 
     if (usadas === null) {
+      const mas = !premium && configuracion.tutorPremium > limite
+        ? ` Con Premium tienes ${configuracion.tutorPremium} al día.`
+        : '';
       throw new HttpsError(
         'resource-exhausted',
-        `Ya usaste tus ${limite} dudas de hoy. Vuelve mañana.`,
+        `Ya usaste tus ${limite} dudas de hoy. Vuelve mañana.${mas}`,
       );
     }
 

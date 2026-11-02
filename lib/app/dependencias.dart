@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../features/academic/domain/repositories/repositorio_contenido.dart';
 import '../features/academic/domain/repositories/repositorio_curriculo.dart';
 import '../features/academic/domain/repositories/repositorio_plan_academico.dart';
@@ -28,6 +30,10 @@ import '../features/identity/domain/repositories/servicio_recuperacion_contrasen
 import '../features/identity/infrastructure/repositories/repositorio_usuario_firestore.dart';
 import '../features/identity/infrastructure/services/firebase_servicio_autenticacion.dart';
 import '../features/seminars/domain/seminario.dart';
+import '../features/premium/domain/repositorio_premium.dart';
+import '../features/premium/infrastructure/elegir_foto.dart';
+import '../features/premium/infrastructure/repositorio_premium_firestore.dart';
+import '../features/premium/infrastructure/servicio_comprobante_storage.dart';
 import '../features/seminars/infrastructure/repositorio_seminarios_firestore.dart';
 import '../features/student_model/domain/repositories/repositorio_evidencia.dart';
 import '../features/student_model/infrastructure/repositories/repositorio_evidencia_firestore.dart';
@@ -61,6 +67,10 @@ class Dependencias {
   final RepositorioExamenes examenes;
   final ServicioExamenes servicioExamenes;
   final RepositorioSeminarios seminarios;
+  final RepositorioPremium premium;
+
+  /// Foto del comprobante (galería). null si no se puede en este equipo.
+  final Future<Uint8List?> Function()? elegirFoto;
 
   const Dependencias({
     required this.autenticacion,
@@ -82,6 +92,8 @@ class Dependencias {
     required this.examenes,
     required this.servicioExamenes,
     required this.seminarios,
+    required this.premium,
+    this.elegirFoto,
   });
 
   factory Dependencias.firebase() {
@@ -109,6 +121,10 @@ class Dependencias {
       examenes: RepositorioExamenesFirestore(),
       servicioExamenes: ServicioExamenesCloudFunctions(),
       seminarios: RepositorioSeminariosFirestore(),
+      premium: RepositorioPremiumFirestore(
+        comprobantes: ServicioComprobanteStorage(),
+      ),
+      elegirFoto: elegirFotoDeGaleria,
     );
   }
 }

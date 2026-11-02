@@ -1,0 +1,23 @@
+rules_version = '2';
+
+// Fotos de comprobantes de pago (solo con el plan Blaze). Cada estudiante
+// sube las suyas; las lee él y el administrador. Imágenes de hasta 5 MB.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /comprobantes/{uid}/{archivo} {
+      allow read: if request.auth != null
+                  && (request.auth.uid == uid || request.auth.token.admin == true);
+
+      allow create: if request.auth != null
+                    && request.auth.uid == uid
+                    && request.resource.size < 5 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+
+      allow update, delete: if false;
+    }
+
+    match /{todo=**} {
+      allow read, write: if false;
+    }
+  }
+}

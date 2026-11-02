@@ -157,3 +157,42 @@ test('el administrador lee el avance de cualquier estudiante', async () => {
   await assertSucceeds(getDoc(doc(admin(), 'simulacros/s1')));
   await assertSucceeds(getDoc(doc(admin(), 'progreso_clases/alumno__version-1__algebra-02')));
 });
+
+const pagoYape = {
+  usuarioId: 'alumno', nombre: 'Ana', correo: 'a@b.pe', monto: 29,
+  metodo: 'yape', operacion: '0045812', estado: 'pendiente',
+};
+
+test('pagos: el estudiante registra el suyo como pendiente', async () => {
+  const db = alumno();
+  await assertSucceeds(setDoc(doc(db, 'pagos/yape__0045812'), { ...pagoYape, creadoEn: serverTimestamp() }));
+  // Otro no puede reclamar la misma operación.
+  await assertFails(setDoc(doc(otro(), 'pagos/yape__0045812'), { ...pagoYape, usuarioId: 'otro', creadoEn: serverTimestamp() }));
+  // Ni aprobarse solo, ni cambiar el id, ni a nombre de otro.
+  await assertFails(setDoc(doc(db, 'pagos/yape__111111'), { ...pagoYape, operacion: '111111', estado: 'aprobado', creadoEn: serverTimestamp() }));
+  await assertFails(setDoc(doc(db, 'pagos/yape__999999'), { ...pagoYape, operacion: '111111', creadoEn: serverTimestamp() }));
+  await assertFails(setDoc(doc(db, 'pagos/yape__222222'), { ...pagoYape, operacion: '222222', usuarioId: 'otro', creadoEn: serverTimestamp() }));
+  // Y no lo puede editar después.
+  await assertFails(updateDoc(doc(db, 'pagos/yape__0045812'), { monto: 1 }));
+  await assertFails(getDoc(doc(otro(), 'pagos/yape__0045812')));
+});
+
+test('pagos: una beca es de monto 0 y una por cupón', async () => {
+  const beca = { usuarioId: 'alumno', nombre: 'Ana', correo: 'a@b.pe', monto: 0, metodo: 'beca', operacion: '', cupon: 'BECA-UNSCH', estado: 'pendiente', creadoEn: serverTimestamp() };
+  await assertSucceeds(setDoc(doc(alumno(), 'pagos/beca__alumno__BECA-UNSCH'), beca));
+  await assertFails(setDoc(doc(alumno(), 'pagos/beca__alumno__OTRA'), { ...beca, cupon: 'OTRA', monto: 5 }));
+});
+
+test('premium, cupones y configuración: solo el administrador los cambia', async () => {
+  await assertSucceeds(updateDoc(doc(admin(), 'usuarios/alumno'), { premiumHasta: new Date('2027-01-30') }));
+  await assertFails(updateDoc(doc(admin(), 'usuarios/alumno'), { rol: 'admin' }));
+  await assertFails(updateDoc(doc(alumno(), 'usuarios/alumno'), { premiumHasta: new Date('2030-01-01') }));
+
+  await assertSucceeds(setDoc(doc(admin(), 'cupones/BECA50'), { tipo: 'descuento', valor: 50, usos: 0, activo: true }));
+  await assertSucceeds(getDoc(doc(alumno(), 'cupones/BECA50')));
+  await assertFails(setDoc(doc(alumno(), 'cupones/GRATIS'), { tipo: 'premiumGratis', activo: true }));
+
+  await assertSucceeds(setDoc(doc(admin(), 'config/academia'), { precio: 29 }));
+  await assertSucceeds(getDoc(doc(alumno(), 'config/academia')));
+  await assertFails(setDoc(doc(alumno(), 'config/academia'), { precio: 1 }));
+});

@@ -393,6 +393,7 @@ class ColumnaPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var i = 0; i < children.length; i++) ...[
@@ -551,4 +552,65 @@ class PildoraEstado extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Pide un texto corto (motivo, nota). Devuelve null si se cancela.
+Future<String?> pedirTexto(
+  BuildContext context, {
+  required String titulo,
+  required String etiqueta,
+  required String confirmar,
+  List<String> sugerencias = const [],
+  String inicial = '',
+}) {
+  final controlador = TextEditingController(text: inicial);
+  return showDialog<String>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, actualizar) => AlertDialog(
+        title: Text(titulo),
+        content: SizedBox(
+          width: 440,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: controlador,
+                autofocus: true,
+                onChanged: (_) => actualizar(() {}),
+                decoration: InputDecoration(labelText: etiqueta),
+              ),
+              if (sugerencias.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final s in sugerencias)
+                      ActionChip(
+                        label: Text(s),
+                        onPressed: () => actualizar(() => controlador.text = s),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: controlador.text.trim().isEmpty
+                ? null
+                : () => Navigator.pop(context, controlador.text.trim()),
+            child: Text(confirmar),
+          ),
+        ],
+      ),
+    ),
+  );
 }

@@ -252,10 +252,11 @@ class _TablaState extends State<_Tabla> {
     ('VERSIÓN', 160.0),
     ('INICIO', 90.0),
     ('AVANCE DEL CICLO', 230.0),
+    ('PLAN', 130.0),
     ('ÚLTIMA ACTIVIDAD', 150.0),
     ('ESTADO', 140.0),
   ];
-  static const _anchoMinimo = 1280.0;
+  static const _anchoMinimo = 1410.0;
 
   final _desplazamiento = ScrollController();
 
@@ -408,6 +409,15 @@ class _TablaState extends State<_Tabla> {
                             ),
                             inicio: e.matricula?.fechaInicioAcademico,
                             hoy: hoy,
+                          ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: e.esPremiumEn(hoy)
+                                ? Insignia(
+                                    'Premium · ${fechaBreve(e.premiumHasta!)}',
+                                    tono: TonoInsignia.acento,
+                                  )
+                                : const Insignia('Gratis'),
                           ),
                           _unaLinea(
                             haceCuanto(e.ultimaActividad, hoy),

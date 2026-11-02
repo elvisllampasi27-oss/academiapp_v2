@@ -7,12 +7,14 @@ class PerfilPage extends StatelessWidget {
   final UsuarioAcademiApp usuario;
   final VoidCallback onCerrarSesion;
   final VoidCallback? onAbrirSeminarios;
+  final VoidCallback? onAbrirPremium;
 
   const PerfilPage({
     super.key,
     required this.usuario,
     required this.onCerrarSesion,
     this.onAbrirSeminarios,
+    this.onAbrirPremium,
   });
 
   @override
@@ -71,6 +73,19 @@ class PerfilPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
+          if (onAbrirPremium != null)
+            Card(
+              child: ListTile(
+                leading: const Icon(
+                  Icons.workspace_premium,
+                  color: ColoresApp.ambar,
+                ),
+                title: const Text('Premium'),
+                subtitle: const Text('Tu plan, beneficios y pagos'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: onAbrirPremium,
+              ),
+            ),
           Card(
             child: ListTile(
               leading: const Icon(Icons.mail_outline),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'acceso/puerta_admin.dart';
 import 'estudiantes/repositorio_estudiantes_admin_firestore.dart';
 import 'examenes/repositorio_examenes_admin_firestore.dart';
+import 'pagos/repositorio_pagos_admin_firestore.dart';
 import 'shell_admin.dart';
 import 'tema_panel.dart';
 
@@ -18,6 +19,7 @@ class AppAdmin extends StatefulWidget {
 class _AppAdminState extends State<AppAdmin> {
   final _estudiantes = RepositorioEstudiantesAdminFirestore();
   final _examenes = RepositorioExamenesAdminFirestore();
+  final _pagos = RepositorioPagosAdminFirestore();
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +34,8 @@ class _AppAdminState extends State<AppAdmin> {
           onSalir: salir,
           repositorioEstudiantes: _estudiantes,
           repositorioExamenes: _examenes,
+          repositorioPagos: _pagos,
+          repositorioAcademia: _pagos,
         ),
       ),
     );

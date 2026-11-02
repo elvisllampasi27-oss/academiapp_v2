@@ -5,11 +5,18 @@ import 'package:flutter/material.dart';
 import '../estudiantes/matricular_dialogo.dart';
 import '../estudiantes/modelo_estudiantes.dart';
 import '../estudiantes/repositorio_estudiantes_admin.dart';
+import '../../features/premium/domain/pago.dart';
 import '../graficos.dart';
+import '../pagos/repositorio_pagos_admin.dart';
 import '../tema_panel.dart';
 import '../widgets_panel.dart';
 
-typedef _Datos = (List<EstudianteAdmin>, List<AccionAdmin>, List<ActividadDia>);
+typedef _Datos = (
+  List<EstudianteAdmin>,
+  List<AccionAdmin>,
+  List<ActividadDia>,
+  List<Pago>,
+);
 
 /// Primera pantalla del panel: cifras del día, lo que requiere atención y
 /// las últimas acciones.
@@ -17,6 +24,10 @@ class ResumenPage extends StatefulWidget {
   final RepositorioEstudiantesAdmin repositorio;
   final ValueChanged<String> onAbrirEstudiante;
   final ValueChanged<FiltroEstudiantes> onVerEstudiantes;
+
+  /// Pagos por revisar (null en pruebas que no los usan).
+  final RepositorioPagosAdmin? pagos;
+  final VoidCallback? onVerPagos;
   final String correoAdmin;
   final DateTime Function() ahora;
 
@@ -25,6 +36,8 @@ class ResumenPage extends StatefulWidget {
     required this.repositorio,
     required this.onAbrirEstudiante,
     required this.onVerEstudiantes,
+    this.pagos,
+    this.onVerPagos,
     this.correoAdmin = '',
     this.ahora = DateTime.now,
   });
@@ -43,6 +56,7 @@ class _ResumenPageState extends State<ResumenPage> {
       widget.repositorio.estudiantes(),
       widget.repositorio.accionesRecientes(),
       widget.repositorio.actividadReciente(),
+      widget.pagos?.pagos(EstadoPago.pendiente) ?? Future.value(<Pago>[]),
     ).wait;
   }
 
@@ -67,7 +81,8 @@ class _ResumenPageState extends State<ResumenPage> {
       futuro: _datos,
       onReintentar: _recargar,
       builder: (context, datos) {
-        final (estudiantes, acciones, actividad) = datos;
+        final (estudiantes, acciones, actividad, pendientes) = datos;
+        final porCobrar = pendientes.fold(0, (t, x) => t + x.monto);
         final hoy = widget.ahora();
         final r = calcularResumen(estudiantes, hoy);
         final p = PaletaPanel.de(context);
@@ -166,13 +181,13 @@ class _ResumenPageState extends State<ResumenPage> {
                       widget.onVerEstudiantes(FiltroEstudiantes.sinActividad),
                 ),
                 IndicadorPanel(
-                  etiqueta: 'Registrados sin matrícula',
-                  valor: '${r.sinMatricula}',
-                  pildora: '${r.programados} por empezar',
-                  nota: 'tienen cuenta en la app',
-                  color: r.sinMatricula == 0 ? null : p.acento,
-                  onTap: () =>
-                      widget.onVerEstudiantes(FiltroEstudiantes.sinMatricula),
+                  etiqueta: 'Pagos por confirmar',
+                  valor: '${pendientes.length}',
+                  pildora: 'S/ $porCobrar',
+                  colorPildora: pendientes.isEmpty ? null : p.acento,
+                  color: pendientes.isEmpty ? null : p.acento,
+                  nota: '${r.premium} Premium activos',
+                  onTap: widget.onVerPagos,
                 ),
               ],
             ),
@@ -182,7 +197,7 @@ class _ResumenPageState extends State<ResumenPage> {
             ),
             DosColumnas(
               flexPrincipal: 3,
-              principal: _atencion(r),
+              principal: _atencion(r, pendientes),
               lateral: _ultimasAcciones(acciones, hoy),
             ),
           ],
@@ -229,9 +244,28 @@ class _ResumenPageState extends State<ResumenPage> {
     );
   }
 
-  Widget _atencion(ResumenPanel r) {
+  Widget _atencion(ResumenPanel r, List<Pago> pendientes) {
     final p = PaletaPanel.de(context);
     final items = [
+      if (pendientes.isNotEmpty)
+        (
+          Icons.receipt_long_outlined,
+          p.acento,
+          '${pendientes.length} pagos por confirmar',
+          'El más antiguo: ${pendientes.last.nombre}, '
+              '${haceCuanto(pendientes.last.creadoEn, widget.ahora()).toLowerCase()}',
+          'Revisar',
+          widget.onVerPagos ?? () {},
+        ),
+      if (r.premiumPorVencer.isNotEmpty)
+        (
+          Icons.workspace_premium_outlined,
+          p.secundario,
+          '${r.premiumPorVencer.length} Premium vencen en 7 días',
+          r.premiumPorVencer.take(3).map((e) => e.nombre).join(', '),
+          'Ver',
+          () => widget.onVerEstudiantes(FiltroEstudiantes.premium),
+        ),
       if (r.sinMatricula > 0)
         (
           Icons.how_to_reg_outlined,

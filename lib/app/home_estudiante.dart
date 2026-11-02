@@ -13,6 +13,7 @@ import '../features/assessment/presentation/widgets/seccion_practica_tema.dart';
 import '../features/exams/presentation/pages/examenes_page.dart';
 import '../features/identity/domain/entities/usuario_academiapp.dart';
 import '../features/identity/presentation/pages/perfil_page.dart';
+import '../features/premium/presentation/premium_page.dart';
 import '../features/seminars/presentation/seminarios_page.dart';
 import '../features/tutor/presentation/conversacion_tutor.dart';
 import '../features/tutor/presentation/widgets/panel_tutor.dart';
@@ -166,6 +167,17 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                 onAbrirSeminarios: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => SeminariosPage(repositorio: _d.seminarios),
+                  ),
+                ),
+                onAbrirPremium: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PremiumPage(
+                      uid: widget.usuario.uid,
+                      nombre: widget.usuario.nombre,
+                      correo: widget.usuario.correo,
+                      repositorio: _d.premium,
+                      elegirFoto: _d.elegirFoto,
+                    ),
                   ),
                 ),
               ),

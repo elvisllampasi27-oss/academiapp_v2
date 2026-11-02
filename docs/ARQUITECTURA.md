@@ -29,7 +29,7 @@ presentation/    pantallas y widgets
   de otro módulo, se lo pasa quien la abre (ver `seccionExtra`/`practica`/`dudas`
   en `TemaPage`).
 
-Módulos: `identity` (cuentas), `enrollment` (matrícula), `academic` (temario,
+Módulos: `identity` (cuentas), `premium` (plan, cupones y pagos), `enrollment` (matrícula), `academic` (temario,
 calendario, clase), `assessment` (prácticas), `student_model` (evidencias),
 `adaptive_engine` (BKT y ruta), `exams` (exámenes pasados y tipo admisión),
 `tutor` (dudas con IA), `seminars`.
@@ -77,7 +77,10 @@ panel se escribe junto con su entrada en `registro_admin` (mismo lote).
 
 | Colección | Quién escribe | Notas |
 |---|---|---|
-| `usuarios` | estudiante (perfil, `ultimaActividad`) / admin | plan y estado solo admin |
+| `usuarios` | estudiante (perfil, `ultimaActividad`) / admin (`premiumHasta`) | el estudiante no toca su plan, rol ni estado |
+| `config/academia` | admin (panel) | precio, Yape, límites gratis/Premium; la leen la app y Functions |
+| `cupones/{CODIGO}` | admin (panel) | el estudiante consulta uno por código, no puede listarlos |
+| `pagos/{metodo}__{operacion}` | estudiante (pendiente) / admin | el id impide reclamar dos veces la misma operación; nunca se borran |
 | `matriculas` | admin (panel) | nunca se borran: se suspenden o finalizan |
 | `versiones_academicas`, `planes_academicos` | scripts | |
 | `registro_admin` | admin (panel) | quién hizo qué; solo se agregan entradas |
@@ -90,6 +93,19 @@ panel se escribe junto con su entrada en `registro_admin` (mismo lote).
 | `simulacros` | servidor | examen tipo admisión |
 | `uso_tutor` | servidor | límite diario |
 | `seminarios` | admin / scripts | |
+
+## Premium y pagos
+
+1. El estudiante paga por Yape/Plin y registra el N.º de operación en la app
+   (`pagos`, estado pendiente). La captura la manda por WhatsApp.
+2. El administrador lo verifica en el panel y lo aprueba: en una transacción
+   suma los días a `usuarios.premiumHasta`, cuenta el uso del cupón y deja la
+   entrada en `registro_admin`. Rechazar y revertir también quedan
+   registrados.
+3. Functions respeta el plan: dudas al tutor por día y examen tipo admisión.
+4. **Con Blaze**: activar "Foto del comprobante" en Configuración, desplegar
+   `storage.rules` (`firebase deploy --only storage`) y la app sube la foto a
+   `comprobantes/{uid}/`.
 
 ## Pruebas
 
