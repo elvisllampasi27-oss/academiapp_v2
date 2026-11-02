@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'app/app.dart';
+import 'app/dependencias.dart';
 import 'firebase_options.dart';
 
 /// Activa con: flutter run -d edge --dart-define=EMULADOR_FUNCTIONS=true
@@ -20,5 +21,5 @@ Future<void> main() async {
     FirebaseFunctions.instance.useFunctionsEmulator('localhost', 5001);
   }
 
-  runApp(const AcademiApp());
+  runApp(AcademiApp(dependencias: Dependencias.firebase()));
 }

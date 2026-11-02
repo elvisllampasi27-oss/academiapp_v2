@@ -12,18 +12,23 @@ service cloud.firestore {
     // PERFIL DEL USUARIO
     match /usuarios/{userId} {
 
-      allow read: if request.auth != null
-                  && request.auth.uid == userId;
+      allow read: if (request.auth != null && request.auth.uid == userId)
+                  || esAdmin();
 
+      // Solo los datos del perfil: el plan, el rol y el estado los cambia
+      // el administrador (o el servidor), nunca el propio estudiante.
       allow create: if request.auth != null
                     && request.auth.uid == userId
+                    && request.resource.data.keys().hasOnly([
+                         'correo', 'nombre', 'rol', 'estado',
+                         'fechaCreacion', 'carreraPostulada'])
                     && request.resource.data.rol == 'estudiante'
                     && request.resource.data.estado == 'activo';
 
       allow update: if request.auth != null
                     && request.auth.uid == userId
-                    && request.resource.data.rol == resource.data.rol
-                    && request.resource.data.estado == resource.data.estado;
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['nombre', 'carreraPostulada']);
 
       allow delete: if false;
     }

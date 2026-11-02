@@ -93,10 +93,13 @@ class _EditorPreguntaState extends State<EditorPregunta> {
     try {
       await widget.onGuardar(pregunta);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(
-          () => _error = 'No se pudo guardar. Revisa tu permiso de administrador o la conexión.',
+          () => _error =
+              'No se pudo guardar. Revisa tu permiso de administrador '
+              'o la conexión.',
         );
+      }
     } finally {
       if (mounted) setState(() => _guardando = false);
     }

@@ -7,15 +7,13 @@ import '../../domain/entities/publicacion_tema.dart';
 import '../../domain/entities/tema.dart';
 import '../../domain/repositories/repositorio_curriculo.dart';
 import '../../domain/repositories/repositorio_curso.dart';
-import '../../domain/repositories/repositorio_publicacion_tema.dart';
 import '../../domain/repositories/repositorio_tema.dart';
 
 /// Lee el temario de una versión desde 2 documentos resumen
 /// (`curriculos/{version}` y `publicaciones_version/{version}`) y los
 /// guarda en memoria: Inicio y Cursos comparten las mismas 2 lecturas
 /// (antes eran ~220 lecturas por apertura del inicio).
-class RepositorioCurriculoFirestore
-    implements RepositorioCurriculo, RepositorioPublicacionTema {
+class RepositorioCurriculoFirestore implements RepositorioCurriculo {
   final String versionId;
   final FirebaseFirestore firestore;
 
@@ -27,9 +25,10 @@ class RepositorioCurriculoFirestore
     FirebaseFirestore? firestore,
   }) : firestore = firestore ?? FirebaseFirestore.instance;
 
-  /// Vistas para `ConstruirDiaEstudianteService`, que pide cursos y temas
-  /// por separado.
+  @override
   RepositorioCurso get cursos => _CursosDelCurriculo(this);
+
+  @override
   RepositorioTema get temas => _TemasDelCurriculo(this);
 
   @override
