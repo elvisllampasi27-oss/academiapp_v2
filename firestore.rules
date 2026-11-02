@@ -25,10 +25,14 @@ service cloud.firestore {
                     && request.resource.data.rol == 'estudiante'
                     && request.resource.data.estado == 'activo';
 
+      // "ultimaActividad" solo con la hora del servidor (la usa el panel).
       allow update: if request.auth != null
                     && request.auth.uid == userId
-                    && request.resource.data.diff(resource.data)
-                         .affectedKeys().hasOnly(['nombre', 'carreraPostulada']);
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['nombre', 'carreraPostulada', 'ultimaActividad'])
+                    && (!request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['ultimaActividad'])
+                        || request.resource.data.ultimaActividad == request.time);
 
       allow delete: if false;
     }
@@ -36,10 +40,28 @@ service cloud.firestore {
     // MATRICULAS
     match /matriculas/{matriculaId} {
 
-      allow read: if request.auth != null
-                  && resource.data.usuarioId == request.auth.uid;
+      allow read: if (request.auth != null
+                      && resource.data.usuarioId == request.auth.uid)
+                  || esAdmin();
 
-      allow create, update, delete: if false;
+      // Las crea y cambia el administrador desde el panel. Nunca se borran:
+      // se suspenden o finalizan.
+      allow create, update: if esAdmin();
+
+      allow delete: if false;
+    }
+
+    // REGISTRO DE ACCIONES DEL PANEL: quién hizo qué y cuándo. Solo se
+    // agregan entradas; nadie las cambia ni las borra.
+    match /registro_admin/{accionId} {
+
+      allow read: if esAdmin();
+
+      allow create: if esAdmin()
+                    && request.resource.data.adminUid == request.auth.uid
+                    && request.resource.data.fecha == request.time;
+
+      allow update, delete: if false;
     }
 
     // VERSIONES ACADEMICAS
@@ -116,8 +138,9 @@ service cloud.firestore {
     // solo puede leer los suyos.
     match /intentos_evaluacion/{intentoId} {
 
-      allow read: if request.auth != null
-                  && resource.data.usuarioId == request.auth.uid;
+      allow read: if (request.auth != null
+                      && resource.data.usuarioId == request.auth.uid)
+                  || esAdmin();
 
       allow write: if false;
     }
@@ -134,8 +157,9 @@ service cloud.firestore {
     // Cloud Functions; el estudiante solo lee las suyas.
     match /evidencias/{evidenciaId} {
 
-      allow read: if request.auth != null
-                  && resource.data.usuarioId == request.auth.uid;
+      allow read: if (request.auth != null
+                      && resource.data.usuarioId == request.auth.uid)
+                  || esAdmin();
 
       allow write: if false;
     }
@@ -167,8 +191,9 @@ service cloud.firestore {
     // suyo. Id: {uid}__{version}__{tema}.
     match /progreso_clases/{progresoId} {
 
-      allow read: if request.auth != null
-                  && progresoId.matches(request.auth.uid + '__.*');
+      allow read: if (request.auth != null
+                      && progresoId.matches(request.auth.uid + '__.*'))
+                  || esAdmin();
 
       allow create, update: if request.auth != null
                             && request.resource.data.usuarioId == request.auth.uid
@@ -219,8 +244,9 @@ service cloud.firestore {
     // solo lee los suyos.
     match /simulacros/{simulacroId} {
 
-      allow read: if request.auth != null
-                  && resource.data.usuarioId == request.auth.uid;
+      allow read: if (request.auth != null
+                      && resource.data.usuarioId == request.auth.uid)
+                  || esAdmin();
 
       allow write: if false;
     }

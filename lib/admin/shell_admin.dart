@@ -1,22 +1,37 @@
 import 'package:flutter/material.dart';
 
-import '../core/presentation/colores_app.dart';
+import 'estudiantes/estudiantes_page.dart';
+import 'estudiantes/ficha_estudiante_page.dart';
+import 'estudiantes/modelo_estudiantes.dart';
+import 'estudiantes/repositorio_estudiantes_admin.dart';
 import 'examenes/examenes_admin_page.dart';
 import 'examenes/repositorio_examenes_admin.dart';
+import 'resumen/resumen_page.dart';
+import 'tema_panel.dart';
 
-/// Estructura del panel: menú lateral y la sección elegida.
-/// Las demás secciones (material, estudiantes, seminarios) se agregan
-/// aquí en los siguientes bloques.
+enum SeccionPanel { resumen, estudiantes, examenes }
+
+/// Estructura del panel: menú lateral por grupos y la sección elegida.
+/// Las secciones de los siguientes bloques (pagos, versiones, contenido…)
+/// se agregan aquí.
 class ShellAdmin extends StatefulWidget {
   final String correo;
   final VoidCallback onSalir;
+  final RepositorioEstudiantesAdmin repositorioEstudiantes;
   final RepositorioExamenesAdmin repositorioExamenes;
+  final PaletaPanel paleta;
+  final ValueChanged<PaletaPanel> onPaleta;
+  final DateTime Function() ahora;
 
   const ShellAdmin({
     super.key,
     required this.correo,
     required this.onSalir,
+    required this.repositorioEstudiantes,
     required this.repositorioExamenes,
+    required this.paleta,
+    required this.onPaleta,
+    this.ahora = DateTime.now,
   });
 
   @override
@@ -24,70 +39,315 @@ class ShellAdmin extends StatefulWidget {
 }
 
 class _ShellAdminState extends State<ShellAdmin> {
-  static const _proximas = [
-    ('Material', Icons.menu_book_outlined),
-    ('Estudiantes', Icons.group_outlined),
-    ('Seminarios', Icons.live_tv_outlined),
-  ];
+  SeccionPanel _seccion = SeccionPanel.resumen;
+  String? _fichaUid;
+  FiltroEstudiantes _filtro = FiltroEstudiantes.todos;
 
-  int _seccion = 0;
+  /// Cambia cada vez que se entra a Estudiantes desde otro lado, para que
+  /// la lista se vuelva a leer con el filtro pedido.
+  int _visita = 0;
+
+  void _ir(SeccionPanel s) => setState(() {
+    _seccion = s;
+    _fichaUid = null;
+    _filtro = FiltroEstudiantes.todos;
+    _visita++;
+  });
+
+  void _verEstudiantes(FiltroEstudiantes filtro) => setState(() {
+    _seccion = SeccionPanel.estudiantes;
+    _fichaUid = null;
+    _filtro = filtro;
+    _visita++;
+  });
+
+  void _abrirEstudiante(String uid) => setState(() {
+    _seccion = SeccionPanel.estudiantes;
+    _fichaUid = uid;
+  });
+
+  Widget _pagina() {
+    return switch (_seccion) {
+      SeccionPanel.resumen => ResumenPage(
+        repositorio: widget.repositorioEstudiantes,
+        onAbrirEstudiante: _abrirEstudiante,
+        onVerEstudiantes: _verEstudiantes,
+        ahora: widget.ahora,
+      ),
+      SeccionPanel.estudiantes => switch (_fichaUid) {
+        final uid? => FichaEstudiantePage(
+          key: ValueKey(uid),
+          uid: uid,
+          repositorio: widget.repositorioEstudiantes,
+          onVolver: () => setState(() => _fichaUid = null),
+          ahora: widget.ahora,
+        ),
+        null => EstudiantesPage(
+          key: ValueKey(_visita),
+          repositorio: widget.repositorioEstudiantes,
+          filtroInicial: _filtro,
+          onAbrir: _abrirEstudiante,
+          ahora: widget.ahora,
+        ),
+      },
+      SeccionPanel.examenes => ExamenesAdminPage(
+        repositorio: widget.repositorioExamenes,
+      ),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
-    final secciones = [
-      (
-        etiqueta: 'Exámenes',
-        icono: Icons.assignment_outlined,
-        pagina: ExamenesAdminPage(repositorio: widget.repositorioExamenes),
-      ),
-    ];
-
     return Scaffold(
       body: Row(
         children: [
-          NavigationRail(
-            backgroundColor: ColoresApp.barra,
-            selectedIndex: _seccion,
-            onDestinationSelected: (i) => setState(() => _seccion = i),
-            labelType: NavigationRailLabelType.all,
-            leading: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                'Panel',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-              ),
-            ),
-            trailing: Expanded(
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: IconButton(
-                    tooltip: 'Salir (${widget.correo})',
-                    onPressed: widget.onSalir,
-                    icon: const Icon(Icons.logout),
+          _MenuLateral(
+            seccion: _seccion,
+            onIr: _ir,
+            correo: widget.correo,
+            onSalir: widget.onSalir,
+            paleta: widget.paleta,
+            onPaleta: widget.onPaleta,
+          ),
+          Expanded(child: _pagina()),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuLateral extends StatelessWidget {
+  final SeccionPanel seccion;
+  final ValueChanged<SeccionPanel> onIr;
+  final String correo;
+  final VoidCallback onSalir;
+  final PaletaPanel paleta;
+  final ValueChanged<PaletaPanel> onPaleta;
+
+  const _MenuLateral({
+    required this.seccion,
+    required this.onIr,
+    required this.correo,
+    required this.onSalir,
+    required this.paleta,
+    required this.onPaleta,
+  });
+
+  static const _salir = '__salir__';
+
+  static const _grupos = [
+    ('GENERAL', [(SeccionPanel.resumen, 'Resumen', Icons.home_outlined)]),
+    (
+      'ESTUDIANTES',
+      [(SeccionPanel.estudiantes, 'Estudiantes', Icons.group_outlined)],
+    ),
+    (
+      'CONTENIDO',
+      [(SeccionPanel.examenes, 'Exámenes', Icons.assignment_outlined)],
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    return Container(
+      width: 248,
+      decoration: BoxDecoration(
+        color: p.barra,
+        border: const Border(right: BorderSide(color: PaletaPanel.borde)),
+      ),
+      padding: const EdgeInsets.fromLTRB(14, 24, 14, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: p.texto,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Text(
+                    'A',
+                    style: TextStyle(
+                      color: p.fondo,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'AcademiApp',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      'Panel de control',
+                      style: TextStyle(color: p.tenue, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: ListView(
+              children: [
+                for (final (grupo, items) in _grupos) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 18, 12, 6),
+                    child: Text(
+                      grupo,
+                      style: TextStyle(
+                        color: p.tenue,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                  for (final (s, etiqueta, icono) in items)
+                    _ItemMenu(
+                      etiqueta: etiqueta,
+                      icono: icono,
+                      activo: s == seccion,
+                      onTap: () => onIr(s),
+                    ),
+                ],
+              ],
+            ),
+          ),
+          const Divider(),
+          const SizedBox(height: 8),
+          PopupMenuButton<String>(
+            tooltip: 'Cuenta y apariencia',
+            onSelected: (id) =>
+                id == _salir ? onSalir() : onPaleta(PaletaPanel.porId(id)),
+            itemBuilder: (_) => [
+              const PopupMenuItem(
+                enabled: false,
+                child: Text('Apariencia del panel'),
+              ),
+              for (final opcion in PaletaPanel.todas)
+                CheckedPopupMenuItem(
+                  value: opcion.id,
+                  checked: opcion.id == paleta.id,
+                  child: Row(
+                    children: [
+                      for (final c in [
+                        opcion.barra,
+                        opcion.acento,
+                        opcion.secundario,
+                      ])
+                        Container(
+                          width: 14,
+                          height: 14,
+                          margin: const EdgeInsets.only(right: 4),
+                          decoration: BoxDecoration(
+                            color: c,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: PaletaPanel.bordeFuerte),
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      Text(opcion.nombre),
+                    ],
+                  ),
+                ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: _salir,
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.logout),
+                  title: Text('Salir'),
+                ),
+              ),
+            ],
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: p.acento,
+                    child: Text(
+                      correo.isEmpty ? '?' : correo[0].toUpperCase(),
+                      style: TextStyle(
+                        color: p.sobreAcento,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      correo,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: p.apagado, fontSize: 13),
+                    ),
+                  ),
+                  Icon(Icons.unfold_more, size: 18, color: p.tenue),
+                ],
               ),
             ),
-            destinations: [
-              for (final s in secciones)
-                NavigationRailDestination(
-                  icon: Icon(s.icono),
-                  label: Text(s.etiqueta),
-                ),
-              // Próximos bloques del panel (todavía deshabilitados).
-              for (final (etiqueta, icono) in _proximas)
-                NavigationRailDestination(
-                  icon: Icon(icono),
-                  label: Text(etiqueta),
-                  disabled: true,
-                ),
-            ],
           ),
-          const VerticalDivider(width: 1),
-          Expanded(child: secciones[_seccion].pagina),
         ],
+      ),
+    );
+  }
+}
+
+class _ItemMenu extends StatelessWidget {
+  final String etiqueta;
+  final IconData icono;
+  final bool activo;
+  final VoidCallback onTap;
+
+  const _ItemMenu({
+    required this.etiqueta,
+    required this.icono,
+    required this.activo,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    final color = activo ? p.texto : p.apagado;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Material(
+        color: activo ? const Color(0x14FFFFFF) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            child: Row(
+              children: [
+                Icon(icono, size: 19, color: activo ? p.acento : color),
+                const SizedBox(width: 12),
+                Text(
+                  etiqueta,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: activo ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

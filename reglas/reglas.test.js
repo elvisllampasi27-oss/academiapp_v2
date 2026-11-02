@@ -16,7 +16,7 @@ const {
   assertSucceeds,
   assertFails,
 } = require('@firebase/rules-unit-testing');
-const { doc, getDoc, setDoc, updateDoc } = require('firebase/firestore');
+const { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } = require('firebase/firestore');
 
 let entorno;
 
@@ -76,6 +76,11 @@ test('perfil: cambia su nombre, pero no su plan, rol ni estado', async () => {
   await assertFails(updateDoc(doc(alumno(), 'usuarios/alumno'), { estado: 'suspendido' }));
 });
 
+test('perfil: la última actividad solo con la hora del servidor', async () => {
+  await assertSucceeds(updateDoc(doc(alumno(), 'usuarios/alumno'), { ultimaActividad: serverTimestamp() }));
+  await assertFails(updateDoc(doc(alumno(), 'usuarios/alumno'), { ultimaActividad: new Date('2030-01-01') }));
+});
+
 test('perfil: nadie lee el de otro, salvo el administrador', async () => {
   await assertSucceeds(getDoc(doc(alumno(), 'usuarios/alumno')));
   await assertFails(getDoc(doc(otro(), 'usuarios/alumno')));
@@ -129,4 +134,26 @@ test('simulacros y matriculas: cada uno lee solo los suyos', async () => {
 test('colecciones no declaradas quedan cerradas', async () => {
   await assertFails(getDoc(doc(alumno(), 'cualquier_cosa/x')));
   await assertFails(setDoc(doc(admin(), 'cualquier_cosa/x'), { a: 1 }));
+});
+
+test('matriculas: solo el administrador las crea y cambia; nadie las borra', async () => {
+  const nueva = { usuarioId: 'alumno', versionId: 'v1', estado: 'activa' };
+  await assertSucceeds(setDoc(doc(admin(), 'matriculas/m2'), nueva));
+  await assertSucceeds(updateDoc(doc(admin(), 'matriculas/m1'), { estado: 'suspendida' }));
+  await assertSucceeds(getDoc(doc(admin(), 'matriculas/m1')));
+  await assertFails(deleteDoc(doc(admin(), 'matriculas/m1')));
+});
+
+test('registro del panel: solo se agrega, con el admin y la hora reales', async () => {
+  const accion = { tipo: 'matricula', descripcion: 'Matriculó a Ana', adminUid: 'jefe', fecha: serverTimestamp() };
+  await assertSucceeds(setDoc(doc(admin(), 'registro_admin/r1'), accion));
+  await assertFails(setDoc(doc(admin(), 'registro_admin/r2'), { ...accion, adminUid: 'otro' }));
+  await assertFails(setDoc(doc(admin(), 'registro_admin/r3'), { ...accion, fecha: new Date('2020-01-01') }));
+  await assertFails(updateDoc(doc(admin(), 'registro_admin/r1'), { descripcion: 'x' }));
+  await assertFails(getDoc(doc(alumno(), 'registro_admin/r1')));
+});
+
+test('el administrador lee el avance de cualquier estudiante', async () => {
+  await assertSucceeds(getDoc(doc(admin(), 'simulacros/s1')));
+  await assertSucceeds(getDoc(doc(admin(), 'progreso_clases/alumno__version-1__algebra-02')));
 });

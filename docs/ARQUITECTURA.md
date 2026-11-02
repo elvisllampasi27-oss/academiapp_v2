@@ -47,6 +47,15 @@ Sin contenedor de inyección, sin `go_router`, sin Bloc/Riverpod: con este tama�
 el constructor y `setState` alcanzan. Se reconsidera si una pantalla necesita
 compartir estado vivo con otra.
 
+## Panel de control (`lib/admin/`)
+
+Una carpeta por sección (`resumen/`, `estudiantes/`, `examenes/`…), cada una
+con su modelo (Dart puro, probado), su repositorio (interfaz + Firestore) y sus
+pantallas. Reutiliza el dominio de la app (calendario, BKT, cálculo del
+inicio) en lugar de repetirlo. `tema_panel.dart` tiene las 4 paletas;
+`widgets_panel.dart`, las piezas visuales comunes. Cada cambio hecho desde el
+panel se escribe junto con su entrada en `registro_admin` (mismo lote).
+
 ## Seguridad
 
 1. **Las respuestas correctas nunca llegan al celular** antes de responder:
@@ -68,8 +77,10 @@ compartir estado vivo con otra.
 
 | Colección | Quién escribe | Notas |
 |---|---|---|
-| `usuarios` | estudiante (perfil) / admin | plan y estado solo admin |
-| `matriculas`, `versiones_academicas`, `planes_academicos` | admin / scripts | |
+| `usuarios` | estudiante (perfil, `ultimaActividad`) / admin | plan y estado solo admin |
+| `matriculas` | admin (panel) | nunca se borran: se suspenden o finalizan |
+| `versiones_academicas`, `planes_academicos` | scripts | |
+| `registro_admin` | admin (panel) | quién hizo qué; solo se agregan entradas |
 | `curriculos/{version}`, `publicaciones_version/{version}` | scripts | temario en 1 lectura |
 | `contenidos`, `recursos` | admin / scripts | material de cada tema |
 | `progreso_clases` | estudiante (el suyo) | id `{uid}__{version}__{tema}` |

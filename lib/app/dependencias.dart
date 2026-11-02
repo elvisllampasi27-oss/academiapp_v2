@@ -20,6 +20,7 @@ import '../features/exams/domain/repositories/repositorio_examenes.dart';
 import '../features/exams/domain/repositories/servicio_examenes.dart';
 import '../features/exams/infrastructure/repositorio_examenes_firestore.dart';
 import '../features/exams/infrastructure/servicio_examenes_cloud_functions.dart';
+import '../features/identity/domain/repositories/registro_actividad.dart';
 import '../features/identity/domain/repositories/repositorio_usuario.dart';
 import '../features/identity/domain/repositories/servicio_autenticacion.dart';
 import '../features/identity/domain/repositories/servicio_autenticacion_google.dart';
@@ -41,6 +42,7 @@ class Dependencias {
   final ServicioRecuperacionContrasena recuperacion;
   final ServicioAutenticacionGoogle google;
   final RepositorioUsuario usuarios;
+  final RegistroActividad actividad;
 
   final RepositorioMatricula matriculas;
   final RepositorioVersionAcademica versiones;
@@ -65,6 +67,7 @@ class Dependencias {
     required this.recuperacion,
     required this.google,
     required this.usuarios,
+    required this.actividad,
     required this.matriculas,
     required this.versiones,
     required this.planes,
@@ -83,12 +86,14 @@ class Dependencias {
 
   factory Dependencias.firebase() {
     final autenticacion = FirebaseServicioAutenticacion();
+    final usuarios = RepositorioUsuarioFirestore();
 
     return Dependencias(
       autenticacion: autenticacion,
       recuperacion: autenticacion,
       google: autenticacion,
-      usuarios: RepositorioUsuarioFirestore(),
+      usuarios: usuarios,
+      actividad: usuarios,
       matriculas: RepositorioMatriculaFirestore(),
       versiones: RepositorioVersionAcademicaFirestore(),
       planes: RepositorioPlanAcademicoFirestore(),

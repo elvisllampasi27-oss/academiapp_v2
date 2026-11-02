@@ -1,0 +1,426 @@
+import 'package:flutter/material.dart';
+
+import 'tema_panel.dart';
+
+/// Piezas visuales comunes del panel (mismo aspecto en todas las secciones).
+
+class EncabezadoPanel extends StatelessWidget {
+  final String titulo;
+  final String? subtitulo;
+  final List<Widget> acciones;
+  final Widget? migas;
+
+  const EncabezadoPanel({
+    super.key,
+    required this.titulo,
+    this.subtitulo,
+    this.acciones = const [],
+    this.migas,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    return Wrap(
+      spacing: 16,
+      runSpacing: 12,
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.end,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (migas case final m?) ...[m, const SizedBox(height: 8)],
+            Text(
+              titulo,
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+            ),
+            if (subtitulo case final s?) ...[
+              const SizedBox(height: 4),
+              Text(s, style: TextStyle(color: p.apagado, fontSize: 14)),
+            ],
+          ],
+        ),
+        if (acciones.isNotEmpty)
+          Wrap(spacing: 10, runSpacing: 10, children: acciones),
+      ],
+    );
+  }
+}
+
+class TarjetaPanel extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  const TarjetaPanel({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(20),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: PaletaPanel.panel,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: PaletaPanel.borde),
+      ),
+      child: child,
+    );
+  }
+}
+
+class TituloTarjeta extends StatelessWidget {
+  final String texto;
+  final Widget? extra;
+
+  const TituloTarjeta(this.texto, {super.key, this.extra});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              texto,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+          ),
+          ?extra,
+        ],
+      ),
+    );
+  }
+}
+
+/// Cifra grande con su explicación (fila de indicadores).
+class IndicadorPanel extends StatelessWidget {
+  final String etiqueta;
+  final String valor;
+  final String? nota;
+  final Color? color;
+  final VoidCallback? onTap;
+
+  const IndicadorPanel({
+    super.key,
+    required this.etiqueta,
+    required this.valor,
+    this.nota,
+    this.color,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: TarjetaPanel(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(etiqueta, style: TextStyle(color: p.apagado, fontSize: 13)),
+              const SizedBox(height: 6),
+              Text(
+                valor,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  color: color ?? p.texto,
+                ),
+              ),
+              if (nota case final n?)
+                Text(n, style: TextStyle(color: p.tenue, fontSize: 12)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+enum TonoInsignia { gris, acento, secundario, alerta }
+
+class Insignia extends StatelessWidget {
+  final String texto;
+  final TonoInsignia tono;
+
+  const Insignia(this.texto, {super.key, this.tono = TonoInsignia.gris});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    final color = switch (tono) {
+      TonoInsignia.gris => p.apagado,
+      TonoInsignia.acento => p.acento,
+      TonoInsignia.secundario => p.secundario,
+      TonoInsignia.alerta => p.alerta,
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        texto,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class BarraAvance extends StatelessWidget {
+  final double valor;
+  final Color? color;
+  final double alto;
+
+  const BarraAvance(this.valor, {super.key, this.color, this.alto = 6});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(alto),
+      child: LinearProgressIndicator(
+        value: valor.clamp(0, 1).toDouble(),
+        minHeight: alto,
+        color: color ?? PaletaPanel.de(context).texto,
+        backgroundColor: PaletaPanel.borde,
+      ),
+    );
+  }
+}
+
+class AvatarIniciales extends StatelessWidget {
+  final String nombre;
+  const AvatarIniciales(this.nombre, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    final inicial = nombre.trim().isEmpty
+        ? '?'
+        : nombre.trim()[0].toUpperCase();
+    return CircleAvatar(
+      radius: 17,
+      backgroundColor: p.acento.withValues(alpha: 0.18),
+      child: Text(
+        inicial,
+        style: TextStyle(color: p.acento, fontWeight: FontWeight.w800),
+      ),
+    );
+  }
+}
+
+class FilaDato extends StatelessWidget {
+  final String etiqueta;
+  final String valor;
+
+  const FilaDato(this.etiqueta, this.valor, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: PaletaPanel.linea)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(etiqueta, style: TextStyle(color: p.apagado)),
+          ),
+          Flexible(
+            child: Text(
+              valor,
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Reparte [children] en columnas iguales según el ancho disponible.
+class RejillaPanel extends StatelessWidget {
+  final List<Widget> children;
+  final double anchoMinimo;
+  final double espacio;
+
+  const RejillaPanel({
+    super.key,
+    required this.children,
+    this.anchoMinimo = 200,
+    this.espacio = 14,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.isEmpty) return const SizedBox.shrink();
+    return LayoutBuilder(
+      builder: (context, c) {
+        final columnas = ((c.maxWidth + espacio) / (anchoMinimo + espacio))
+            .floor()
+            .clamp(1, children.length)
+            .toInt();
+        final ancho = (c.maxWidth - espacio * (columnas - 1)) / columnas;
+        return Wrap(
+          spacing: espacio,
+          runSpacing: espacio,
+          children: [
+            for (final hijo in children) SizedBox(width: ancho, child: hijo),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Dos columnas (principal y lateral) en pantallas anchas; una en angostas.
+class DosColumnas extends StatelessWidget {
+  final Widget principal;
+  final Widget lateral;
+  final int flexPrincipal;
+
+  const DosColumnas({
+    super.key,
+    required this.principal,
+    required this.lateral,
+    this.flexPrincipal = 2,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        if (c.maxWidth < 960) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [principal, const SizedBox(height: 16), lateral],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: flexPrincipal, child: principal),
+            const SizedBox(width: 16),
+            Expanded(child: lateral),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Columna con separación fija entre sus hijos.
+class ColumnaPanel extends StatelessWidget {
+  final List<Widget> children;
+  final double espacio;
+
+  const ColumnaPanel({super.key, required this.children, this.espacio = 16});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) SizedBox(height: espacio),
+          children[i],
+        ],
+      ],
+    );
+  }
+}
+
+/// Espera un Future y muestra carga, error con "Reintentar" o el contenido.
+class FuturoPanel<T> extends StatelessWidget {
+  final Future<T> futuro;
+  final Widget Function(BuildContext context, T datos) builder;
+  final VoidCallback onReintentar;
+
+  const FuturoPanel({
+    super.key,
+    required this.futuro,
+    required this.builder,
+    required this.onReintentar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<T>(
+      future: futuro,
+      builder: (context, s) {
+        if (s.hasError) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('No se pudo cargar.'),
+                const SizedBox(height: 4),
+                Text(
+                  '${s.error}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: PaletaPanel.de(context).tenue),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: onReintentar,
+                  child: const Text('Reintentar'),
+                ),
+              ],
+            ),
+          );
+        }
+        if (!s.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return builder(context, s.data as T);
+      },
+    );
+  }
+}
+
+/// Contenido desplazable de una sección, con los márgenes del panel.
+class PaginaPanel extends StatelessWidget {
+  final List<Widget> children;
+
+  const PaginaPanel({super.key, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(32, 28, 32, 40),
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1400),
+          child: ColumnaPanel(espacio: 20, children: children),
+        ),
+      ),
+    );
+  }
+}
+
+void avisarPanel(BuildContext context, String mensaje) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(mensaje)));
+}

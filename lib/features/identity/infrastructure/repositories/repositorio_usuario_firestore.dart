@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../domain/entities/usuario_academiapp.dart';
+import '../../domain/repositories/registro_actividad.dart';
 import '../../domain/repositories/repositorio_usuario.dart';
 
-class RepositorioUsuarioFirestore implements RepositorioUsuario {
+class RepositorioUsuarioFirestore
+    implements RepositorioUsuario, RegistroActividad {
   final FirebaseFirestore firestore;
 
   RepositorioUsuarioFirestore({FirebaseFirestore? firestore})
@@ -48,4 +50,9 @@ class RepositorioUsuarioFirestore implements RepositorioUsuario {
       carreraPostulada: datos['carreraPostulada'] as String?,
     );
   }
+
+  @override
+  Future<void> registrar(String uid) => _usuarios.doc(uid).update({
+    'ultimaActividad': FieldValue.serverTimestamp(),
+  });
 }

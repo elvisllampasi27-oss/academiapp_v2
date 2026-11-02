@@ -48,6 +48,10 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
   void initState() {
     super.initState();
     _contextoAcademico = _cargarContextoAcademico();
+    // Para el panel ("última actividad"). Si falla, no afecta al estudiante.
+    widget.dependencias.actividad
+        .registrar(widget.usuario.uid)
+        .catchError((Object _) {});
   }
 
   @override
