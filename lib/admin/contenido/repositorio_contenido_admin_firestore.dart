@@ -111,7 +111,7 @@ class RepositorioContenidoAdminFirestore implements RepositorioContenidoAdmin {
             separata: separata[t.id],
             contenidos: [
               for (final (_, nombre)
-                  in (porTema[t.id] ?? [])
+                  in (porTema[t.id] ?? <(int, String)>[])
                     ..sort((a, b) => a.$1.compareTo(b.$1)))
                 nombre,
             ],
