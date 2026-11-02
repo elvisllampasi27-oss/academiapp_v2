@@ -5,6 +5,7 @@ import '../../domain/entities/evaluacion.dart';
 import '../../domain/entities/pregunta_presentada.dart';
 import '../../domain/services/practica_tema_service.dart';
 import '../../../../core/presentation/texto_con_latex.dart';
+import '../../../../core/presentation/imagen_figura.dart';
 
 /// Resolver una práctica: una pregunta a la vez y, al final, la corrección
 /// que devuelve el servidor (con la respuesta correcta y la explicación).
@@ -178,6 +179,7 @@ class _PracticaPageState extends State<PracticaPage> {
                 pregunta.enunciado,
                 estilo: const TextStyle(fontSize: 18),
               ),
+              if (pregunta.imagen case final imagen?) ImagenFigura(imagen),
               const SizedBox(height: 20),
               for (final (i, opcion) in pregunta.opciones.indexed)
                 _TarjetaOpcion(
@@ -364,6 +366,7 @@ class _TarjetaCorreccion extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             TextoConLatex(pregunta.enunciado),
+            if (pregunta.imagen case final imagen?) ImagenFigura(imagen),
             const SizedBox(height: 8),
             if (!item.esCorrecta) ...[
               Text('Tu respuesta:', style: TextStyle(color: colorEstado)),

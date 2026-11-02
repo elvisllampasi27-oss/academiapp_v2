@@ -41,6 +41,15 @@ class RepositorioFalso implements RepositorioExamenesAdmin {
     String examenId, {
     required bool publicado,
   }) async {}
+
+  @override
+  Future<void> importar({
+    required String examenId,
+    required String tipo,
+    required String fecha,
+    required String titulo,
+    required List<PreguntaAdmin> preguntas,
+  }) async {}
 }
 
 const pregunta = PreguntaAdmin(

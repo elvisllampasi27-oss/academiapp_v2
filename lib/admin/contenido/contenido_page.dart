@@ -7,6 +7,7 @@ import '../../features/academic/domain/entities/tema.dart';
 import '../../features/academic/domain/entities/version_academica.dart';
 import '../estudiantes/modelo_estudiantes.dart';
 import '../estudiantes/repositorio_estudiantes_admin.dart';
+import '../graficos.dart';
 import '../tema_panel.dart';
 import '../versiones/modelo_versiones.dart';
 import '../widgets_panel.dart';
@@ -44,6 +45,13 @@ class _ContenidoPageState extends State<ContenidoPage> {
   String? _cursoId;
   FiltroTemas _filtro = FiltroTemas.todos;
   Tema? _editando;
+  final _desplazamientoCursos = ScrollController();
+
+  @override
+  void dispose() {
+    _desplazamientoCursos.dispose();
+    super.dispose();
+  }
 
   void _elegirVersion(String id) => setState(() {
     _versionId = id;
@@ -118,6 +126,10 @@ class _ContenidoPageState extends State<ContenidoPage> {
       ..sort((a, b) => a.orden.compareTo(b.orden));
     final curso =
         cursos.where((c) => c.id == _cursoId).firstOrNull ?? cursos.firstOrNull;
+    // Alto de las dos columnas: lo que queda de la ventana.
+    final alto = (MediaQuery.sizeOf(context).height - 230)
+        .clamp(420.0, 2000.0)
+        .toDouble();
     final dias = {
       for (final d in calendarioVersion(r.curriculo, version.fechaApertura))
         for (final t in d.temas) t: d.numero,
@@ -157,18 +169,29 @@ class _ContenidoPageState extends State<ContenidoPage> {
           DosColumnas(
             flexPrincipal: 1,
             flexLateral: 3,
-            principal: TarjetaPanel(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                children: [
-                  for (final c in cursos)
-                    _ItemCurso(
-                      curso: c,
-                      avance: completoCurso(c.id, r.curriculo, r.material),
-                      elegido: c.id == curso.id,
-                      onTap: () => setState(() => _cursoId = c.id),
-                    ),
-                ],
+            // Cursos y temas con su propio desplazamiento: la página no
+            // tiene que bajar hasta el final para ver todo.
+            principal: SizedBox(
+              height: alto,
+              child: TarjetaPanel(
+                padding: const EdgeInsets.all(10),
+                child: Scrollbar(
+                  controller: _desplazamientoCursos,
+                  thumbVisibility: true,
+                  child: ListView(
+                    controller: _desplazamientoCursos,
+                    padding: const EdgeInsets.only(right: 10),
+                    children: [
+                      for (final c in cursos)
+                        _ItemCurso(
+                          curso: c,
+                          avance: completoCurso(c.id, r.curriculo, r.material),
+                          elegido: c.id == curso.id,
+                          onTap: () => setState(() => _cursoId = c.id),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
             lateral: ColumnaPanel(
@@ -181,12 +204,23 @@ class _ContenidoPageState extends State<ContenidoPage> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: Text(
-                        curso.nombre,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnilloAvance(
+                            completoCurso(curso.id, r.curriculo, r.material),
+                            tamano: 44,
+                            color: p.acento,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            curso.nombre,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     for (final f in FiltroTemas.values)
@@ -210,6 +244,7 @@ class _ContenidoPageState extends State<ContenidoPage> {
                   material: r.material,
                   publicados: r.publicados,
                   dias: dias,
+                  alto: alto - 100,
                   onAbrir: (t) => setState(() => _editando = t),
                 ),
                 Text(
@@ -289,6 +324,7 @@ class _TablaTemas extends StatelessWidget {
   final Map<String, MaterialTema> material;
   final Set<String> publicados;
   final Map<String, int> dias;
+  final double alto;
   final ValueChanged<Tema> onAbrir;
 
   const _TablaTemas({
@@ -296,6 +332,7 @@ class _TablaTemas extends StatelessWidget {
     required this.material,
     required this.publicados,
     required this.dias,
+    required this.alto,
     required this.onAbrir,
   });
 
@@ -364,6 +401,7 @@ class _TablaTemas extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             child: SizedBox(
               width: ancho,
+              height: alto,
               child: Column(
                 children: [
                   fila(cabecera: true, [
@@ -379,62 +417,79 @@ class _TablaTemas extends StatelessWidget {
                         ),
                       ),
                   ]),
-                  if (temas.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(28),
-                      child: Text(
-                        'Ningún tema coincide con el filtro.',
-                        style: TextStyle(color: p.apagado),
-                      ),
-                    ),
-                  for (final t in temas)
-                    () {
-                      final m = material[t.id] ?? MaterialTema(temaId: t.id);
-                      final publicado = publicados.contains(t.id);
-                      final quiz = m.tieneQuiz
-                          ? Insignia(
-                              '${m.quizzes.values.where((q) => q.publicado).length} '
-                              'nivel(es)',
-                              tono: TonoInsignia.secundario,
-                            )
-                          : m.quizBorrador
-                          ? const Insignia(
-                              'Borrador',
-                              tono: TonoInsignia.acento,
-                            )
-                          : const Insignia('—');
-                      return fila(onTap: () => onAbrir(t), [
-                        Text('${t.orden}', style: TextStyle(color: p.apagado)),
-                        Text(
-                          t.titulo,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        Text(
-                          dias[t.id] == null ? '—' : 'Día ${dias[t.id]}',
-                          style: TextStyle(color: p.apagado),
-                        ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: publicado
-                              ? const Insignia(
-                                  'Publicado',
-                                  tono: TonoInsignia.secundario,
-                                )
-                              : const Insignia('Sin publicar'),
-                        ),
-                        marca(m.video != null),
-                        marca(m.separata != null),
-                        Text(
-                          '${m.contenidos.length}',
-                          style: TextStyle(
-                            color: m.contenidos.isEmpty ? p.alerta : p.apagado,
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        if (temas.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(28),
+                            child: Text(
+                              'Ningún tema coincide con el filtro.',
+                              style: TextStyle(color: p.apagado),
+                            ),
                           ),
-                        ),
-                        Align(alignment: Alignment.centerLeft, child: quiz),
-                      ]);
-                    }(),
+                        for (final t in temas)
+                          () {
+                            final m =
+                                material[t.id] ?? MaterialTema(temaId: t.id);
+                            final publicado = publicados.contains(t.id);
+                            final quiz = m.tieneQuiz
+                                ? Insignia(
+                                    '${m.quizzes.values.where((q) => q.publicado).length} '
+                                    'nivel(es)',
+                                    tono: TonoInsignia.secundario,
+                                  )
+                                : m.quizBorrador
+                                ? const Insignia(
+                                    'Borrador',
+                                    tono: TonoInsignia.acento,
+                                  )
+                                : const Insignia('—');
+                            return fila(onTap: () => onAbrir(t), [
+                              Text(
+                                '${t.orden}',
+                                style: TextStyle(color: p.apagado),
+                              ),
+                              Text(
+                                t.titulo,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                dias[t.id] == null ? '—' : 'Día ${dias[t.id]}',
+                                style: TextStyle(color: p.apagado),
+                              ),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: publicado
+                                    ? const Insignia(
+                                        'Publicado',
+                                        tono: TonoInsignia.secundario,
+                                      )
+                                    : const Insignia('Sin publicar'),
+                              ),
+                              marca(m.video != null),
+                              marca(m.separata != null),
+                              Text(
+                                '${m.contenidos.length}',
+                                style: TextStyle(
+                                  color: m.contenidos.isEmpty
+                                      ? p.alerta
+                                      : p.apagado,
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: quiz,
+                              ),
+                            ]);
+                          }(),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

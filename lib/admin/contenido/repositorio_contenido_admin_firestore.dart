@@ -163,6 +163,7 @@ class RepositorioContenidoAdminFirestore implements RepositorioContenidoAdmin {
               (o) => o['id'] == clave['opcionCorrectaId'],
             ),
             explicacion: (clave['explicacion'] as String?) ?? '',
+            imagen: d.data()['imagen'] as String?,
           );
         }(),
     ];
@@ -295,6 +296,7 @@ class RepositorioContenidoAdminFirestore implements RepositorioContenidoAdmin {
             {'id': PreguntaPractica.letras[k], 'texto': o.trim()},
         ],
         'habilidades': const <String>[],
+        'imagen': p.imagen,
       });
       lote.set(db.collection('claves_preguntas').doc(id), {
         'opcionCorrectaId': PreguntaPractica.letras[p.correcta],

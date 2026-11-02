@@ -6,7 +6,7 @@ import '../../../../core/presentation/colores_app.dart';
 import '../../../../core/presentation/texto_con_latex.dart';
 import '../../domain/entities/simulacro.dart';
 import '../../domain/repositories/servicio_examenes.dart';
-import '../widgets/imagen_examen.dart';
+import '../../../../core/presentation/imagen_figura.dart';
 import '../widgets/opcion_examen.dart';
 import 'resultado_simulacro_page.dart';
 
@@ -311,7 +311,7 @@ class _SimulacroPageState extends State<SimulacroPage> {
                 pregunta.enunciado,
                 estilo: const TextStyle(fontSize: 17),
               ),
-              if (pregunta.imagen case final imagen?) ImagenExamen(imagen),
+              if (pregunta.imagen case final imagen?) ImagenFigura(imagen),
               const SizedBox(height: 12),
               for (final (i, opcion) in pregunta.opciones.indexed)
                 OpcionExamenTile(

@@ -67,6 +67,10 @@ class RepositorioEvaluacionFirestore implements RepositorioEvaluacion {
             DificultadPregunta.values.asNameMap()[datos['dificultad']] ??
             DificultadPregunta.basica,
         orden: datos['orden'] as int,
+        imagen: switch (datos['imagen']) {
+          final String url when url.startsWith('https://') => url,
+          _ => null,
+        },
         opciones: [
           for (final opcion in opciones)
             OpcionPresentada(

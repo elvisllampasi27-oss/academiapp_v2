@@ -111,6 +111,9 @@ class IndicadorPanel extends StatelessWidget {
   final String? pildora;
   final Color? colorPildora;
   final List<double>? tendencia;
+
+  /// Avance de 0 a 1 que se muestra como anillo a la derecha.
+  final double? anillo;
   final VoidCallback? onTap;
 
   const IndicadorPanel({
@@ -122,6 +125,7 @@ class IndicadorPanel extends StatelessWidget {
     this.pildora,
     this.colorPildora,
     this.tendencia,
+    this.anillo,
     this.onTap,
   });
 
@@ -190,6 +194,8 @@ class IndicadorPanel extends StatelessWidget {
                         painter: PintorTendencia(serie, color ?? p.acento),
                       ),
                     ),
+                  if (anillo case final a?)
+                    AnilloAvance(a, tamano: 46, color: color ?? p.acento),
                 ],
               ),
               if (nota case final n?)

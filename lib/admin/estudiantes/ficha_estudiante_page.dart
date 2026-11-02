@@ -233,6 +233,10 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
                   'de ${fin.dias} · termina ${fechaBreve(fin.fecha)}',
                 null => null,
               },
+              anillo: switch (f.fin) {
+                final fin? when m != null && fin.dias > 0 => dia / fin.dias,
+                _ => null,
+              },
             ),
             IndicadorPanel(
               etiqueta: 'Clases vistas completas',

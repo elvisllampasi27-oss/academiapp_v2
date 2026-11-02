@@ -256,7 +256,7 @@ class _MenuLateral extends StatelessWidget {
               children: [
                 for (final (grupo, items) in _grupos) ...[
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 18, 12, 6),
+                    padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
                     child: Text(
                       grupo,
                       style: TextStyle(
@@ -357,7 +357,7 @@ class _ItemMenu extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
             child: Row(
               children: [
                 Icon(icono, size: 19, color: activo ? p.acento : color),

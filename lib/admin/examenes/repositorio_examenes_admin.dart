@@ -16,4 +16,15 @@ abstract class RepositorioExamenesAdmin {
   });
 
   Future<void> cambiarEstado(String examenId, {required bool publicado});
+
+  /// Crea o reemplaza un examen completo desde JSON. Las preguntas que ya
+  /// no vienen se desactivan (no se borran). Un examen nuevo queda en
+  /// borrador hasta que lo publiques.
+  Future<void> importar({
+    required String examenId,
+    required String tipo,
+    required String fecha,
+    required String titulo,
+    required List<PreguntaAdmin> preguntas,
+  });
 }

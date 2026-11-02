@@ -74,3 +74,5 @@ functions/.env.local
 .firebase/
 # Panel compilado (se genera con flutter build web)
 /hosting/admin/
+# Figuras de las prácticas (se publican con firebase deploy --only hosting)
+/hosting/temas/

@@ -4,7 +4,7 @@ import '../../../../core/presentation/colores_app.dart';
 import '../../../../core/presentation/texto_con_latex.dart';
 import '../../domain/entities/examen.dart';
 import '../../domain/entities/simulacro.dart';
-import '../widgets/imagen_examen.dart';
+import '../../../../core/presentation/imagen_figura.dart';
 
 /// Resultado del examen tipo admisión: total, por área y revisión.
 class ResultadoSimulacroPage extends StatefulWidget {
@@ -157,7 +157,7 @@ class _Revision extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             TextoConLatex(pregunta.enunciado),
-            if (pregunta.imagen case final imagen?) ImagenExamen(imagen),
+            if (pregunta.imagen case final imagen?) ImagenFigura(imagen),
             const SizedBox(height: 8),
             Text(
               elegida == null
@@ -178,7 +178,7 @@ class _Revision extends StatelessWidget {
               const SizedBox(height: 8),
               TextoConLatex(solucion),
             ],
-            if (detalle.imagenSolucion case final imagen?) ImagenExamen(imagen),
+            if (detalle.imagenSolucion case final imagen?) ImagenFigura(imagen),
           ],
         ),
       ),

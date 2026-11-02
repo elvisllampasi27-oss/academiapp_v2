@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/academic/domain/entities/curriculo.dart';
 import '../../features/academic/domain/entities/version_academica.dart';
+import '../graficos.dart';
 import '../tema_panel.dart';
 import '../widgets_panel.dart';
 import 'matricular_dialogo.dart';
@@ -480,40 +481,36 @@ class _AvanceCelda extends StatelessWidget {
       _ => p.acento,
     };
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final restantes = a.total == null ? null : a.total! - a.dia;
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
+        AnilloAvance(fraccion, tamano: 38, color: color),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
                 texto,
                 maxLines: 1,
                 softWrap: false,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 13),
               ),
-            ),
-            if (a.fraccion != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(999),
+              if (restantes != null && situacion == SituacionEstudiante.activo)
+                Text(
+                  restantes <= 0
+                      ? 'terminó el temario'
+                      : 'faltan $restantes días',
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: p.tenue, fontSize: 12),
                 ),
-                child: Text(
-                  '${(fraccion * 100).round()} %',
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 7),
-        BarraAvance(fraccion, color: color, alto: 5),
       ],
     );
   }

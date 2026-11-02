@@ -410,7 +410,12 @@ class _DetalleVersionState extends State<_DetalleVersion> {
                             : '${dias.fold<int>(0, (t, d) => t + d.temas.length)} temas',
                         nota: curriculo == null
                             ? 'sin temario cargado'
-                            : '$cursos cursos · ${dias.length} días',
+                            : '$cursos cursos · ${dias.length} días · '
+                                  'publicado hasta el ${ultimoDiaPublicado(dias, publicados)}',
+                        anillo: dias.isEmpty
+                            ? null
+                            : ultimoDiaPublicado(dias, publicados) /
+                                  dias.length,
                       ),
                       IndicadorPanel(
                         etiqueta: 'Apertura',

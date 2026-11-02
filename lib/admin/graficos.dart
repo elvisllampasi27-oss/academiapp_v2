@@ -424,3 +424,78 @@ class _PintorArea extends CustomPainter {
       old.etiquetas != etiquetas ||
       old.colorTexto != colorTexto;
 }
+
+/// Avance en forma de anillo con el porcentaje al centro (ocupa poco y se
+/// lee de un vistazo).
+class AnilloAvance extends StatelessWidget {
+  final double valor;
+  final double tamano;
+  final double grosor;
+  final Color? color;
+
+  const AnilloAvance(
+    this.valor, {
+    super.key,
+    this.tamano = 40,
+    this.grosor = 4,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PaletaPanel.de(context);
+    final v = valor.clamp(0.0, 1.0);
+    return SizedBox.square(
+      dimension: tamano,
+      child: CustomPaint(
+        painter: _PintorAnillo(v, color ?? p.acento, grosor),
+        child: Center(
+          child: Text(
+            '${(v * 100).round()}%',
+            style: TextStyle(
+              fontSize: tamano * 0.26,
+              fontWeight: FontWeight.w700,
+              color: p.texto,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PintorAnillo extends CustomPainter {
+  final double valor;
+  final Color color;
+  final double grosor;
+
+  _PintorAnillo(this.valor, this.color, this.grosor);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect =
+        Offset(grosor / 2, grosor / 2) &
+        Size(size.width - grosor, size.height - grosor);
+    final base = Paint()
+      ..color = PaletaPanel.borde
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = grosor;
+    canvas.drawArc(rect, 0, 2 * math.pi, false, base);
+    if (valor <= 0) return;
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      2 * math.pi * valor,
+      false,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = grosor
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_PintorAnillo old) =>
+      old.valor != valor || old.color != color || old.grosor != grosor;
+}

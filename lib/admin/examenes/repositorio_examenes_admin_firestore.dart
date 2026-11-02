@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'modelo_examen_admin.dart';
@@ -88,6 +90,81 @@ class RepositorioExamenesAdminFirestore implements RepositorioExamenesAdmin {
     });
 
     await lote.commit();
+  }
+
+  @override
+  Future<void> importar({
+    required String examenId,
+    required String tipo,
+    required String fecha,
+    required String titulo,
+    required List<PreguntaAdmin> preguntas,
+  }) async {
+    final (anteriores, examen) = await (
+      this.preguntas(examenId),
+      firestore.collection('examenes').doc(examenId).get(),
+    ).wait;
+    final nuevas = {for (final p in preguntas) p.id};
+    final indice = firestore.collection('indices').doc('preguntas_examen');
+
+    // Firestore admite 500 escrituras por lote: se arman en grupos.
+    final operaciones = <void Function(WriteBatch)>[
+      for (final p in anteriores)
+        if (!nuevas.contains(p.id) && p.activa)
+          (l) => l.update(firestore.collection('preguntas_examen').doc(p.id), {
+            'activa': false,
+          }),
+      for (final p in preguntas) ...[
+        (l) => l.set(
+          firestore.collection('preguntas_examen').doc(p.id),
+          p.datosPregunta(),
+        ),
+        (l) => l.set(
+          firestore.collection('claves_examen').doc(p.id),
+          p.datosClave(),
+        ),
+      ],
+    ];
+    for (var i = 0; i < operaciones.length; i += 450) {
+      final lote = firestore.batch();
+      for (final op in operaciones.skip(i).take(450)) {
+        op(lote);
+      }
+      await lote.commit();
+    }
+
+    // Índice del examen tipo admisión y datos del examen, al final.
+    final lote = firestore.batch();
+    if (anteriores.any((p) => p.activa)) {
+      lote.set(indice, {
+        'preguntas': FieldValue.arrayRemove([
+          for (final p in anteriores)
+            if (p.activa) {'id': p.id, 'seccion': p.seccion},
+        ]),
+      }, SetOptions(merge: true));
+    }
+    final todas = {
+      for (final p in anteriores) p.id: p.copiar(activa: false),
+      for (final p in preguntas) p.id: p,
+    }.values;
+    lote.set(firestore.collection('examenes').doc(examenId), {
+      'tipo': tipo,
+      'fecha': fecha,
+      'titulo': titulo,
+      'totalPreguntas': todas.where((p) => p.activa).length,
+      'secciones': seccionesDe(todas),
+      'estado': examen.data()?['estado'] ?? 'borrador',
+      'actualizadoEn': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await lote.commit();
+
+    // El arrayUnion va en otro lote: en el mismo, chocaría con el arrayRemove.
+    await indice.set({
+      'preguntas': FieldValue.arrayUnion([
+        for (final p in preguntas)
+          if (p.activa) {'id': p.id, 'seccion': p.seccion.trim()},
+      ]),
+    }, SetOptions(merge: true));
   }
 
   @override

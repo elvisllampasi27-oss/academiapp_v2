@@ -56,6 +56,20 @@ inicio) en lugar de repetirlo. `tema_panel.dart` tiene el tema (grafito y ámbar
 `widgets_panel.dart`, las piezas visuales comunes. Cada cambio hecho desde el
 panel se escribe junto con su entrada en `registro_admin` (mismo lote).
 
+### Importar preguntas (JSON)
+
+Quizzes y exámenes se cargan pegando o abriendo un JSON (el mismo formato de
+la V1 y de `tool/`). Antes de importar, el panel muestra cuántas traen LaTeX,
+imágenes, solución y qué preguntas se omiten y por qué
+(`lib/admin/importar/`). Las imágenes que vienen como nombre de archivo se
+leen de Hosting:
+
+- quizzes: `hosting/temas/{version}/{tema}/`
+- exámenes: `hosting/examenes/{tipo}/{dd-mm-aaaa}/`
+
+Se copian ahí y se publican con `firebase deploy --only hosting` (funciona en
+el plan gratis). Con Blaze se podrá subir directo a Storage.
+
 ## Seguridad
 
 1. **Las respuestas correctas nunca llegan al celular** antes de responder:

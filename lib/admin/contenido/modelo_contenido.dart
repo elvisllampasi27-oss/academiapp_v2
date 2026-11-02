@@ -130,11 +130,15 @@ class PreguntaPractica {
   final int correcta;
   final String explicacion;
 
+  /// Figura del enunciado (enlace https), si tiene.
+  final String? imagen;
+
   const PreguntaPractica({
     required this.enunciado,
     required this.opciones,
     required this.correcta,
     this.explicacion = '',
+    this.imagen,
   });
 
   static const letras = 'abcdefgh';
@@ -148,6 +152,9 @@ class PreguntaPractica {
     }
     if (correcta < 0 || correcta >= opciones.length) {
       return 'Marca la respuesta correcta.';
+    }
+    if (imagen != null && !enlaceValido(imagen!)) {
+      return 'La imagen debe ser un enlace https.';
     }
     return null;
   }

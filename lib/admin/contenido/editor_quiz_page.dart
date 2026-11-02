@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../core/presentation/imagen_figura.dart';
 import '../../core/presentation/texto_con_latex.dart';
 import '../../features/academic/domain/entities/curso.dart';
 import '../../features/academic/domain/entities/tema.dart';
+import '../importar/dialogo_importar_json.dart';
+import '../importar/importar_json.dart';
 import '../tema_panel.dart';
 import '../widgets_panel.dart';
 import 'modelo_contenido.dart';
@@ -40,13 +43,17 @@ class _Editable {
   final TextEditingController enunciado;
   final List<TextEditingController> opciones;
   final TextEditingController explicacion;
+  final TextEditingController imagen;
   int correcta;
-  final bool deIa;
 
-  _Editable(PreguntaPractica p, {this.deIa = false})
+  /// De dónde salió: "Generada con IA", "Importada" o null (escrita aquí).
+  final String? origen;
+
+  _Editable(PreguntaPractica p, {this.origen})
     : enunciado = TextEditingController(text: p.enunciado),
       opciones = [for (final o in p.opciones) TextEditingController(text: o)],
       explicacion = TextEditingController(text: p.explicacion),
+      imagen = TextEditingController(text: p.imagen ?? ''),
       correcta = p.correcta;
 
   _Editable.vacia()
@@ -63,10 +70,11 @@ class _Editable {
     opciones: [for (final o in opciones) o.text],
     correcta: correcta,
     explicacion: explicacion.text,
+    imagen: imagen.text.trim().isEmpty ? null : imagen.text.trim(),
   );
 
   void dispose() {
-    for (final c in [enunciado, explicacion, ...opciones]) {
+    for (final c in [enunciado, explicacion, imagen, ...opciones]) {
       c.dispose();
     }
   }
@@ -107,7 +115,9 @@ class _EditorQuizPageState extends State<EditorQuizPage> {
       );
       if (!mounted) return;
       setState(() {
-        _preguntas.addAll([for (final p in nuevas) _Editable(p, deIa: true)]);
+        _preguntas.addAll([
+          for (final p in nuevas) _Editable(p, origen: 'Generada con IA'),
+        ]);
         _mensaje =
             '${nuevas.length} preguntas nuevas al final. Revísalas antes de '
             'publicar: la IA puede equivocarse.';
@@ -121,6 +131,45 @@ class _EditorQuizPageState extends State<EditorQuizPage> {
     } finally {
       if (mounted) setState(() => _ocupado = false);
     }
+  }
+
+  /// Carpeta de Hosting de las figuras de este tema.
+  String get _carpeta => 'temas/${widget.versionId}/${widget.tema.id}/';
+
+  Future<void> _importar() async {
+    final elegida = await mostrarImportarJson(
+      context,
+      titulo: 'Importar preguntas (JSON)',
+      urlDeArchivo: (archivo) =>
+          '$urlHosting/$_carpeta${Uri.encodeComponent(archivo)}',
+      carpetaImagenes: 'hosting/$_carpeta',
+      hayActuales: _preguntas.isNotEmpty,
+    );
+    if (elegida == null || !mounted) return;
+    setState(() {
+      if (elegida.reemplazar) {
+        for (final p in _preguntas) {
+          p.dispose();
+        }
+        _preguntas.clear();
+      }
+      _preguntas.addAll([
+        for (final x in elegida.resultado.preguntas)
+          _Editable(
+            PreguntaPractica(
+              enunciado: x.enunciado,
+              opciones: x.opciones,
+              correcta: x.correcta,
+              explicacion: x.solucion ?? '',
+              imagen: x.imagen,
+            ),
+            origen: 'Importada',
+          ),
+      ]);
+      _mensaje =
+          '${elegida.resultado.preguntas.length} preguntas importadas. '
+          'Revisa y presiona Publicar (o Guardar borrador).';
+    });
   }
 
   Future<void> _guardar({required bool publicar}) async {
@@ -185,6 +234,11 @@ class _EditorQuizPageState extends State<EditorQuizPage> {
               '${widget.curso.nombre} · ${widget.tema.titulo}. Fórmulas entre '
               r'$…$ (se ven como en la app).',
           acciones: [
+            OutlinedButton.icon(
+              onPressed: _ocupado ? null : _importar,
+              icon: const Icon(Icons.data_object, size: 18),
+              label: const Text('Importar JSON'),
+            ),
             OutlinedButton.icon(
               onPressed: _ocupado ? null : _generar,
               icon: const Icon(Icons.auto_awesome, size: 18),
@@ -282,13 +336,10 @@ class _TarjetaPregunta extends StatelessWidget {
             extra: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (pregunta.deIa)
-                  const Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: Insignia(
-                      'Generada con IA',
-                      tono: TonoInsignia.acento,
-                    ),
+                if (pregunta.origen case final origen?)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Insignia(origen, tono: TonoInsignia.acento),
                   ),
                 IconButton(
                   tooltip: 'Quitar pregunta',
@@ -314,6 +365,27 @@ class _TarjetaPregunta extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: TextoConLatex(pregunta.enunciado.text),
+            ),
+          ],
+          const SizedBox(height: 10),
+          TextField(
+            controller: pregunta.imagen,
+            onChanged: (_) => onCambio(),
+            decoration: const InputDecoration(
+              labelText: 'Figura (enlace https, opcional)',
+            ),
+          ),
+          if (pregunta.imagen.text.trim().startsWith('https://')) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: 180,
+                  maxWidth: 420,
+                ),
+                child: ImagenFigura(pregunta.imagen.text.trim()),
+              ),
             ),
           ],
           const SizedBox(height: 12),

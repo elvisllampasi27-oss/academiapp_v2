@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/colores_app.dart';
+import 'colores_app.dart';
 
-/// Figura de una pregunta o solución (imagen publicada en Hosting).
-class ImagenExamen extends StatelessWidget {
+/// Figura de una pregunta o solución (imagen publicada en Hosting). La usan
+/// los exámenes y las prácticas.
+class ImagenFigura extends StatelessWidget {
   final String url;
 
-  const ImagenExamen(this.url, {super.key});
+  const ImagenFigura(this.url, {super.key});
 
   @override
   Widget build(BuildContext context) {

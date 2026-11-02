@@ -18,6 +18,9 @@ class PreguntaPresentada {
   final int orden;
   final List<OpcionPresentada> opciones;
 
+  /// Figura del enunciado (enlace https), si tiene.
+  final String? imagen;
+
   const PreguntaPresentada({
     required this.id,
     required this.evaluacionId,
@@ -25,5 +28,6 @@ class PreguntaPresentada {
     required this.dificultad,
     required this.orden,
     required this.opciones,
+    this.imagen,
   });
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/presentation/colores_app.dart';
 import '../../core/presentation/texto.dart';
+import '../importar/dialogo_importar_json.dart';
+import '../importar/importar_json.dart';
 import 'editor_pregunta.dart';
 import 'modelo_examen_admin.dart';
 import 'repositorio_examenes_admin.dart';
@@ -106,6 +108,71 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
     }
   }
 
+  /// Examen completo desde el JSON de la V1 (o el mismo formato).
+  Future<void> _importar(List<ExamenAdmin> existentes) async {
+    final datos = await showDialog<(String, String)>(
+      context: context,
+      builder: (_) => const _DialogoDatosExamen(),
+    );
+    if (datos == null || !mounted) return;
+    final (tipo, carpeta) = datos;
+    final fecha = fechaIsoDeCarpeta(carpeta)!;
+    final examenId = '$tipo-$fecha';
+    final yaExiste = existentes.any((e) => e.id == examenId);
+
+    final elegida = await mostrarImportarJson(
+      context,
+      titulo: 'Importar ${tituloExamen(tipo, fecha)}',
+      urlDeArchivo: (archivo) =>
+          '$urlHosting/examenes/$tipo/$carpeta/${Uri.encodeComponent(archivo)}',
+      carpetaImagenes: 'hosting/examenes/$tipo/$carpeta/',
+      hayActuales: yaExiste,
+    );
+    if (elegida == null || !mounted) return;
+
+    try {
+      final actuales = yaExiste && !elegida.reemplazar
+          ? await widget.repositorio.preguntas(examenId)
+          : const <PreguntaAdmin>[];
+      final desde = actuales.fold<int>(
+        0,
+        (m, p) => p.numero > m ? p.numero : m,
+      );
+      final r = elegida.resultado;
+      final preguntas = [
+        for (final (i, x) in r.preguntas.indexed)
+          PreguntaAdmin(
+            id: PreguntaAdmin.idPara(examenId, desde + i + 1),
+            examenId: examenId,
+            numero: desde + i + 1,
+            seccion: r.seccionDe(x),
+            enunciado: x.enunciado,
+            opciones: x.opciones,
+            correcta: x.correcta,
+            solucion: x.solucion,
+            imagen: x.imagen,
+            imagenSolucion: x.imagenSolucion,
+          ),
+      ];
+      await widget.repositorio.importar(
+        examenId: examenId,
+        tipo: tipo,
+        fecha: fecha,
+        titulo: tituloExamen(tipo, fecha),
+        preguntas: [...actuales, ...preguntas],
+      );
+      _avisar(
+        '${preguntas.length} preguntas importadas en '
+        '${tituloExamen(tipo, fecha)}. Revísalo y publícalo.',
+      );
+      if (mounted) {
+        setState(() => _examenes = widget.repositorio.examenes());
+      }
+    } catch (e) {
+      _avisar('No se pudo importar: $e');
+    }
+  }
+
   void _avisar(String mensaje) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -154,10 +221,11 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
               'Exámenes pasados',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 4),
-            const Text(
-              'Para cargar exámenes completos usa tool/cargar_examenes.js.',
-              style: TextStyle(fontSize: 12, color: ColoresApp.apagado),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => _importar(examenes ?? const []),
+              icon: const Icon(Icons.data_object, size: 18),
+              label: const Text('Importar examen (JSON)'),
             ),
             const SizedBox(height: 12),
             if (snapshot.hasError)
@@ -330,6 +398,79 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
       esNueva: _esNueva,
       secciones: secciones,
       onGuardar: _guardar,
+    );
+  }
+}
+
+/// Tipo y fecha del examen a importar (como las carpetas de la V1).
+class _DialogoDatosExamen extends StatefulWidget {
+  const _DialogoDatosExamen();
+
+  @override
+  State<_DialogoDatosExamen> createState() => _DialogoDatosExamenState();
+}
+
+class _DialogoDatosExamenState extends State<_DialogoDatosExamen> {
+  final _fecha = TextEditingController();
+  String _tipo = 'exonerados';
+
+  @override
+  void dispose() {
+    _fecha.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final valida = fechaIsoDeCarpeta(_fecha.text) != null;
+    return AlertDialog(
+      title: const Text('Importar examen'),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final (valor, etiqueta) in const [
+                  ('exonerados', 'Exonerados'),
+                  ('ordinario', 'Ordinario'),
+                ])
+                  ChoiceChip(
+                    label: Text(etiqueta),
+                    selected: _tipo == valor,
+                    onSelected: (_) => setState(() => _tipo = valor),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _fecha,
+              autofocus: true,
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(
+                labelText: 'Fecha del examen (dd-mm-aaaa)',
+                hintText: '16-11-2025',
+                helperText: 'Si ya existe ese examen, podrás reemplazarlo.',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: valida
+              ? () => Navigator.pop(context, (_tipo, _fecha.text.trim()))
+              : null,
+          child: const Text('Siguiente'),
+        ),
+      ],
     );
   }
 }
