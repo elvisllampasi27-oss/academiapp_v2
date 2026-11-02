@@ -7,6 +7,7 @@ import 'examenes/repositorio_examenes_admin_firestore.dart';
 import 'pagos/repositorio_pagos_admin_firestore.dart';
 import 'shell_admin.dart';
 import 'tema_panel.dart';
+import 'versiones/repositorio_versiones_admin_firestore.dart';
 
 /// Composición del panel: aquí se eligen las implementaciones (Firebase).
 class AppAdmin extends StatefulWidget {
@@ -20,6 +21,7 @@ class _AppAdminState extends State<AppAdmin> {
   final _estudiantes = RepositorioEstudiantesAdminFirestore();
   final _examenes = RepositorioExamenesAdminFirestore();
   final _pagos = RepositorioPagosAdminFirestore();
+  final _versiones = RepositorioVersionesAdminFirestore();
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +38,7 @@ class _AppAdminState extends State<AppAdmin> {
           repositorioExamenes: _examenes,
           repositorioPagos: _pagos,
           repositorioAcademia: _pagos,
+          repositorioVersiones: _versiones,
         ),
       ),
     );

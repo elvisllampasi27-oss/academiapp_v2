@@ -196,3 +196,20 @@ test('premium, cupones y configuración: solo el administrador los cambia', asyn
   await assertSucceeds(getDoc(doc(alumno(), 'config/academia')));
   await assertFails(setDoc(doc(alumno(), 'config/academia'), { precio: 1 }));
 });
+
+test('versiones y temario: solo el administrador los crea y publica', async () => {
+  const version = { codigo: 'c27', nombre: 'Ciclo 2027-I', estado: 'preparacion', fechaApertura: new Date('2027-03-01') };
+  await assertSucceeds(setDoc(doc(admin(), 'versiones_academicas/c27'), version));
+  await assertFails(setDoc(doc(alumno(), 'versiones_academicas/c28'), version));
+  await assertFails(deleteDoc(doc(admin(), 'versiones_academicas/c27')));
+
+  await assertSucceeds(setDoc(doc(admin(), 'publicaciones_version/c27'), { versionId: 'c27', temas: ['a1'] }));
+  await assertSucceeds(setDoc(doc(admin(), 'publicaciones_temas/c27__a1'), { versionId: 'c27', temaId: 'a1', publicada: true }));
+  await assertFails(setDoc(doc(alumno(), 'publicaciones_temas/c27__a2'), { versionId: 'c27', temaId: 'a2', publicada: true }));
+  await assertSucceeds(setDoc(doc(admin(), 'curriculos/c27'), { versionId: 'c27', temas: [] }));
+  await assertFails(setDoc(doc(alumno(), 'curriculos/c27'), { versionId: 'c27', temas: [] }));
+
+  // Las claves de las prácticas: el administrador sí, el estudiante nunca.
+  await assertSucceeds(getDoc(doc(admin(), 'claves_preguntas/p1')));
+  await assertFails(getDoc(doc(alumno(), 'claves_preguntas/p1')));
+});

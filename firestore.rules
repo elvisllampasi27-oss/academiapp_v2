@@ -130,7 +130,11 @@ service cloud.firestore {
 
       allow read: if request.auth != null;
 
-      allow create, update, delete: if false;
+      // El administrador las crea y cambia desde el panel; no se borran
+      // (se archivan).
+      allow create, update: if esAdmin();
+
+      allow delete: if false;
     }
 
     // PLANES ACADEMICOS
@@ -138,7 +142,7 @@ service cloud.firestore {
 
       allow read: if request.auth != null;
 
-      allow write: if false;
+      allow write: if esAdmin();
     }
 
     // CURSOS
@@ -163,7 +167,7 @@ service cloud.firestore {
 
       allow read: if request.auth != null;
 
-      allow write: if false;
+      allow write: if esAdmin();
     }
 
     // RECURSOS (videos, PDF y material de apoyo por versión)
@@ -171,7 +175,7 @@ service cloud.firestore {
 
       allow read: if request.auth != null;
 
-      allow write: if false;
+      allow write: if esAdmin();
     }
 
     // EVALUACIONES Y PREGUNTAS (sin respuestas correctas)
@@ -179,20 +183,22 @@ service cloud.firestore {
 
       allow read: if request.auth != null;
 
-      allow write: if false;
+      allow write: if esAdmin();
     }
 
     match /preguntas/{preguntaId} {
 
       allow read: if request.auth != null;
 
-      allow write: if false;
+      allow write: if esAdmin();
     }
 
-    // CLAVES: solo las lee Cloud Functions (Admin SDK). Nunca el cliente.
+    // CLAVES: las lee Cloud Functions (Admin SDK) y el administrador. Nunca el
+    // estudiante.
     match /claves_preguntas/{preguntaId} {
 
-      allow read, write: if false;
+      // El administrador las copia al crear una versión nueva.
+      allow read, write: if esAdmin();
     }
 
     // INTENTOS Y RESPUESTAS: los escribe Cloud Functions; el estudiante
@@ -230,14 +236,14 @@ service cloud.firestore {
 
       allow read: if request.auth != null;
 
-      allow write: if false;
+      allow write: if esAdmin();
     }
 
     match /publicaciones_version/{versionId} {
 
       allow read: if request.auth != null;
 
-      allow write: if false;
+      allow write: if esAdmin();
     }
 
     // PUBLICACIONES DE TEMAS
@@ -245,7 +251,7 @@ service cloud.firestore {
 
       allow read: if request.auth != null;
 
-      allow write: if false;
+      allow write: if esAdmin();
     }
 
     // PROGRESO DE LA CLASE (video): cada estudiante lee y escribe solo el

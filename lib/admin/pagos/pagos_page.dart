@@ -176,7 +176,8 @@ class _PagosPageState extends State<PagosPage> {
               )
             else
               DosColumnas(
-                flexPrincipal: 3,
+                flexPrincipal: 5,
+                flexLateral: 4,
                 principal: ColumnaPanel(
                   espacio: 10,
                   children: [

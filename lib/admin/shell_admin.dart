@@ -13,6 +13,8 @@ import 'pagos/repositorio_pagos_admin.dart';
 import 'logo_puntos.dart';
 import 'resumen/resumen_page.dart';
 import 'tema_panel.dart';
+import 'versiones/repositorio_versiones_admin.dart';
+import 'versiones/versiones_page.dart';
 import 'widgets_panel.dart';
 
 enum SeccionPanel {
@@ -20,6 +22,7 @@ enum SeccionPanel {
   estudiantes,
   pagos,
   cupones,
+  versiones,
   examenes,
   configuracion,
 }
@@ -34,6 +37,7 @@ class ShellAdmin extends StatefulWidget {
   final RepositorioExamenesAdmin repositorioExamenes;
   final RepositorioPagosAdmin repositorioPagos;
   final RepositorioAcademiaAdmin repositorioAcademia;
+  final RepositorioVersionesAdmin repositorioVersiones;
   final DateTime Function() ahora;
 
   const ShellAdmin({
@@ -44,6 +48,7 @@ class ShellAdmin extends StatefulWidget {
     required this.repositorioExamenes,
     required this.repositorioPagos,
     required this.repositorioAcademia,
+    required this.repositorioVersiones,
     this.ahora = DateTime.now,
   });
 
@@ -119,6 +124,12 @@ class _ShellAdminState extends State<ShellAdmin> {
         repositorio: widget.repositorioAcademia,
         ahora: widget.ahora,
       ),
+      SeccionPanel.versiones => VersionesPage(
+        versiones: widget.repositorioVersiones,
+        estudiantes: widget.repositorioEstudiantes,
+        onVerEstudiantes: () => _ir(SeccionPanel.estudiantes),
+        ahora: widget.ahora,
+      ),
       SeccionPanel.examenes => ExamenesAdminPage(
         repositorio: widget.repositorioExamenes,
       ),
@@ -172,6 +183,11 @@ class _MenuLateral extends StatelessWidget {
         (SeccionPanel.estudiantes, 'Estudiantes', Icons.group_outlined),
         (SeccionPanel.pagos, 'Pagos', Icons.receipt_long_outlined),
         (SeccionPanel.cupones, 'Cupones y becas', Icons.sell_outlined),
+        (
+          SeccionPanel.versiones,
+          'Versiones y matrículas',
+          Icons.layers_outlined,
+        ),
       ],
     ),
     (

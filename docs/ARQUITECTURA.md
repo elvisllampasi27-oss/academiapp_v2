@@ -82,9 +82,9 @@ panel se escribe junto con su entrada en `registro_admin` (mismo lote).
 | `cupones/{CODIGO}` | admin (panel) | el estudiante consulta uno por código, no puede listarlos |
 | `pagos/{metodo}__{operacion}` | estudiante (pendiente) / admin | el id impide reclamar dos veces la misma operación; nunca se borran |
 | `matriculas` | admin (panel) | nunca se borran: se suspenden o finalizan |
-| `versiones_academicas`, `planes_academicos` | scripts | |
+| `versiones_academicas`, `planes_academicos` | admin (panel → Versiones) | una versión nueva copia el temario (y si se pide, el material) de otra |
 | `registro_admin` | admin (panel) | quién hizo qué; solo se agregan entradas |
-| `curriculos/{version}`, `publicaciones_version/{version}` | scripts | temario en 1 lectura |
+| `curriculos/{version}`, `publicaciones_version/{version}` | admin (panel) / scripts | temario y publicados en 1 lectura cada uno |
 | `contenidos`, `recursos` | admin / scripts | material de cada tema |
 | `progreso_clases` | estudiante (el suyo) | id `{uid}__{version}__{tema}` |
 | `evaluaciones`, `preguntas` / `claves_preguntas` | admin / scripts | prácticas por tema |

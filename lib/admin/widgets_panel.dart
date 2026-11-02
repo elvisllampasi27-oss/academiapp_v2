@@ -354,12 +354,14 @@ class DosColumnas extends StatelessWidget {
   final Widget principal;
   final Widget lateral;
   final int flexPrincipal;
+  final int flexLateral;
 
   const DosColumnas({
     super.key,
     required this.principal,
     required this.lateral,
     this.flexPrincipal = 2,
+    this.flexLateral = 1,
   });
 
   @override
@@ -377,7 +379,7 @@ class DosColumnas extends StatelessWidget {
           children: [
             Expanded(flex: flexPrincipal, child: principal),
             const SizedBox(width: 16),
-            Expanded(child: lateral),
+            Expanded(flex: flexLateral, child: lateral),
           ],
         );
       },
