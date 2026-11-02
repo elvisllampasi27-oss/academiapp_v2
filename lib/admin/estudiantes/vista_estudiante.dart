@@ -44,8 +44,9 @@ Future<DateTime?> elegirInicio(
   required DateTime desde,
 }) {
   var dia = DateTime(inicial.year, inicial.month, inicial.day);
-  if (dia.weekday == DateTime.sunday)
+  if (dia.weekday == DateTime.sunday) {
     dia = DateTime(dia.year, dia.month, dia.day + 1);
+  }
   var primera = DateTime(desde.year, desde.month, desde.day);
   if (dia.isBefore(primera)) primera = dia;
   return showDatePicker(

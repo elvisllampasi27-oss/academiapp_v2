@@ -295,16 +295,26 @@ class _GraficoSemanas extends StatelessWidget {
                           style: TextStyle(color: p.apagado, fontSize: 12),
                         ),
                         const SizedBox(height: 6),
-                        Container(
-                          width: 36,
-                          height: 4 + 140 * cantidad / maximo,
-                          decoration: BoxDecoration(
-                            color: i == porSemana.length - 1
-                                ? p.acento
-                                : PaletaPanel.bordeFuerte,
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(8),
-                              bottom: Radius.circular(4),
+                        // La barra usa el alto que queda: nunca se desborda.
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: FractionallySizedBox(
+                              heightFactor: cantidad == 0
+                                  ? 0.03
+                                  : cantidad / maximo,
+                              child: Container(
+                                width: 36,
+                                decoration: BoxDecoration(
+                                  color: i == porSemana.length - 1
+                                      ? p.acento
+                                      : PaletaPanel.bordeFuerte,
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(8),
+                                    bottom: Radius.circular(4),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),

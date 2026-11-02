@@ -50,10 +50,8 @@ class RepositorioEstudiantesAdminFirestore
   @override
   Future<List<VersionAcademica>> versiones() async {
     final consulta = await db.collection('versiones_academicas').get();
-    return [
-      for (final d in consulta.docs)
-        if (_version(d.id, d.data()) case final v?) v,
-    ]..sort((a, b) => b.fechaApertura.compareTo(a.fechaApertura));
+    return [for (final d in consulta.docs) ?_version(d.id, d.data())]
+      ..sort((a, b) => b.fechaApertura.compareTo(a.fechaApertura));
   }
 
   @override
