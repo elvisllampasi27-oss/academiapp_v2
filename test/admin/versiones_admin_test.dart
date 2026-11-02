@@ -16,7 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 final hoy = DateTime(2026, 11, 1, 10);
 
 // 2 cursos x 6 temas = 12 temas: lun-vie 3, sáb 2.
-final curriculo = Curriculo(
+final temario = Curriculo(
   versionId: 'v1',
   areas: const [],
   cursos: const [
@@ -72,7 +72,7 @@ class Estudiantes implements RepositorioEstudiantesAdmin {
   Future<List<VersionAcademica>> versiones() async => [version];
 
   @override
-  Future<Curriculo> curriculo(String versionId) async => curriculo;
+  Future<Curriculo> curriculo(String versionId) async => temario;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -101,14 +101,14 @@ class Versiones implements RepositorioVersionesAdmin {
 
 void main() {
   group('reglas de versiones', () {
-    final dias = calendarioVersion(curriculo, DateTime(2026, 10, 26));
+    final dias = calendarioVersion(temario, DateTime(2026, 10, 26));
 
     test('calendario: 3 temas de lunes a viernes, 2 el sábado', () {
       // 12 temas desde el lunes 26: cuatro días de 3.
       expect(dias.map((d) => d.temas.length), [3, 3, 3, 3]);
       expect(dias.first.temas, ['a1', 'f1', 'a2']);
       // Desde un viernes: vie 3, sáb 2, (dom libre), lun 3, mar 3, mié 1.
-      final desdeViernes = calendarioVersion(curriculo, DateTime(2026, 10, 30));
+      final desdeViernes = calendarioVersion(temario, DateTime(2026, 10, 30));
       expect(desdeViernes.map((d) => d.temas.length), [3, 2, 3, 3, 1]);
     });
 

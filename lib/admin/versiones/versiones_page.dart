@@ -407,7 +407,7 @@ class _DetalleVersionState extends State<_DetalleVersion> {
                         etiqueta: 'Temario',
                         valor: curriculo == null
                             ? '—'
-                            : '${dias.fold(0, (t, d) => t + d.temas.length)} temas',
+                            : '${dias.fold<int>(0, (t, d) => t + d.temas.length)} temas',
                         nota: curriculo == null
                             ? 'sin temario cargado'
                             : '$cursos cursos · ${dias.length} días',
@@ -559,9 +559,9 @@ class _DetalleVersionState extends State<_DetalleVersion> {
   Widget _inicios() {
     final p = PaletaPanel.de(context);
     final grupos = iniciosPorFecha(widget.version.id, widget.estudiantes);
-    final total = grupos.fold(0, (t, g) => t + g.$2);
+    final total = grupos.fold<int>(0, (t, g) => t + g.$2);
     final principales = grupos.take(4).toList();
-    final otros = total - principales.fold(0, (t, g) => t + g.$2);
+    final otros = total - principales.fold<int>(0, (t, g) => t + g.$2);
 
     return TarjetaPanel(
       child: Column(

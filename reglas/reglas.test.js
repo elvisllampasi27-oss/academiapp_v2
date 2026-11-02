@@ -91,7 +91,6 @@ test('perfil: nadie lee el de otro, salvo el administrador', async () => {
 test('claves: el estudiante nunca las lee', async () => {
   await assertFails(getDoc(doc(alumno(), 'claves_preguntas/p1')));
   await assertFails(getDoc(doc(alumno(), 'claves_examen/e1__p001')));
-  await assertFails(getDoc(doc(admin(), 'claves_preguntas/p1')));
 });
 
 test('examenes: el estudiante lee preguntas; solo el admin edita preguntas y claves', async () => {
