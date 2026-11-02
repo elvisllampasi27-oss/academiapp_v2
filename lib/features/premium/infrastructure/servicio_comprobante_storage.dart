@@ -9,7 +9,7 @@ import '../domain/servicio_comprobante.dart';
 class ServicioComprobanteStorage implements ServicioComprobante {
   FirebaseStorage? _storage;
 
-  ServicioComprobanteStorage({FirebaseStorage? storage}) : _storage = storage;
+  ServicioComprobanteStorage({FirebaseStorage? this._storage});
 
   /// Se crea recién al subir: sin el plan Blaze la app igual abre.
   FirebaseStorage get storage => _storage ??= FirebaseStorage.instance;

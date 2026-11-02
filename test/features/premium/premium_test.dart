@@ -161,6 +161,10 @@ void main() {
   });
 
   testWidgets('Premium: paga con cupón y queda en revisión', (tester) async {
+    tester.view.physicalSize = const Size(800, 1800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
     final repositorio = RepositorioFalso()
       ..cupones['BECA50'] = const Cupon(
         codigo: 'BECA50',
@@ -197,6 +201,7 @@ void main() {
       '0045812',
     );
     await tester.ensureVisible(find.text('Enviar pago'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Enviar pago'));
     await tester.pumpAndSettle();
 

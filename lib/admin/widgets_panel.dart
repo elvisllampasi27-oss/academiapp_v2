@@ -62,14 +62,16 @@ class TarjetaPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: PaletaPanel.panel,
+    // Material (no un Container pintado): así los ListTile, Switch y
+    // Checkbox de adentro muestran bien su fondo y su efecto al tocar.
+    return Material(
+      color: PaletaPanel.panel,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: PaletaPanel.borde),
+        side: const BorderSide(color: PaletaPanel.borde),
       ),
-      child: child,
+      clipBehavior: Clip.antiAlias,
+      child: Padding(padding: padding, child: child),
     );
   }
 }
