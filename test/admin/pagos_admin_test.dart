@@ -68,6 +68,9 @@ class Falso implements RepositorioPagosAdmin, RepositorioAcademiaAdmin {
 
   @override
   Future<void> guardarCupon(Cupon cupon, {required bool nuevo}) async {}
+
+  @override
+  Future<void> eliminarCupon(Cupon cupon) async => hechos.add('eliminar');
 }
 
 void main() {

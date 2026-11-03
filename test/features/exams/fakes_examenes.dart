@@ -59,6 +59,15 @@ class ServicioExamenesFalso implements ServicioExamenes {
     solucion: 'Solución de $preguntaId',
   );
 
+  RankingSemanal? rankingSemanal;
+  EstadoExamenSemanal estado = const EstadoExamenSemanal(semana: 0);
+
+  @override
+  Future<EstadoExamenSemanal> estadoSemanal() async => estado;
+
+  @override
+  Future<RankingSemanal?> ranking() async => rankingSemanal;
+
   @override
   Future<Simulacro> iniciarSimulacro() async {
     if (errorAlIniciar != null) throw errorAlIniciar!;

@@ -2,36 +2,60 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const { esFinDeSemanaLima, elegirPreguntas, calificarExamen } = require('../src/examenes/reglas');
+const {
+  semanaAcademica,
+  semanaDeExamen,
+  cierreExamenMs,
+  idExamenSemanal,
+  nombreCorto,
+  ordenarRanking,
+  calificarExamen,
+} = require('../src/examenes/reglas');
 
-test('sabado y domingo segun la hora de Lima', () => {
-  assert.strictEqual(esFinDeSemanaLima(new Date('2026-10-31T15:00:00Z')), true); // sábado
-  assert.strictEqual(esFinDeSemanaLima(new Date('2026-11-01T15:00:00Z')), true); // domingo
-  // Lunes 02:00 UTC todavía es domingo en Lima.
-  assert.strictEqual(esFinDeSemanaLima(new Date('2026-11-02T02:00:00Z')), true);
-  assert.strictEqual(esFinDeSemanaLima(new Date('2026-11-02T15:00:00Z')), false);
+test('semana academica: de lunes a domingo, en hora de Lima', () => {
+  // Empezó el miércoles 21 oct 2026 (medianoche de Lima = 05:00 UTC).
+  const inicio = Date.parse('2026-10-21T05:00:00Z');
+  assert.strictEqual(semanaAcademica(inicio, Date.parse('2026-10-20T15:00:00Z')), 0);
+  assert.strictEqual(semanaAcademica(inicio, Date.parse('2026-10-24T15:00:00Z')), 1); // sáb 24
+  assert.strictEqual(semanaAcademica(inicio, Date.parse('2026-10-26T04:00:00Z')), 1); // dom 25 en Lima
+  assert.strictEqual(semanaAcademica(inicio, Date.parse('2026-10-31T15:00:00Z')), 2); // sáb 31
+  assert.strictEqual(semanaAcademica(inicio, Date.parse('2026-11-08T15:00:00Z')), 3); // dom 8 nov
+  // Si empezó un sábado, su semana 1 es la siguiente.
+  const sabado = Date.parse('2026-10-24T05:00:00Z');
+  assert.strictEqual(semanaAcademica(sabado, Date.parse('2026-10-24T15:00:00Z')), 0);
+  assert.strictEqual(semanaAcademica(sabado, Date.parse('2026-10-31T15:00:00Z')), 1);
 });
 
-test('reparte las preguntas por seccion en proporcion al banco', () => {
-  const banco = [
-    ...Array.from({ length: 50 }, (_, i) => ({ id: `c${i}`, seccion: 'Comunicación' })),
-    ...Array.from({ length: 30 }, (_, i) => ({ id: `m${i}`, seccion: 'Matemática' })),
-    ...Array.from({ length: 20 }, (_, i) => ({ id: `s${i}`, seccion: 'Sociales' })),
-  ];
-
-  const elegidas = elegirPreguntas(banco, 20);
-  const cuenta = (s) => elegidas.filter((p) => p.seccion === s).length;
-
-  assert.strictEqual(elegidas.length, 20);
-  assert.strictEqual(new Set(elegidas.map((p) => p.id)).size, 20);
-  assert.deepStrictEqual([cuenta('Comunicación'), cuenta('Matemática'), cuenta('Sociales')], [10, 6, 4]);
-  // Agrupadas por sección, como el examen real.
-  assert.strictEqual(elegidas[0].seccion, 'Comunicación');
-  assert.strictEqual(elegidas[19].seccion, 'Sociales');
+test('el examen de la semana se abre el sabado y dura hasta el siguiente', () => {
+  const inicio = Date.parse('2026-10-21T05:00:00Z'); // miércoles 21 oct
+  const viernes23 = Date.parse('2026-10-23T15:00:00Z');
+  const sabado24 = Date.parse('2026-10-24T15:00:00Z');
+  const martes27 = Date.parse('2026-10-27T15:00:00Z');
+  const sabado31 = Date.parse('2026-10-31T15:00:00Z');
+  assert.strictEqual(semanaDeExamen(inicio, viernes23), 0);
+  assert.strictEqual(semanaDeExamen(inicio, sabado24), 1);
+  assert.strictEqual(semanaDeExamen(inicio, martes27), 1); // sigue abierto
+  assert.strictEqual(semanaDeExamen(inicio, sabado31), 2);
+  // Cierra el próximo sábado a las 00:00 de Lima (05:00 UTC).
+  assert.strictEqual(new Date(cierreExamenMs(martes27)).toISOString(), '2026-10-31T05:00:00.000Z');
+  assert.strictEqual(new Date(cierreExamenMs(sabado24)).toISOString(), '2026-10-31T05:00:00.000Z');
 });
 
-test('con un banco pequeno devuelve lo que hay', () => {
-  assert.strictEqual(elegirPreguntas([{ id: 'a', seccion: 'X' }], 20).length, 1);
+test('id del examen semanal y nombre corto para el ranking', () => {
+  assert.strictEqual(idExamenSemanal('v1', 3), 'v1__s03');
+  assert.strictEqual(nombreCorto('Ana María Quispe Rojas'), 'Ana Q.');
+  assert.strictEqual(nombreCorto('Luis Paredes'), 'Luis P.');
+  assert.strictEqual(nombreCorto('  '), 'Estudiante');
+});
+
+test('ranking: puntaje, luego tiempo, luego quien termino antes', () => {
+  const r = ordenarRanking([
+    { usuarioId: 'a', puntaje: 80, tiempoUsadoSegundos: 900, terminadoMs: 3 },
+    { usuarioId: 'b', puntaje: 90, tiempoUsadoSegundos: 1200, terminadoMs: 2 },
+    { usuarioId: 'c', puntaje: 80, tiempoUsadoSegundos: 700, terminadoMs: 5 },
+    { usuarioId: 'd', puntaje: 80, tiempoUsadoSegundos: 700, terminadoMs: 1 },
+  ]);
+  assert.deepStrictEqual(r.map((x) => `${x.puesto}${x.usuarioId}`), ['1b', '2d', '3c', '4a']);
 });
 
 test('califica, cuenta por seccion y trata las no respondidas como incorrectas', () => {

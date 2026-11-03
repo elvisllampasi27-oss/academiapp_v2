@@ -8,6 +8,7 @@ import 'contenido/repositorio_contenido_admin_firestore.dart';
 import 'estudiantes/repositorio_estudiantes_admin_firestore.dart';
 import 'examenes/repositorio_examenes_admin_firestore.dart';
 import 'pagos/repositorio_pagos_admin_firestore.dart';
+import 'ranking/ranking_admin.dart';
 import 'shell_admin.dart';
 import 'sistema/sonda_sistema.dart';
 import 'tema_panel.dart';
@@ -24,6 +25,10 @@ class AppAdmin extends StatefulWidget {
 class _AppAdminState extends State<AppAdmin> {
   final _estudiantes = RepositorioEstudiantesAdminFirestore();
   final _examenes = RepositorioExamenesAdminFirestore();
+  final _semanales = RepositorioExamenesAdminFirestore(
+    colecciones: ColeccionesExamen.semanales,
+  );
+  final _ranking = RepositorioRankingAdminFirestore();
   final _pagos = RepositorioPagosAdminFirestore();
   final _versiones = RepositorioVersionesAdminFirestore();
   final _contenido = RepositorioContenidoAdminFirestore();
@@ -45,6 +50,8 @@ class _AppAdminState extends State<AppAdmin> {
           onSalir: salir,
           repositorioEstudiantes: _estudiantes,
           repositorioExamenes: _examenes,
+          repositorioSemanales: _semanales,
+          repositorioRanking: _ranking,
           repositorioPagos: _pagos,
           repositorioAcademia: _pagos,
           repositorioVersiones: _versiones,

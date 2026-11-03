@@ -25,4 +25,10 @@ abstract class ServicioExamenes {
     required String simulacroId,
     required Map<String, String> respuestas,
   });
+
+  /// Qué examen semanal le toca ahora y si ya lo dio.
+  Future<EstadoExamenSemanal> estadoSemanal();
+
+  /// Ranking del último examen semanal que dio (null si aún no da ninguno).
+  Future<RankingSemanal?> ranking();
 }

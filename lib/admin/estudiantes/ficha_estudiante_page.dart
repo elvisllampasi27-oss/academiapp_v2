@@ -254,7 +254,7 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
                   : p.alerta,
             ),
             IndicadorPanel(
-              etiqueta: 'Exámenes tipo admisión',
+              etiqueta: 'Exámenes semanales',
               valor: '${f.simulacros.length}',
               nota: ultimo == null
                   ? 'aún no rinde'
@@ -451,7 +451,7 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const TituloTarjeta('Exámenes tipo admisión'),
+          const TituloTarjeta('Exámenes semanales'),
           if (f.simulacros.isEmpty)
             Text(
               'Aún no rinde ninguno.',
@@ -459,7 +459,7 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
             ),
           for (final r in f.simulacros.take(6))
             FilaDato(
-              fechaPanel(r.fecha),
+              r.titulo?.split(' · ').first ?? fechaPanel(r.fecha),
               '${r.correctas} de ${r.total} · '
               '${r.segundos ~/ 60}:${(r.segundos % 60).toString().padLeft(2, '0')}',
             ),

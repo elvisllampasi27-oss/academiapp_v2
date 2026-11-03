@@ -11,12 +11,16 @@ class EditorPregunta extends StatefulWidget {
   final List<String> secciones;
   final Future<void> Function(PreguntaAdmin pregunta) onGuardar;
 
+  /// Pide confirmar y borra la pregunta (solo si ya está guardada).
+  final VoidCallback? onEliminar;
+
   const EditorPregunta({
     super.key,
     required this.pregunta,
     required this.esNueva,
     required this.secciones,
     required this.onGuardar,
+    this.onEliminar,
   });
 
   @override
@@ -253,6 +257,16 @@ class _EditorPreguntaState extends State<EditorPregunta> {
                 onPressed: _guardando ? null : _guardar,
                 child: Text(_guardando ? 'Guardando…' : 'Guardar'),
               ),
+              const Spacer(),
+              if (!widget.esNueva && widget.onEliminar != null)
+                TextButton.icon(
+                  onPressed: _guardando ? null : widget.onEliminar,
+                  style: TextButton.styleFrom(
+                    foregroundColor: ColoresApp.naranja,
+                  ),
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text('Eliminar pregunta'),
+                ),
             ],
           ),
         ],

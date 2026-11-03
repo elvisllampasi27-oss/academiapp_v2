@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 class RepositorioFalso implements RepositorioExamenesAdmin {
   final List<PreguntaAdmin> lista;
   final guardadas = <PreguntaAdmin>[];
+  final eliminados = <String>[];
   List<PreguntaAdmin>? ultimasTodas;
 
   RepositorioFalso(this.lista);
@@ -49,7 +50,18 @@ class RepositorioFalso implements RepositorioExamenesAdmin {
     required String fecha,
     required String titulo,
     required List<PreguntaAdmin> preguntas,
+    Map<String, Object?> extra = const {},
   }) async {}
+
+  @override
+  Future<void> eliminarPregunta(
+    PreguntaAdmin pregunta, {
+    required List<PreguntaAdmin> restantes,
+  }) async => eliminados.add('${pregunta.id} quedan ${restantes.length}');
+
+  @override
+  Future<void> eliminarExamen(String examenId) async =>
+      eliminados.add(examenId);
 }
 
 const pregunta = PreguntaAdmin(
@@ -182,5 +194,47 @@ void main() {
 
     expect(find.text('Falta el enunciado.'), findsOneWidget);
     expect(repo.guardadas, isEmpty);
+  });
+
+  testWidgets('elimina una pregunta y el examen, siempre confirmando', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(2800, 1800);
+    tester.view.devicePixelRatio = 1.5;
+    addTearDown(tester.view.reset);
+
+    final repo = RepositorioFalso([pregunta]);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ExamenesAdminPage(repositorio: repo)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Exonerados · 16 nov 2025'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('#1 · Comunicación'));
+    await tester.pumpAndSettle();
+
+    // Cancelar no borra nada.
+    await tester.ensureVisible(find.text('Eliminar pregunta'));
+    await tester.tap(find.text('Eliminar pregunta'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    expect(repo.eliminados, isEmpty);
+
+    await tester.tap(find.text('Eliminar pregunta'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Eliminar'));
+    await tester.pumpAndSettle();
+    expect(repo.eliminados, ['exonerados-2025-11-16__p001 quedan 0']);
+    expect(find.text('#1 · Comunicación'), findsNothing);
+
+    await tester.tap(find.byTooltip('Eliminar examen'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Eliminar examen'));
+    await tester.pumpAndSettle();
+    expect(repo.eliminados.last, 'exonerados-2025-11-16');
   });
 }

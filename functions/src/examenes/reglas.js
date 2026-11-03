@@ -1,46 +1,77 @@
 'use strict';
 
-/** ¿Es sábado o domingo en Perú? (el examen tipo admisión solo se da esos días) */
-function esFinDeSemanaLima(fecha = new Date()) {
-  const dia = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Lima', weekday: 'short' }).format(fecha);
-  return dia === 'Sat' || dia === 'Sun';
+const DIA_MS = 24 * 60 * 60 * 1000;
+/** Perú no cambia de hora: siempre UTC-5. */
+const DESFASE_LIMA_MS = 5 * 60 * 60 * 1000;
+
+/** Número de día (desde 1970) de la fecha en Lima. */
+function diaLima(ms) {
+  return Math.floor((ms - DESFASE_LIMA_MS) / DIA_MS);
 }
 
-/** Mezcla (Fisher-Yates) sin modificar la lista original. */
-function mezclar(lista, aleatorio = Math.random) {
-  const copia = [...lista];
-  for (let i = copia.length - 1; i > 0; i--) {
-    const j = Math.floor(aleatorio() * (i + 1));
-    [copia[i], copia[j]] = [copia[j], copia[i]];
-  }
-  return copia;
+/** 0 = lunes … 6 = domingo, para un número de día. */
+function diaSemana(dia) {
+  // El 1 de enero de 1970 fue jueves (3).
+  return (dia + 3) % 7;
 }
 
 /**
- * Elige [total] preguntas repartidas por sección en proporción al banco
- * (como el examen real) y las devuelve agrupadas por sección.
- * @param {{id: string, seccion: string}[]} banco
+ * Semana académica del estudiante (1, 2, 3…) en la fecha [ahoraMs]. La
+ * semana va de lunes a domingo; si empezó un sábado o domingo, su semana 1
+ * es la siguiente. 0 si todavía no le toca ninguna.
  */
-function elegirPreguntas(banco, total, aleatorio = Math.random) {
-  const grupos = new Map();
-  for (const p of banco) {
-    if (!grupos.has(p.seccion)) grupos.set(p.seccion, []);
-    grupos.get(p.seccion).push(p);
-  }
+function semanaAcademica(inicioMs, ahoraMs) {
+  const inicio = diaLima(inicioMs);
+  let lunesInicio = inicio - diaSemana(inicio);
+  if (diaSemana(inicio) >= 5) lunesInicio += 7;
+  const hoy = diaLima(ahoraMs);
+  if (hoy < inicio || hoy < lunesInicio) return 0;
+  return Math.floor((hoy - lunesInicio) / 7) + 1;
+}
 
-  const n = Math.min(total, banco.length);
-  const secciones = [...grupos.keys()];
-  // Cuotas por "mayor resto" para que sumen exactamente n.
-  const exactas = secciones.map((s) => (grupos.get(s).length / banco.length) * n);
-  const cuotas = exactas.map(Math.floor);
-  const faltan = n - cuotas.reduce((a, b) => a + b, 0);
-  secciones
-    .map((s, i) => ({ i, resto: exactas[i] - cuotas[i] }))
-    .sort((a, b) => b.resto - a.resto)
-    .slice(0, faltan)
-    .forEach(({ i }) => { cuotas[i] += 1; });
+/**
+ * Qué examen semanal le toca: el de la semana N se abre el sábado de esa
+ * semana y queda abierto hasta que el sábado siguiente se abre el N+1.
+ * 0 si todavía no le toca ninguno.
+ */
+function semanaDeExamen(inicioMs, ahoraMs) {
+  const semana = semanaAcademica(inicioMs, ahoraMs);
+  const finDeSemana = diaSemana(diaLima(ahoraMs)) >= 5;
+  return finDeSemana ? semana : Math.max(semana - 1, 0);
+}
 
-  return secciones.flatMap((s, i) => mezclar(grupos.get(s), aleatorio).slice(0, cuotas[i]));
+/** Cuándo cierra el examen abierto ahora: el próximo sábado 00:00 de Lima. */
+function cierreExamenMs(ahoraMs) {
+  const hoy = diaLima(ahoraMs);
+  const faltan = ((5 - diaSemana(hoy) + 7) % 7) || 7;
+  return (hoy + faltan) * DIA_MS + DESFASE_LIMA_MS;
+}
+
+/** Id del examen semanal: `{version}__s03`. */
+function idExamenSemanal(versionId, semana) {
+  return `${versionId}__s${String(semana).padStart(2, '0')}`;
+}
+
+/** "Ana María Quispe Rojas" -> "Ana Q." (el ranking no muestra el nombre completo). */
+function nombreCorto(nombre) {
+  const partes = String(nombre || '').trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return 'Estudiante';
+  if (partes.length === 1) return partes[0];
+  const apellido = partes.length >= 3 ? partes[partes.length - 2] : partes[1];
+  return `${partes[0]} ${apellido[0].toUpperCase()}.`;
+}
+
+/**
+ * Ordena los resultados para el ranking: más puntaje, luego menos tiempo,
+ * luego quién terminó antes. Devuelve copias con su puesto.
+ * @param {{usuarioId: string, puntaje: number, tiempoUsadoSegundos: number, terminadoMs: number}[]} resultados
+ */
+function ordenarRanking(resultados) {
+  return [...resultados]
+    .sort((a, b) => b.puntaje - a.puntaje
+      || a.tiempoUsadoSegundos - b.tiempoUsadoSegundos
+      || a.terminadoMs - b.terminadoMs)
+    .map((r, i) => ({ ...r, puesto: i + 1 }));
 }
 
 /**
@@ -83,4 +114,12 @@ function calificarExamen(preguntas, claves, respuestas) {
   };
 }
 
-module.exports = { esFinDeSemanaLima, mezclar, elegirPreguntas, calificarExamen };
+module.exports = {
+  semanaAcademica,
+  semanaDeExamen,
+  cierreExamenMs,
+  idExamenSemanal,
+  nombreCorto,
+  ordenarRanking,
+  calificarExamen,
+};

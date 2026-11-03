@@ -1,5 +1,4 @@
 import 'package:academiapp_v2/features/exams/domain/entities/examen.dart';
-import 'package:academiapp_v2/features/exams/domain/entities/simulacro.dart';
 import 'package:academiapp_v2/features/exams/domain/repositories/servicio_examenes.dart';
 import 'package:academiapp_v2/features/exams/infrastructure/examenes_desde_mapa.dart';
 import 'package:academiapp_v2/features/exams/infrastructure/servicio_examenes_cloud_functions.dart';
@@ -12,7 +11,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'fakes_examenes.dart';
 
 void main() {
-  final domingo = DateTime(2026, 11, 1);
   final lunes = DateTime(2026, 11, 2);
 
   Future<void> grande(WidgetTester tester) async {
@@ -22,10 +20,27 @@ void main() {
   }
 
   group('datos', () {
-    test('el examen tipo admision es solo sabado y domingo', () {
-      expect(esDiaDeSimulacro(DateTime(2026, 10, 31)), isTrue);
-      expect(esDiaDeSimulacro(domingo), isTrue);
-      expect(esDiaDeSimulacro(lunes), isFalse);
+    test('estado del examen semanal desde el servidor', () {
+      final e = estadoSemanalDesdeMapa({
+        'semana': 3,
+        'titulo': 'Semana 3 · Ciclo 2026-II',
+        'publicado': true,
+        'totalPreguntas': 20,
+        'estado': 'pendiente',
+        'cierraEnMs': DateTime(2026, 11, 14).millisecondsSinceEpoch,
+      });
+      expect(e.disponible, isTrue);
+      expect(e.cierra, DateTime(2026, 11, 14));
+      expect(estadoSemanalDesdeMapa({'semana': 0}).disponible, isFalse);
+      expect(
+        estadoSemanalDesdeMapa({
+          'semana': 3,
+          'publicado': true,
+          'estado': 'completado',
+          'puntaje': 85,
+        }).disponible,
+        isFalse,
+      );
     });
 
     test('lee examenes, preguntas y resultados del servidor', () {

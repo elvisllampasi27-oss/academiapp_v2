@@ -190,6 +190,8 @@ test('premium, cupones y configuración: solo el administrador los cambia', asyn
   await assertSucceeds(setDoc(doc(admin(), 'cupones/BECA50'), { tipo: 'descuento', valor: 50, usos: 0, activo: true }));
   await assertSucceeds(getDoc(doc(alumno(), 'cupones/BECA50')));
   await assertFails(setDoc(doc(alumno(), 'cupones/GRATIS'), { tipo: 'premiumGratis', activo: true }));
+  await assertFails(deleteDoc(doc(alumno(), 'cupones/BECA50')));
+  await assertSucceeds(deleteDoc(doc(admin(), 'cupones/BECA50')));
 
   await assertSucceeds(setDoc(doc(admin(), 'config/academia'), { precio: 29 }));
   await assertSucceeds(getDoc(doc(alumno(), 'config/academia')));
@@ -272,4 +274,14 @@ test('avisos: el estudiante lee solo los activos; el admin los maneja', async ()
   await assertFails(getDoc(doc(anonimo(), 'avisos/a1')));
   await assertFails(deleteDoc(doc(alumno(), 'avisos/a1')));
   await assertSucceeds(deleteDoc(doc(admin(), 'avisos/a1')));
+});
+
+test('examen semanal: el estudiante no ve preguntas ni claves antes de tiempo', async () => {
+  await assertSucceeds(setDoc(doc(admin(), 'examenes_semanales/v1__s01'), { titulo: 'Semana 1', estado: 'publicado' }));
+  await assertSucceeds(setDoc(doc(admin(), 'preguntas_semanales/v1__s01__p001'), { examenId: 'v1__s01', enunciado: '¿?' }));
+  await assertSucceeds(setDoc(doc(admin(), 'claves_semanales/v1__s01__p001'), { opcionCorrectaId: 'a' }));
+  await assertFails(getDoc(doc(alumno(), 'examenes_semanales/v1__s01')));
+  await assertFails(getDoc(doc(alumno(), 'preguntas_semanales/v1__s01__p001')));
+  await assertFails(getDoc(doc(alumno(), 'claves_semanales/v1__s01__p001')));
+  await assertFails(setDoc(doc(alumno(), 'preguntas_semanales/x'), { examenId: 'v1__s01' }));
 });

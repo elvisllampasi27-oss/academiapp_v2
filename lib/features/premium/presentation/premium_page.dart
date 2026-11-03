@@ -468,8 +468,8 @@ class _Beneficios extends StatelessWidget {
       if (c.simulacroSoloPremium)
         (
           Icons.timer_outlined,
-          'Examen tipo admisión',
-          'Sábados y domingos, con tu puntaje por área',
+          'Examen semanal y ranking',
+          'Sábados y domingos, con tu nota por área y tu puesto',
         ),
       (
         Icons.trending_up,

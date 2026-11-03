@@ -25,6 +25,8 @@ const examenes = require('./src/examenes/funciones');
 exports.revisarPreguntaExamen = examenes.revisarPreguntaExamen;
 exports.iniciarSimulacro = examenes.iniciarSimulacro;
 exports.enviarSimulacro = examenes.enviarSimulacro;
+exports.rankingSemanal = examenes.rankingSemanal;
+exports.estadoExamenSemanal = examenes.estadoExamenSemanal;
 
 const { generarPreguntas } = require('./src/contenido/generar_preguntas');
 

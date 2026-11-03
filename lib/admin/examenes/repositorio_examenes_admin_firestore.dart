@@ -5,15 +5,46 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'modelo_examen_admin.dart';
 import 'repositorio_examenes_admin.dart';
 
+/// Dónde vive cada tipo de examen. Los pasados los lee el estudiante; los
+/// semanales solo el administrador y Cloud Functions.
+class ColeccionesExamen {
+  final String examenes;
+  final String preguntas;
+  final String claves;
+
+  const ColeccionesExamen(this.examenes, this.preguntas, this.claves);
+
+  static const pasados = ColeccionesExamen(
+    'examenes',
+    'preguntas_examen',
+    'claves_examen',
+  );
+  static const semanales = ColeccionesExamen(
+    'examenes_semanales',
+    'preguntas_semanales',
+    'claves_semanales',
+  );
+}
+
 class RepositorioExamenesAdminFirestore implements RepositorioExamenesAdmin {
   final FirebaseFirestore firestore;
+  final ColeccionesExamen colecciones;
 
-  RepositorioExamenesAdminFirestore({FirebaseFirestore? firestore})
-    : firestore = firestore ?? FirebaseFirestore.instance;
+  RepositorioExamenesAdminFirestore({
+    FirebaseFirestore? firestore,
+    this.colecciones = ColeccionesExamen.pasados,
+  }) : firestore = firestore ?? FirebaseFirestore.instance;
+
+  CollectionReference<Map<String, dynamic>> get _examenes =>
+      firestore.collection(colecciones.examenes);
+  CollectionReference<Map<String, dynamic>> get _preguntas =>
+      firestore.collection(colecciones.preguntas);
+  CollectionReference<Map<String, dynamic>> get _claves =>
+      firestore.collection(colecciones.claves);
 
   @override
   Future<List<ExamenAdmin>> examenes() async {
-    final consulta = await firestore.collection('examenes').get();
+    final consulta = await _examenes.get();
 
     return [
       for (final d in consulta.docs)
@@ -24,29 +55,38 @@ class RepositorioExamenesAdminFirestore implements RepositorioExamenesAdmin {
           fecha: d.data()['fecha'] as String? ?? '',
           estado: d.data()['estado'] as String? ?? 'borrador',
           totalPreguntas: (d.data()['totalPreguntas'] as num?)?.toInt() ?? 0,
+          versionId: d.data()['versionId'] as String?,
+          semana: (d.data()['semana'] as num?)?.toInt(),
         ),
-    ]..sort((a, b) => b.fecha.compareTo(a.fecha));
+    ]..sort((a, b) {
+      // Semanales: por versión y semana; pasados: el más nuevo primero.
+      if (a.semana != null && b.semana != null) {
+        final v = (a.versionId ?? '').compareTo(b.versionId ?? '');
+        return v != 0 ? v : a.semana!.compareTo(b.semana!);
+      }
+      return b.fecha.compareTo(a.fecha);
+    });
   }
 
   @override
   Future<List<PreguntaAdmin>> preguntas(String examenId) async {
-    final resultados = await Future.wait([
-      firestore
-          .collection('preguntas_examen')
-          .where('examenId', isEqualTo: examenId)
-          .get(),
-      firestore
-          .collection('claves_examen')
-          .where('examenId', isEqualTo: examenId)
-          .get(),
-    ]);
-    final claves = {for (final d in resultados[1].docs) d.id: d.data()};
+    final (preguntas, claves) = await (
+      _preguntas.where('examenId', isEqualTo: examenId).get(),
+      _claves.where('examenId', isEqualTo: examenId).get(),
+    ).wait;
+    final porId = {for (final d in claves.docs) d.id: d.data()};
 
     return [
-      for (final d in resultados[0].docs)
-        preguntaAdminDesdeMapas(d.id, d.data(), claves[d.id]),
+      for (final d in preguntas.docs)
+        preguntaAdminDesdeMapas(d.id, d.data(), porId[d.id]),
     ]..sort((a, b) => a.numero.compareTo(b.numero));
   }
+
+  Map<String, Object?> _totales(Iterable<PreguntaAdmin> todas) => {
+    'totalPreguntas': todas.where((p) => p.activa).length,
+    'secciones': seccionesDe(todas),
+    'actualizadoEn': FieldValue.serverTimestamp(),
+  };
 
   @override
   Future<void> guardar(
@@ -54,41 +94,10 @@ class RepositorioExamenesAdminFirestore implements RepositorioExamenesAdmin {
     PreguntaAdmin? anterior,
     required List<PreguntaAdmin> todas,
   }) async {
-    final lote = firestore.batch();
-    final indice = firestore.collection('indices').doc('preguntas_examen');
-
-    lote.set(
-      firestore.collection('preguntas_examen').doc(pregunta.id),
-      pregunta.datosPregunta(),
-    );
-    lote.set(
-      firestore.collection('claves_examen').doc(pregunta.id),
-      pregunta.datosClave(),
-    );
-
-    // Índice del examen tipo admisión: se quita la entrada vieja y se pone
-    // la nueva (si la pregunta está activa).
-    if (anterior != null && anterior.activa) {
-      lote.set(indice, {
-        'preguntas': FieldValue.arrayRemove([
-          {'id': anterior.id, 'seccion': anterior.seccion},
-        ]),
-      }, SetOptions(merge: true));
-    }
-    if (pregunta.activa) {
-      lote.set(indice, {
-        'preguntas': FieldValue.arrayUnion([
-          {'id': pregunta.id, 'seccion': pregunta.seccion.trim()},
-        ]),
-      }, SetOptions(merge: true));
-    }
-
-    lote.update(firestore.collection('examenes').doc(pregunta.examenId), {
-      'totalPreguntas': todas.where((p) => p.activa).length,
-      'secciones': seccionesDe(todas),
-      'actualizadoEn': FieldValue.serverTimestamp(),
-    });
-
+    final lote = firestore.batch()
+      ..set(_preguntas.doc(pregunta.id), pregunta.datosPregunta())
+      ..set(_claves.doc(pregunta.id), pregunta.datosClave())
+      ..update(_examenes.doc(pregunta.examenId), _totales(todas));
     await lote.commit();
   }
 
@@ -99,32 +108,74 @@ class RepositorioExamenesAdminFirestore implements RepositorioExamenesAdmin {
     required String fecha,
     required String titulo,
     required List<PreguntaAdmin> preguntas,
+    Map<String, Object?> extra = const {},
   }) async {
     final (anteriores, examen) = await (
       this.preguntas(examenId),
-      firestore.collection('examenes').doc(examenId).get(),
+      _examenes.doc(examenId).get(),
     ).wait;
     final nuevas = {for (final p in preguntas) p.id};
-    final indice = firestore.collection('indices').doc('preguntas_examen');
 
     // Firestore admite 500 escrituras por lote: se arman en grupos.
     final operaciones = <void Function(WriteBatch)>[
       for (final p in anteriores)
         if (!nuevas.contains(p.id) && p.activa)
-          (l) => l.update(firestore.collection('preguntas_examen').doc(p.id), {
-            'activa': false,
-          }),
+          (l) => l.update(_preguntas.doc(p.id), {'activa': false}),
       for (final p in preguntas) ...[
-        (l) => l.set(
-          firestore.collection('preguntas_examen').doc(p.id),
-          p.datosPregunta(),
-        ),
-        (l) => l.set(
-          firestore.collection('claves_examen').doc(p.id),
-          p.datosClave(),
-        ),
+        (l) => l.set(_preguntas.doc(p.id), p.datosPregunta()),
+        (l) => l.set(_claves.doc(p.id), p.datosClave()),
       ],
     ];
+    await _enLotes(operaciones);
+
+    final todas = {
+      for (final p in anteriores) p.id: p.copiar(activa: false),
+      for (final p in preguntas) p.id: p,
+    }.values;
+    await _examenes.doc(examenId).set({
+      ...extra,
+      'tipo': tipo,
+      'fecha': fecha,
+      'titulo': titulo,
+      'estado': examen.data()?['estado'] ?? 'borrador',
+      ..._totales(todas),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> eliminarPregunta(
+    PreguntaAdmin pregunta, {
+    required List<PreguntaAdmin> restantes,
+  }) async {
+    final lote = firestore.batch()
+      ..delete(_preguntas.doc(pregunta.id))
+      ..delete(_claves.doc(pregunta.id))
+      ..update(_examenes.doc(pregunta.examenId), _totales(restantes));
+    await lote.commit();
+  }
+
+  @override
+  Future<void> eliminarExamen(String examenId) async {
+    final preguntas = await this.preguntas(examenId);
+    await _enLotes([
+      for (final p in preguntas) ...[
+        (l) => l.delete(_preguntas.doc(p.id)),
+        (l) => l.delete(_claves.doc(p.id)),
+      ],
+    ]);
+    // El examen al final: si algo falla a mitad, sigue en la lista y se
+    // puede volver a eliminar.
+    await _examenes.doc(examenId).delete();
+  }
+
+  @override
+  Future<void> cambiarEstado(String examenId, {required bool publicado}) {
+    return _examenes.doc(examenId).update({
+      'estado': publicado ? 'publicado' : 'borrador',
+    });
+  }
+
+  Future<void> _enLotes(List<void Function(WriteBatch)> operaciones) async {
     for (var i = 0; i < operaciones.length; i += 450) {
       final lote = firestore.batch();
       for (final op in operaciones.skip(i).take(450)) {
@@ -132,45 +183,5 @@ class RepositorioExamenesAdminFirestore implements RepositorioExamenesAdmin {
       }
       await lote.commit();
     }
-
-    // Índice del examen tipo admisión y datos del examen, al final.
-    final lote = firestore.batch();
-    if (anteriores.any((p) => p.activa)) {
-      lote.set(indice, {
-        'preguntas': FieldValue.arrayRemove([
-          for (final p in anteriores)
-            if (p.activa) {'id': p.id, 'seccion': p.seccion},
-        ]),
-      }, SetOptions(merge: true));
-    }
-    final todas = {
-      for (final p in anteriores) p.id: p.copiar(activa: false),
-      for (final p in preguntas) p.id: p,
-    }.values;
-    lote.set(firestore.collection('examenes').doc(examenId), {
-      'tipo': tipo,
-      'fecha': fecha,
-      'titulo': titulo,
-      'totalPreguntas': todas.where((p) => p.activa).length,
-      'secciones': seccionesDe(todas),
-      'estado': examen.data()?['estado'] ?? 'borrador',
-      'actualizadoEn': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-    await lote.commit();
-
-    // El arrayUnion va en otro lote: en el mismo, chocaría con el arrayRemove.
-    await indice.set({
-      'preguntas': FieldValue.arrayUnion([
-        for (final p in preguntas)
-          if (p.activa) {'id': p.id, 'seccion': p.seccion.trim()},
-      ]),
-    }, SetOptions(merge: true));
-  }
-
-  @override
-  Future<void> cambiarEstado(String examenId, {required bool publicado}) {
-    return firestore.collection('examenes').doc(examenId).update({
-      'estado': publicado ? 'publicado' : 'borrador',
-    });
   }
 }

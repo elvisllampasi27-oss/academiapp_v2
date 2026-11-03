@@ -218,7 +218,7 @@ class _ResumenPageState extends State<ResumenPage> {
         relleno: true,
       ),
       SerieGrafico(
-        nombre: 'Exámenes tipo admisión',
+        nombre: 'Exámenes semanales',
         valores: [for (final d in actividad) d.simulacros.toDouble()],
         color: p.texto,
       ),

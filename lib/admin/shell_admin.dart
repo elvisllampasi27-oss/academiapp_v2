@@ -15,6 +15,8 @@ import 'contenido/contenido_page.dart';
 import 'contenido/repositorio_contenido_admin.dart';
 import 'examenes/repositorio_examenes_admin.dart';
 import 'pagos/cupones_page.dart';
+import 'ranking/ranking_admin.dart';
+import 'ranking/ranking_page.dart';
 import 'pagos/pagos_page.dart';
 import 'pagos/repositorio_pagos_admin.dart';
 import 'logo_puntos.dart';
@@ -33,9 +35,11 @@ enum SeccionPanel {
   pagos,
   cupones,
   versiones,
+  ranking,
   avisos,
   contenido,
   examenes,
+  semanales,
   reportes,
   estado,
   configuracion,
@@ -47,6 +51,8 @@ class ShellAdmin extends StatefulWidget {
   final VoidCallback onSalir;
   final RepositorioEstudiantesAdmin repositorioEstudiantes;
   final RepositorioExamenesAdmin repositorioExamenes;
+  final RepositorioExamenesAdmin repositorioSemanales;
+  final RepositorioRankingAdmin repositorioRanking;
   final RepositorioPagosAdmin repositorioPagos;
   final RepositorioAcademiaAdmin repositorioAcademia;
   final RepositorioVersionesAdmin repositorioVersiones;
@@ -63,6 +69,8 @@ class ShellAdmin extends StatefulWidget {
     required this.onSalir,
     required this.repositorioEstudiantes,
     required this.repositorioExamenes,
+    required this.repositorioSemanales,
+    required this.repositorioRanking,
     required this.repositorioPagos,
     required this.repositorioAcademia,
     required this.repositorioVersiones,
@@ -197,6 +205,16 @@ class _ShellAdminState extends State<ShellAdmin> {
         examenInicial: _destino?.$1,
         preguntaInicial: _destino?.$2,
       ),
+      SeccionPanel.semanales => ExamenesAdminPage(
+        key: const ValueKey('semanales'),
+        repositorio: widget.repositorioSemanales,
+        versionesSemanales: widget.repositorioEstudiantes.versiones,
+      ),
+      SeccionPanel.ranking => RankingPage(
+        semanales: widget.repositorioSemanales,
+        ranking: widget.repositorioRanking,
+        onAbrirEstudiante: _abrirEstudiante,
+      ),
       SeccionPanel.reportes => BandejaPage(
         repositorio: widget.repositorioBandeja,
         onAbrirEstudiante: _abrirEstudiante,
@@ -270,6 +288,7 @@ class _MenuLateral extends StatelessWidget {
           'Versiones y matrículas',
           Icons.layers_outlined,
         ),
+        (SeccionPanel.ranking, 'Ranking semanal', Icons.emoji_events_outlined),
         (SeccionPanel.avisos, 'Avisos', Icons.campaign_outlined),
       ],
     ),
@@ -277,7 +296,12 @@ class _MenuLateral extends StatelessWidget {
       'CONTENIDO',
       [
         (SeccionPanel.contenido, 'Cursos y temas', Icons.menu_book_outlined),
-        (SeccionPanel.examenes, 'Exámenes', Icons.assignment_outlined),
+        (SeccionPanel.examenes, 'Exámenes pasados', Icons.assignment_outlined),
+        (
+          SeccionPanel.semanales,
+          'Exámenes semanales',
+          Icons.event_note_outlined,
+        ),
       ],
     ),
     (

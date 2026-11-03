@@ -10,7 +10,7 @@ import '../../../../core/presentation/imagen_figura.dart';
 import '../widgets/opcion_examen.dart';
 import 'resultado_simulacro_page.dart';
 
-/// Examen tipo admisión: con tiempo y sin ver respuestas hasta el final.
+/// Examen semanal: con tiempo y sin ver respuestas hasta el final.
 /// Al acabarse el tiempo se envía solo.
 class SimulacroPage extends StatefulWidget {
   final ServicioExamenes servicio;
@@ -103,6 +103,8 @@ class _SimulacroPageState extends State<SimulacroPage> {
           builder: (_) => ResultadoSimulacroPage(
             resultado: resultado,
             preguntas: simulacro.preguntas,
+            titulo: simulacro.titulo,
+            servicio: widget.servicio,
           ),
         ),
       );
@@ -195,7 +197,7 @@ class _SimulacroPageState extends State<SimulacroPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Examen tipo admisión'),
+          title: Text(simulacro?.titulo ?? 'Examen semanal'),
           actions: [
             if (simulacro != null)
               Padding(

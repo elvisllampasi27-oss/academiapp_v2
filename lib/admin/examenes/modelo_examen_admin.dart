@@ -10,6 +10,10 @@ class ExamenAdmin {
   final String estado;
   final int totalPreguntas;
 
+  /// Solo los exámenes semanales.
+  final String? versionId;
+  final int? semana;
+
   const ExamenAdmin({
     required this.id,
     required this.titulo,
@@ -17,10 +21,16 @@ class ExamenAdmin {
     required this.fecha,
     required this.estado,
     required this.totalPreguntas,
+    this.versionId,
+    this.semana,
   });
 
   bool get publicado => estado == 'publicado';
 }
+
+/// Id del examen semanal: `{version}__s03` (igual que en Cloud Functions).
+String idExamenSemanal(String versionId, int semana) =>
+    '${versionId}__s${semana.toString().padLeft(2, '0')}';
 
 class PreguntaAdmin {
   static const letras = 'abcdefgh';

@@ -22,6 +22,9 @@ class InicioPage extends StatelessWidget {
   /// Avisos del equipo (van arriba de "Hoy").
   final Widget? avisos;
 
+  /// Aviso del examen semanal abierto.
+  final Widget? examen;
+
   /// Cuántas recomendaciones de "Reforzar" se muestran en el inicio.
   final int maximoRefuerzos;
 
@@ -35,6 +38,7 @@ class InicioPage extends StatelessWidget {
     required this.onVerRuta,
     required this.onAbrirPerfil,
     this.avisos,
+    this.examen,
     this.maximoRefuerzos = 2,
   });
 
@@ -101,6 +105,7 @@ class InicioPage extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           ?avisos,
+          ?examen,
           _TarjetaHoy(
             dia: dia,
             practicados: {for (final item in ruta) ?item.temaId},

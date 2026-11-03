@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/presentation/texto.dart';
+import '../../features/academic/domain/entities/version_academica.dart';
 import '../importar/dialogo_importar_json.dart';
 import '../importar/importar_json.dart';
 import '../importar/subir_imagenes.dart';
@@ -12,9 +13,14 @@ import 'repositorio_examenes_admin.dart';
 
 enum _Filtro { todas, sinSolucion, inactivas }
 
-/// Exámenes pasados: lista de exámenes, sus preguntas y el editor.
+/// Exámenes pasados o semanales: lista de exámenes, sus preguntas y el
+/// editor. Los semanales se importan por versión y semana.
 class ExamenesAdminPage extends StatefulWidget {
   final RepositorioExamenesAdmin repositorio;
+
+  /// Con esto la pantalla maneja los exámenes semanales (si no, los
+  /// pasados).
+  final Future<List<VersionAcademica>> Function()? versionesSemanales;
 
   /// Para subir figuras (por defecto, Firebase Storage).
   final ServicioImagenesAdmin? imagenes;
@@ -29,7 +35,10 @@ class ExamenesAdminPage extends StatefulWidget {
     this.imagenes,
     this.examenInicial,
     this.preguntaInicial,
+    this.versionesSemanales,
   });
+
+  bool get semanales => versionesSemanales != null;
 
   @override
   State<ExamenesAdminPage> createState() => _ExamenesAdminPageState();
@@ -141,24 +150,107 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
     }
   }
 
+  Future<void> _eliminarPregunta(PreguntaAdmin pregunta) async {
+    final ok = await confirmarPanel(
+      context,
+      titulo: 'Eliminar la pregunta #${pregunta.numero}',
+      mensaje:
+          'Se borran la pregunta y su clave. Deja de salir para los '
+          'estudiantes y no se puede recuperar. Si solo '
+          'quieres sacarla un tiempo, desactívala.',
+      confirmar: 'Eliminar',
+      peligro: true,
+    );
+    if (!ok) return;
+    final restantes = [
+      for (final p in _preguntas ?? const <PreguntaAdmin>[])
+        if (p.id != pregunta.id) p,
+    ];
+    try {
+      await widget.repositorio.eliminarPregunta(pregunta, restantes: restantes);
+      if (!mounted) return;
+      setState(() {
+        _preguntas = restantes;
+        _editando = null;
+        _examenes = widget.repositorio.examenes();
+      });
+      _avisar('Pregunta ${pregunta.numero} eliminada.');
+    } catch (_) {
+      _avisar('No se pudo eliminar la pregunta.');
+    }
+  }
+
+  Future<void> _eliminarExamen(ExamenAdmin examen) async {
+    final ok = await confirmarPanel(
+      context,
+      titulo: 'Eliminar ${examen.titulo}',
+      mensaje:
+          'Se borran el examen y sus ${examen.totalPreguntas} preguntas con '
+          'sus claves. No se puede recuperar (tendrías que importar el JSON '
+          'de nuevo). Si solo quieres ocultarlo, pásalo a borrador con el ojo.',
+      confirmar: 'Eliminar examen',
+      peligro: true,
+    );
+    if (!ok) return;
+    try {
+      await widget.repositorio.eliminarExamen(examen.id);
+      if (!mounted) return;
+      setState(() {
+        if (_examen?.id == examen.id) {
+          _examen = null;
+          _preguntas = null;
+          _editando = null;
+        }
+        _examenes = widget.repositorio.examenes();
+      });
+      _avisar('Examen eliminado.');
+    } catch (_) {
+      _avisar('No se pudo eliminar el examen. Inténtalo de nuevo.');
+    }
+  }
+
   /// Examen completo desde el JSON de la V1 (o el mismo formato).
   Future<void> _importar(List<ExamenAdmin> existentes) async {
-    final datos = await showDialog<(String, String)>(
-      context: context,
-      builder: (_) => const _DialogoDatosExamen(),
-    );
-    if (datos == null || !mounted) return;
-    final (tipo, carpeta) = datos;
-    final fecha = fechaIsoDeCarpeta(carpeta)!;
-    final examenId = '$tipo-$fecha';
+    final String examenId;
+    final String tipo;
+    final String fecha;
+    final String titulo;
+    final String carpeta;
+    var extra = const <String, Object?>{};
+    if (widget.versionesSemanales case final versiones?) {
+      final datos = await showDialog<(VersionAcademica, int)>(
+        context: context,
+        builder: (_) => _DialogoSemana(versiones: versiones()),
+      );
+      if (datos == null || !mounted) return;
+      final (version, semana) = datos;
+      examenId = idExamenSemanal(version.id, semana);
+      tipo = 'semanal';
+      fecha = '';
+      titulo = 'Semana $semana · ${version.nombre}';
+      carpeta = 'semanales/${version.id}/s$semana';
+      extra = {'versionId': version.id, 'semana': semana};
+    } else {
+      final datos = await showDialog<(String, String)>(
+        context: context,
+        builder: (_) => const _DialogoDatosExamen(),
+      );
+      if (datos == null || !mounted) return;
+      final (t, dia) = datos;
+      tipo = t;
+      fecha = fechaIsoDeCarpeta(dia)!;
+      examenId = '$tipo-$fecha';
+      titulo = tituloExamen(tipo, fecha);
+      carpeta = 'examenes/$tipo/$dia';
+    }
     final yaExiste = existentes.any((e) => e.id == examenId);
 
     final elegida = await mostrarImportarJson(
       context,
-      titulo: 'Importar ${tituloExamen(tipo, fecha)}',
+      titulo: 'Importar $titulo',
       urlDeArchivo: (archivo) =>
-          '$urlHosting/examenes/$tipo/$carpeta/${Uri.encodeComponent(archivo)}',
-      carpetaImagenes: 'examenes/$tipo/$carpeta',
+          '$urlHosting/$carpeta/${Uri.encodeComponent(archivo)}',
+      carpetaImagenes: carpeta,
       hayActuales: yaExiste,
       imagenes: widget.imagenes ?? ServicioImagenesStorage(),
     );
@@ -192,12 +284,13 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
         examenId: examenId,
         tipo: tipo,
         fecha: fecha,
-        titulo: tituloExamen(tipo, fecha),
+        titulo: titulo,
         preguntas: [...actuales, ...preguntas],
+        extra: extra,
       );
       _avisar(
-        '${preguntas.length} preguntas importadas en '
-        '${tituloExamen(tipo, fecha)}. Revísalo y publícalo.',
+        '${preguntas.length} preguntas importadas en $titulo. '
+        'Revísalo y publícalo.',
       );
       if (mounted) {
         setState(() {
@@ -239,10 +332,15 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           EncabezadoPanel(
-            titulo: 'Exámenes pasados',
-            subtitulo:
-                'Los estudiantes los practican y el examen tipo admisión toma '
-                'de aquí sus preguntas. Elige un examen y luego una pregunta.',
+            titulo: widget.semanales
+                ? 'Exámenes semanales'
+                : 'Exámenes pasados',
+            subtitulo: widget.semanales
+                ? 'Uno por versión y semana. Se abre el sábado de esa semana y '
+                      'queda abierto hasta el sábado siguiente; un solo intento. '
+                      'Solo se da si está publicado.'
+                : 'Los estudiantes los practican y ven la respuesta al '
+                      'instante. Elige un examen y luego una pregunta.',
             acciones: [
               OutlinedButton.icon(
                 onPressed: () => setState(() {
@@ -308,7 +406,10 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
         if (examenes.isEmpty) {
           return Center(
             child: Text(
-              'Todavía no hay exámenes. Importa uno.',
+              widget.semanales
+                  ? 'Todavía no hay exámenes semanales. Importa el de la '
+                        'semana 1.'
+                  : 'Todavía no hay exámenes. Importa uno.',
               style: TextStyle(color: p.apagado),
             ),
           );
@@ -388,6 +489,15 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
                               color: p.apagado,
                             ),
                             onPressed: () => _cambiarEstado(e),
+                          ),
+                          IconButton(
+                            tooltip: 'Eliminar examen',
+                            icon: Icon(
+                              Icons.delete_outline,
+                              size: 20,
+                              color: p.apagado,
+                            ),
+                            onPressed: () => _eliminarExamen(e),
                           ),
                         ],
                       ),
@@ -540,6 +650,7 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
       esNueva: _esNueva,
       secciones: secciones,
       onGuardar: _guardar,
+      onEliminar: () => _eliminarPregunta(pregunta),
     );
   }
 }
@@ -610,6 +721,107 @@ class _DialogoDatosExamenState extends State<_DialogoDatosExamen> {
           onPressed: valida
               ? () => Navigator.pop(context, (_tipo, _fecha.text.trim()))
               : null,
+          child: const Text('Siguiente'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Versión y semana del examen semanal a importar.
+class _DialogoSemana extends StatefulWidget {
+  final Future<List<VersionAcademica>> versiones;
+
+  const _DialogoSemana({required this.versiones});
+
+  @override
+  State<_DialogoSemana> createState() => _DialogoSemanaState();
+}
+
+class _DialogoSemanaState extends State<_DialogoSemana> {
+  VersionAcademica? _version;
+  int _semana = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Importar examen semanal'),
+      content: SizedBox(
+        width: 420,
+        child: FutureBuilder<List<VersionAcademica>>(
+          future: widget.versiones,
+          builder: (context, s) {
+            final versiones = s.data;
+            if (versiones == null) {
+              return const SizedBox(
+                height: 80,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DropdownButtonFormField<VersionAcademica>(
+                  initialValue: _version,
+                  decoration: const InputDecoration(labelText: 'Versión'),
+                  items: [
+                    for (final v in versiones)
+                      DropdownMenuItem(value: v, child: Text(v.nombre)),
+                  ],
+                  onChanged: (v) => setState(() => _version = v),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Expanded(child: Text('Semana')),
+                    IconButton(
+                      tooltip: 'Semana anterior',
+                      onPressed: _semana > 1
+                          ? () => setState(() => _semana--)
+                          : null,
+                      icon: const Icon(Icons.remove),
+                    ),
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        '$_semana',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Semana siguiente',
+                      onPressed: _semana < 52
+                          ? () => setState(() => _semana++)
+                          : null,
+                      icon: const Icon(Icons.add),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Con los temas de esa semana del ciclo. Si ya existe, '
+                  'podrás reemplazarlo.',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: _version == null
+              ? null
+              : () => Navigator.pop(context, (_version!, _semana)),
           child: const Text('Siguiente'),
         ),
       ],

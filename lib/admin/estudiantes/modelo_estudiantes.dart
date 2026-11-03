@@ -58,11 +58,15 @@ class SimulacroAdmin {
   final int total;
   final int segundos;
 
+  /// "Semana 3 · Ciclo 2026-II" (los exámenes al azar antiguos no tienen).
+  final String? titulo;
+
   const SimulacroAdmin({
     required this.fecha,
     required this.correctas,
     required this.total,
     required this.segundos,
+    this.titulo,
   });
 }
 
@@ -307,7 +311,7 @@ ResumenPanel calcularResumen(
   );
 }
 
-/// Actividad de un día: prácticas resueltas y exámenes tipo admisión.
+/// Actividad de un día: prácticas resueltas y exámenes semanales.
 class ActividadDia {
   final DateTime dia;
   final int practicas;

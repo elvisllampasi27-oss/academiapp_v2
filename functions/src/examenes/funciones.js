@@ -5,9 +5,15 @@ const admin = require('firebase-admin');
 const { FieldValue, Timestamp } = require('firebase-admin/firestore');
 const { verificarEstudiante } = require('../comun/estudiante');
 const { leerConfiguracion, esPremium } = require('../comun/plan');
-const { esFinDeSemanaLima, elegirPreguntas, calificarExamen } = require('./reglas');
+const {
+  semanaDeExamen,
+  cierreExamenMs,
+  idExamenSemanal,
+  nombreCorto,
+  ordenarRanking,
+  calificarExamen,
+} = require('./reglas');
 
-const PREGUNTAS_SIMULACRO = () => Number(process.env.SIMULACRO_PREGUNTAS) || 20;
 /** Como en la UNSCH: unos 2 minutos por pregunta. */
 const SEGUNDOS_POR_PREGUNTA = 120;
 /** Margen para el envío automático al acabarse el tiempo. */
@@ -61,59 +67,128 @@ const revisarPreguntaExamen = onCall(async (request) => {
   };
 });
 
+/** Las preguntas de un simulacro viejo (al azar) están en otra colección. */
+const coleccionesDe = (datos) => (datos.examenSemanalId
+  ? { preguntas: 'preguntas_semanales', claves: 'claves_semanales' }
+  : { preguntas: 'preguntas_examen', claves: 'claves_examen' });
+
 /**
- * Examen tipo admisión: solo sábado y domingo. Arma un examen con preguntas
- * de exámenes pasados repartidas por área. Si ya hay uno en curso, lo
- * devuelve (así recargar la app no lo pierde).
+ * Qué examen semanal le toca ahora al estudiante y en qué va: para la
+ * tarjeta de Exámenes y el aviso del Inicio. No da preguntas.
+ */
+const estadoExamenSemanal = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
+
+  const db = admin.firestore();
+  const uid = request.auth.uid;
+  const matricula = await verificarEstudiante(db, uid);
+  const ahora = Date.now();
+  const semana = semanaDeExamen(matricula.fechaInicioAcademico.toMillis(), ahora);
+  if (semana < 1) return { semana: 0 };
+
+  const examenId = idExamenSemanal(matricula.versionId, semana);
+  const [examenSnap, previos, usuarioSnap, configuracion] = await Promise.all([
+    db.collection('examenes_semanales').doc(examenId).get(),
+    db.collection('simulacros')
+      .where('usuarioId', '==', uid)
+      .where('examenSemanalId', '==', examenId)
+      .get(),
+    db.collection('usuarios').doc(uid).get(),
+    leerConfiguracion(db),
+  ]);
+  const examen = examenSnap.data();
+  const previo = previos.docs[0] ? previos.docs[0].data() : null;
+  const enCurso = previo && previo.estado === 'en_curso'
+    && previo.venceEn.toMillis() + MARGEN_SEGUNDOS * 1000 > ahora;
+
+  return {
+    semana,
+    titulo: examen ? examen.titulo : `Semana ${semana}`,
+    publicado: Boolean(examen && examen.estado === 'publicado'),
+    totalPreguntas: examen ? examen.totalPreguntas || 0 : 0,
+    estado: !previo ? 'pendiente' : (enCurso ? 'en_curso' : 'completado'),
+    puntaje: previo && previo.estado === 'completado' ? previo.puntaje : null,
+    cierraEnMs: cierreExamenMs(ahora),
+    requierePremium: Boolean(configuracion.simulacroSoloPremium && !esPremium(usuarioSnap.data())),
+  };
+});
+
+/**
+ * Examen semanal: el de la última semana que el estudiante completó (según
+ * su fecha de inicio). Se abre el sábado y queda abierto hasta el sábado
+ * siguiente. Un solo intento. Si ya hay uno en curso, lo devuelve (así
+ * recargar la app no lo pierde).
  */
 const iniciarSimulacro = onCall(async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
 
   const db = admin.firestore();
   const uid = request.auth.uid;
-  await verificarEstudiante(db, uid);
+  const matricula = await verificarEstudiante(db, uid);
 
   const ahora = Date.now();
-  const enCurso = await db.collection('simulacros')
-    .where('usuarioId', '==', uid)
-    .where('estado', '==', 'en_curso')
-    .get();
-  const vigente = enCurso.docs.find((d) => d.data().venceEn.toMillis() + MARGEN_SEGUNDOS * 1000 > ahora);
+  const semana = semanaDeExamen(matricula.fechaInicioAcademico.toMillis(), ahora);
+  if (semana < 1) {
+    throw new HttpsError('failed-precondition', 'Tu primer examen semanal se abre el sábado de tu primera semana.');
+  }
+  const examenId = idExamenSemanal(matricula.versionId, semana);
+
+  const [examenSnap, previos, usuarioSnap, configuracion] = await Promise.all([
+    db.collection('examenes_semanales').doc(examenId).get(),
+    db.collection('simulacros')
+      .where('usuarioId', '==', uid)
+      .where('examenSemanalId', '==', examenId)
+      .get(),
+    db.collection('usuarios').doc(uid).get(),
+    leerConfiguracion(db),
+  ]);
 
   let simulacroRef;
   let datos;
+  const previo = previos.docs[0];
 
-  if (vigente) {
-    simulacroRef = vigente.ref;
-    datos = vigente.data();
+  if (previo) {
+    const d = previo.data();
+    const vigente = d.estado === 'en_curso'
+      && d.venceEn.toMillis() + MARGEN_SEGUNDOS * 1000 > ahora;
+    if (!vigente) {
+      throw new HttpsError('failed-precondition', `Ya diste el examen de la semana ${semana}. Mira tu puesto en el ranking.`);
+    }
+    simulacroRef = previo.ref;
+    datos = d;
   } else {
-    const [usuarioSnap, configuracion] = await Promise.all([
-      db.collection('usuarios').doc(uid).get(),
-      leerConfiguracion(db),
-    ]);
     if (configuracion.simulacroSoloPremium && !esPremium(usuarioSnap.data())) {
       throw new HttpsError(
         'permission-denied',
-        'El examen tipo admisión es para Premium. Hazte Premium desde tu Perfil.',
+        'El examen semanal es para Premium. Hazte Premium desde tu Perfil.',
       );
     }
-
-    if (!esFinDeSemanaLima() && process.env.SIMULACRO_CUALQUIER_DIA !== 'true') {
-      throw new HttpsError('failed-precondition', 'El examen tipo admisión se da sábados y domingos.');
+    const examen = examenSnap.data();
+    if (!examenSnap.exists || examen.estado !== 'publicado') {
+      throw new HttpsError('failed-precondition', `El examen de tu semana ${semana} todavía no está listo. Vuelve más tarde.`);
     }
 
-    const indice = await db.collection('indices').doc('preguntas_examen').get();
-    const banco = indice.exists ? indice.data().preguntas || [] : [];
-    if (banco.length === 0) {
-      throw new HttpsError('failed-precondition', 'Todavía no hay preguntas para el examen.');
+    const preguntasSnap = await db.collection('preguntas_semanales')
+      .where('examenId', '==', examenId)
+      .get();
+    const preguntas = preguntasSnap.docs
+      .filter((d) => d.data().activa === true)
+      .sort((a, b) => a.data().numero - b.data().numero)
+      .map((d) => ({ id: d.id, seccion: d.data().seccion }));
+    if (preguntas.length === 0) {
+      throw new HttpsError('failed-precondition', 'Este examen todavía no tiene preguntas.');
     }
 
-    const elegidas = elegirPreguntas(banco, PREGUNTAS_SIMULACRO());
-    const duracionSegundos = elegidas.length * SEGUNDOS_POR_PREGUNTA;
+    const duracionSegundos = preguntas.length * SEGUNDOS_POR_PREGUNTA;
     simulacroRef = db.collection('simulacros').doc();
     datos = {
       usuarioId: uid,
-      preguntas: elegidas.map((p) => ({ id: p.id, seccion: p.seccion })),
+      nombre: (usuarioSnap.data() || {}).nombre || '',
+      examenSemanalId: examenId,
+      versionId: matricula.versionId,
+      semana,
+      titulo: examen.titulo || `Semana ${semana}`,
+      preguntas,
       estado: 'en_curso',
       duracionSegundos,
       iniciadoEn: Timestamp.fromMillis(ahora),
@@ -122,19 +197,89 @@ const iniciarSimulacro = onCall(async (request) => {
     await simulacroRef.set(datos);
   }
 
+  const { preguntas: coleccion } = coleccionesDe(datos);
   const snaps = await db.getAll(
-    ...datos.preguntas.map((p) => db.collection('preguntas_examen').doc(p.id)),
+    ...datos.preguntas.map((p) => db.collection(coleccion).doc(p.id)),
   );
 
   return {
     simulacroId: simulacroRef.id,
+    titulo: datos.titulo || 'Examen semanal',
+    semana: datos.semana || null,
     duracionSegundos: datos.duracionSegundos,
     venceEnMs: datos.venceEn.toMillis(),
     preguntas: snaps.filter((s) => s.exists).map(publica),
   };
 });
 
-/** Corrige el examen tipo admisión y guarda el resultado. */
+/**
+ * Ranking de un examen semanal: los 10 primeros y el puesto del que
+ * pregunta. Sin [examenId], el último examen semanal que dio.
+ */
+const rankingSemanal = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
+
+  const db = admin.firestore();
+  const uid = request.auth.uid;
+  await verificarEstudiante(db, uid);
+
+  let { examenId } = request.data || {};
+  if (examenId !== undefined && (typeof examenId !== 'string' || !/^[\w-]+__s\d{2}$/.test(examenId))) {
+    throw new HttpsError('invalid-argument', 'Examen inválido.');
+  }
+  if (!examenId) {
+    const mios = await db.collection('simulacros')
+      .where('usuarioId', '==', uid)
+      .where('estado', '==', 'completado')
+      .get();
+    const ultimo = mios.docs
+      .map((d) => d.data())
+      .filter((d) => d.examenSemanalId)
+      .sort((a, b) => b.terminadoEn.toMillis() - a.terminadoEn.toMillis())[0];
+    if (!ultimo) return { examenId: null };
+    examenId = ultimo.examenSemanalId;
+  }
+
+  const resultados = await db.collection('simulacros')
+    .where('examenSemanalId', '==', examenId)
+    .where('estado', '==', 'completado')
+    .get();
+  const filas = ordenarRanking(resultados.docs.map((d) => {
+    const r = d.data();
+    return {
+      usuarioId: r.usuarioId,
+      nombre: nombreCorto(r.nombre),
+      titulo: r.titulo,
+      semana: r.semana,
+      puntaje: r.puntaje || 0,
+      correctas: r.correctas || 0,
+      total: r.total || 0,
+      tiempoUsadoSegundos: r.tiempoUsadoSegundos || 0,
+      terminadoMs: r.terminadoEn ? r.terminadoEn.toMillis() : 0,
+    };
+  }));
+  const publicaFila = (f) => ({
+    puesto: f.puesto,
+    nombre: f.nombre,
+    puntaje: f.puntaje,
+    correctas: f.correctas,
+    total: f.total,
+    tiempoUsadoSegundos: f.tiempoUsadoSegundos,
+    soyYo: f.usuarioId === uid,
+  });
+  const yo = filas.find((f) => f.usuarioId === uid);
+
+  return {
+    examenId,
+    titulo: filas[0] ? filas[0].titulo : null,
+    semana: filas[0] ? filas[0].semana : null,
+    participantes: filas.length,
+    top: filas.slice(0, 10).map(publicaFila),
+    yo: yo ? publicaFila(yo) : null,
+  };
+});
+
+/** Corrige el examen semanal y guarda el resultado. */
 const enviarSimulacro = onCall(async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
 
@@ -156,8 +301,9 @@ const enviarSimulacro = onCall(async (request) => {
     throw new HttpsError('failed-precondition', 'Este examen ya fue enviado.');
   }
 
+  const { claves: coleccionClaves } = coleccionesDe(datos);
   const clavesSnap = await db.getAll(
-    ...datos.preguntas.map((p) => db.collection('claves_examen').doc(p.id)),
+    ...datos.preguntas.map((p) => db.collection(coleccionClaves).doc(p.id)),
   );
   const claves = new Map(clavesSnap.filter((s) => s.exists).map((s) => [s.id, s.data()]));
 
@@ -185,4 +331,10 @@ const enviarSimulacro = onCall(async (request) => {
   return { ...resultado, tiempoUsadoSegundos };
 });
 
-module.exports = { revisarPreguntaExamen, iniciarSimulacro, enviarSimulacro };
+module.exports = {
+  revisarPreguntaExamen,
+  iniciarSimulacro,
+  enviarSimulacro,
+  rankingSemanal,
+  estadoExamenSemanal,
+};

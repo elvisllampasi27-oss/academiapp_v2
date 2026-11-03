@@ -280,4 +280,19 @@ class RepositorioPagosAdminFirestore
       );
     });
   }
+
+  @override
+  Future<void> eliminarCupon(Cupon cupon) async {
+    final lote = db.batch();
+    lote.delete(db.collection('cupones').doc(cupon.codigo));
+    lote.set(
+      db.collection('registro_admin').doc(),
+      entradaRegistro(
+        auth,
+        tipo: 'cupon',
+        descripcion: 'Eliminó el cupón ${cupon.codigo} (${cupon.usos} usos)',
+      ),
+    );
+    await lote.commit();
+  }
 }

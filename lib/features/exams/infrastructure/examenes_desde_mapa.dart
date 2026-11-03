@@ -51,6 +51,9 @@ RevisionPregunta revisionDesdeMapa(Map<Object?, Object?> datos) {
 Simulacro simulacroDesdeMapa(Map<Object?, Object?> datos) {
   return Simulacro(
     id: _texto(datos['simulacroId']),
+    titulo: datos['titulo'] is String
+        ? datos['titulo'] as String
+        : 'Examen semanal',
     duracionSegundos: _entero(datos['duracionSegundos']),
     vence: DateTime.fromMillisecondsSinceEpoch(_entero(datos['venceEnMs'])),
     preguntas: [
@@ -85,5 +88,46 @@ ResultadoSimulacro resultadoDesdeMapa(Map<Object?, Object?> datos) {
           imagenSolucion: _opcional(d['imagenSolucion']),
         ),
     ],
+  );
+}
+
+RankingSemanal? rankingDesdeMapa(Map<Object?, Object?> datos) {
+  if (datos['examenId'] == null) return null;
+  PuestoRanking puesto(Map<Object?, Object?> p) => PuestoRanking(
+    puesto: _entero(p['puesto']),
+    nombre: _texto(p['nombre']),
+    puntaje: _entero(p['puntaje']),
+    correctas: _entero(p['correctas']),
+    total: _entero(p['total']),
+    tiempoUsadoSegundos: _entero(p['tiempoUsadoSegundos']),
+    soyYo: p['soyYo'] == true,
+  );
+  return RankingSemanal(
+    titulo: datos['titulo'] is String
+        ? datos['titulo'] as String
+        : 'Examen semanal',
+    participantes: _entero(datos['participantes']),
+    top: [for (final p in _lista(datos['top']).map(_mapa)) puesto(p)],
+    yo: datos['yo'] is Map ? puesto(_mapa(datos['yo'])) : null,
+  );
+}
+
+EstadoExamenSemanal estadoSemanalDesdeMapa(Map<Object?, Object?> datos) {
+  final cierra = datos['cierraEnMs'];
+  return EstadoExamenSemanal(
+    semana: _entero(datos['semana']),
+    titulo: _texto(datos['titulo']),
+    publicado: datos['publicado'] == true,
+    totalPreguntas: _entero(datos['totalPreguntas']),
+    intento: switch (datos['estado']) {
+      'en_curso' => EstadoIntento.enCurso,
+      'completado' => EstadoIntento.completado,
+      _ => EstadoIntento.pendiente,
+    },
+    puntaje: datos['puntaje'] is num ? (datos['puntaje'] as num).toInt() : null,
+    cierra: cierra is num
+        ? DateTime.fromMillisecondsSinceEpoch(cierra.toInt())
+        : null,
+    requierePremium: datos['requierePremium'] == true,
   );
 }

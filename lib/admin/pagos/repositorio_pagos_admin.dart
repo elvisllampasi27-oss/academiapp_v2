@@ -40,4 +40,7 @@ abstract class RepositorioAcademiaAdmin {
 
   /// Lanza [StateError] si se crea un código que ya existe.
   Future<void> guardarCupon(Cupon cupon, {required bool nuevo});
+
+  /// Los pagos que ya lo usaron no cambian.
+  Future<void> eliminarCupon(Cupon cupon);
 }

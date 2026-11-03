@@ -4,17 +4,25 @@ import '../../../../core/presentation/colores_app.dart';
 import '../../../../core/presentation/texto_con_latex.dart';
 import '../../domain/entities/examen.dart';
 import '../../domain/entities/simulacro.dart';
+import '../../domain/repositories/servicio_examenes.dart';
 import '../../../../core/presentation/imagen_figura.dart';
+import 'ranking_semanal_page.dart';
 
-/// Resultado del examen tipo admisión: total, por área y revisión.
+/// Resultado del examen semanal: total, por área, ranking y revisión.
 class ResultadoSimulacroPage extends StatefulWidget {
   final ResultadoSimulacro resultado;
   final List<PreguntaExamen> preguntas;
+  final String titulo;
+
+  /// Para abrir el ranking (null = sin botón).
+  final ServicioExamenes? servicio;
 
   const ResultadoSimulacroPage({
     super.key,
     required this.resultado,
     required this.preguntas,
+    this.titulo = 'Examen semanal',
+    this.servicio,
   });
 
   @override
@@ -40,9 +48,9 @@ class _ResultadoSimulacroPageState extends State<ResultadoSimulacroPage> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
-          const Text(
-            'Examen tipo admisión',
-            style: TextStyle(color: ColoresApp.apagado),
+          Text(
+            widget.titulo,
+            style: const TextStyle(color: ColoresApp.apagado),
           ),
           const SizedBox(height: 6),
           Text(
@@ -62,6 +70,18 @@ class _ResultadoSimulacroPageState extends State<ResultadoSimulacroPage> {
           const SizedBox(height: 8),
           for (final s in r.porSeccion) _FilaSeccion(s),
           const SizedBox(height: 20),
+          if (widget.servicio case final servicio?) ...[
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => RankingSemanalPage(servicio: servicio),
+                ),
+              ),
+              icon: const Icon(Icons.emoji_events_outlined, size: 18),
+              label: const Text('Ver mi puesto en el ranking'),
+            ),
+            const SizedBox(height: 10),
+          ],
           if (!_revisando)
             OutlinedButton(
               onPressed: () => setState(() => _revisando = true),

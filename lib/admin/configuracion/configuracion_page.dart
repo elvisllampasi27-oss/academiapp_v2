@@ -193,9 +193,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                       contentPadding: EdgeInsets.zero,
                       value: _simulacroPremium,
                       onChanged: (v) => setState(() => _simulacroPremium = v),
-                      title: const Text(
-                        'Examen tipo admisión solo para Premium',
-                      ),
+                      title: const Text('Examen semanal solo para Premium'),
                     ),
                   ]),
                 ],

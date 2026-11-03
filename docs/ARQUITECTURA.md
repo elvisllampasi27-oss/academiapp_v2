@@ -31,7 +31,7 @@ presentation/    pantallas y widgets
 
 Módulos: `identity` (cuentas), `premium` (plan, cupones y pagos), `enrollment` (matrícula), `academic` (temario,
 calendario, clase), `assessment` (prácticas), `student_model` (evidencias),
-`adaptive_engine` (BKT y ruta), `exams` (exámenes pasados y tipo admisión),
+`adaptive_engine` (BKT y ruta), `exams` (exámenes pasados y examen semanal),
 `tutor` (dudas con IA), `seminars`.
 
 ## Composición (`lib/app/`)
@@ -93,6 +93,17 @@ el estudiante ve en Perfil → "Mis reportes". Cada cambio queda en
   Storage, con tiempos de respuesta, lo pendiente (pagos y reportes) y la
   lista de pasos antes de activar Blaze.
 
+### Examen semanal y ranking
+
+El administrador importa un examen por versión y semana (`{version}__s03`)
+en *Exámenes semanales* y lo publica. Con la fecha de inicio del estudiante
+(semanas de lunes a domingo, hora de Lima) se calcula qué examen le toca: el
+de la semana N se abre el sábado y queda abierto hasta el sábado siguiente.
+`estadoExamenSemanal` lo dice a la app (tarjeta en Exámenes y aviso en el
+Inicio) e `iniciarSimulacro` lo entrega: un intento, con tiempo. `enviarSimulacro` lo corrige y `rankingSemanal` devuelve el top 10
+con nombres cortos ("Ana Q.") y el puesto del que pregunta. En el panel,
+*Ranking semanal* muestra la tabla completa; la ficha, la nota por semana.
+
 ## Seguridad
 
 1. **Las respuestas correctas nunca llegan al celular** antes de responder:
@@ -127,8 +138,9 @@ el estudiante ve en Perfil → "Mis reportes". Cada cambio queda en
 | `progreso_clases` | estudiante (el suyo) | id `{uid}__{version}__{tema}` |
 | `evaluaciones`, `preguntas` / `claves_preguntas` | admin (panel) / scripts | quiz por nivel; la IA solo propone borradores (`generarPreguntas`) |
 | `intentos_evaluacion`, `respuestas`, `evidencias` | servidor | entrada del BKT |
-| `examenes`, `preguntas_examen` / `claves_examen`, `indices` | admin / scripts | exámenes pasados |
-| `simulacros` | servidor | examen tipo admisión |
+| `examenes`, `preguntas_examen` / `claves_examen` | admin / scripts | exámenes pasados (el estudiante lee las preguntas, nunca las claves) |
+| `examenes_semanales`, `preguntas_semanales` / `claves_semanales` | admin (panel) | examen semanal por versión y semana; solo los lee Functions |
+| `simulacros` | servidor | examen semanal (un intento por semana; ranking) |
 | `uso_tutor` | servidor | límite diario |
 | `seminarios` | admin / scripts | |
 
@@ -140,7 +152,7 @@ el estudiante ve en Perfil → "Mis reportes". Cada cambio queda en
    suma los días a `usuarios.premiumHasta`, cuenta el uso del cupón y deja la
    entrada en `registro_admin`. Rechazar y revertir también quedan
    registrados.
-3. Functions respeta el plan: dudas al tutor por día y examen tipo admisión.
+3. Functions respeta el plan: dudas al tutor por día y examen semanal.
 4. **Con Blaze**: activar "Foto del comprobante" en Configuración, desplegar
    `storage.rules` (`firebase deploy --only storage`) y la app sube la foto a
    `comprobantes/{uid}/`.

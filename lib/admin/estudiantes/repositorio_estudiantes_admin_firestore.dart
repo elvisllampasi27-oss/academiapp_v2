@@ -134,6 +134,7 @@ class RepositorioEstudiantesAdminFirestore
             correctas: correctas.toInt(),
             total: (d.data()['total'] as num?)?.toInt() ?? 20,
             segundos: (d.data()['tiempoUsadoSegundos'] as num?)?.toInt() ?? 0,
+            titulo: d.data()['titulo'] as String?,
           ),
     ]..sort((a, b) => b.fecha.compareTo(a.fecha));
 

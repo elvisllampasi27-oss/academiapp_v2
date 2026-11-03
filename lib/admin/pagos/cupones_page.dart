@@ -44,6 +44,27 @@ class _CuponesPageState extends State<CuponesPage> {
     }
   }
 
+  Future<void> _eliminar(Cupon cupon) async {
+    final ok = await confirmarPanel(
+      context,
+      titulo: 'Eliminar el cupón ${cupon.codigo}',
+      mensaje:
+          'Nadie más podrá usarlo. Los que ya lo usaron conservan su '
+          'descuento o su Premium. Si solo quieres pausarlo, desactívalo.',
+      confirmar: 'Eliminar',
+      peligro: true,
+    );
+    if (!ok) return;
+    try {
+      await widget.repositorio.eliminarCupon(cupon);
+      if (!mounted) return;
+      avisarPanel(context, 'Cupón eliminado.');
+      _recargar();
+    } catch (e) {
+      if (mounted) avisarPanel(context, 'No se pudo: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FuturoPanel(
@@ -58,7 +79,7 @@ class _CuponesPageState extends State<CuponesPage> {
           ('USOS', 2),
           ('VIGENCIA', 2),
           ('ESTADO', 2),
-          ('', 1),
+          ('', 2),
         ];
 
         Widget fila(List<Widget> celdas, {bool cabecera = false}) => Container(
@@ -158,10 +179,24 @@ class _CuponesPageState extends State<CuponesPage> {
                       ),
                       Align(
                         alignment: Alignment.centerRight,
-                        child: IconButton(
-                          tooltip: 'Editar',
-                          onPressed: () => _editar(c),
-                          icon: const Icon(Icons.edit_outlined, size: 18),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Editar',
+                              onPressed: () => _editar(c),
+                              icon: const Icon(Icons.edit_outlined, size: 18),
+                            ),
+                            IconButton(
+                              tooltip: 'Eliminar',
+                              onPressed: () => _eliminar(c),
+                              icon: Icon(
+                                Icons.delete_outline,
+                                size: 18,
+                                color: p.alerta,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ]),

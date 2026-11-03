@@ -56,9 +56,7 @@ service cloud.firestore {
 
       allow get: if request.auth != null;
 
-      allow list, create, update: if esAdmin();
-
-      allow delete: if false;
+      allow list, create, update, delete: if esAdmin();
     }
 
     // PAGOS DE PREMIUM: el estudiante registra el suyo como pendiente y el
@@ -362,6 +360,21 @@ service cloud.firestore {
 
     match /claves_examen/{preguntaId} {
 
+      allow read, write: if esAdmin();
+    }
+
+    // EXAMEN SEMANAL: lo prepara el administrador por versión y semana. El
+    // estudiante nunca lee las preguntas antes: se las da Cloud Functions
+    // el fin de semana, y las claves solo al corregir.
+    match /examenes_semanales/{examenId} {
+      allow read, write: if esAdmin();
+    }
+
+    match /preguntas_semanales/{preguntaId} {
+      allow read, write: if esAdmin();
+    }
+
+    match /claves_semanales/{preguntaId} {
       allow read, write: if esAdmin();
     }
 

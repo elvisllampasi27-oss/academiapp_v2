@@ -41,6 +41,14 @@ class ServicioExamenesCloudFunctions implements ServicioExamenes {
       simulacroDesdeMapa(await _llamar('iniciarSimulacro'));
 
   @override
+  Future<EstadoExamenSemanal> estadoSemanal() async =>
+      estadoSemanalDesdeMapa(await _llamar('estadoExamenSemanal'));
+
+  @override
+  Future<RankingSemanal?> ranking() async =>
+      rankingDesdeMapa(await _llamar('rankingSemanal'));
+
+  @override
   Future<ResultadoSimulacro> enviarSimulacro({
     required String simulacroId,
     required Map<String, String> respuestas,
