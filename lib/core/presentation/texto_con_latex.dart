@@ -59,19 +59,25 @@ class TextoConLatex extends StatelessWidget {
 
       final formula = (coincidencia.group(1) ?? coincidencia.group(2)!).trim();
 
-      partes.add(
-        WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: Math.tex(
-            formula,
-            textStyle: estiloBase,
-            onErrorFallback: (_) => Text(
-              formula,
-              style: estiloBase.copyWith(fontStyle: FontStyle.italic),
-            ),
-          ),
+      final math = Math.tex(
+        formula,
+        textStyle: estiloBase,
+        onErrorFallback: (_) => Text(
+          formula,
+          style: estiloBase.copyWith(fontStyle: FontStyle.italic),
         ),
       );
+      // Una fórmula larga se parte donde lo haría TeX (después de =, +,
+      // ⇒…) para que baje de línea en vez de salirse de la pantalla. Si un
+      // pedazo solo aún no cabe (una fracción enorme), se achica un poco.
+      for (final pedazo in math.texBreak().parts) {
+        partes.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: FittedBox(fit: BoxFit.scaleDown, child: pedazo),
+          ),
+        );
+      }
 
       ultimo = coincidencia.end;
     }

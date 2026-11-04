@@ -15,7 +15,8 @@ void main() {
   ) async {
     await mostrar(tester, r'Forma general: $$P(x) = a_nx^n$$ y $x^2$.');
 
-    expect(find.byType(Math), findsNWidgets(2));
+    // P(x) = a_nx^n se parte después del "=": 2 pedazos + x^2.
+    expect(find.byType(Math), findsNWidgets(3));
     expect(find.textContaining(r'$'), findsNothing);
   });
 
@@ -24,5 +25,23 @@ void main() {
 
     expect(find.textContaining('**'), findsNothing);
     expect(find.textContaining('polinomio'), findsOneWidget);
+  });
+
+  testWidgets('una fórmula larga baja de línea en vez de desbordarse', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await mostrar(
+      tester,
+      r'$P(t) = 4000 \Rightarrow 10^3(2\cos Bt + 3) = 4000 \Rightarrow '
+      r'2\cos Bt + 3 = 4 \Rightarrow \cos Bt = \frac{1}{2}$. Listo.',
+    );
+
+    // Sin el arreglo, Flutter lanza "RIGHT OVERFLOWED BY ... PIXELS".
+    expect(tester.takeException(), isNull);
+    expect(find.byType(Math), findsAtLeastNWidgets(4));
   });
 }
