@@ -19,6 +19,7 @@ import 'ranking/ranking_admin.dart';
 import 'ranking/ranking_page.dart';
 import 'pagos/pagos_page.dart';
 import 'pagos/repositorio_pagos_admin.dart';
+import 'graficos.dart';
 import 'logo_puntos.dart';
 import 'resumen/resumen_page.dart';
 import 'sistema/estado_sistema_page.dart';
@@ -248,7 +249,24 @@ class _ShellAdminState extends State<ShellAdmin> {
             pendientes: _pendientes,
             reportesNuevos: _reportesNuevos,
           ),
-          Expanded(child: _pagina()),
+          // Al cambiar de sección (o abrir una ficha), la página nueva entra
+          // con un fundido en vez de aparecer de golpe.
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: duracionAnimacion(
+                context,
+                const Duration(milliseconds: 220),
+              ),
+              layoutBuilder: (actual, anteriores) => Stack(
+                fit: StackFit.expand,
+                children: [...anteriores, ?actual],
+              ),
+              child: KeyedSubtree(
+                key: ValueKey('$_seccion-$_fichaUid-$_visita'),
+                child: _pagina(),
+              ),
+            ),
+          ),
         ],
       ),
     );

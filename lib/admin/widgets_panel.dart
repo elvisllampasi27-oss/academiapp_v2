@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/presentation/desplegables.dart';
+import '../core/presentation/esqueleto.dart';
 import 'graficos.dart';
 import 'tema_panel.dart';
 
@@ -177,9 +179,9 @@ class IndicadorPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
-                    child: Text(
+                    child: ValorAnimado(
                       valor,
-                      style: TextStyle(
+                      estilo: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.w800,
                         color: color ?? p.texto,
@@ -347,7 +349,12 @@ class RejillaPanel extends StatelessWidget {
           spacing: espacio,
           runSpacing: espacio,
           children: [
-            for (final hijo in children) SizedBox(width: ancho, child: hijo),
+            // Las tarjetas entran una tras otra.
+            for (final (i, hijo) in children.indexed)
+              SizedBox(
+                width: ancho,
+                child: Aparecer(indice: i, child: hijo),
+              ),
           ],
         );
       },
@@ -398,7 +405,15 @@ class ColumnaPanel extends StatelessWidget {
   final List<Widget> children;
   final double espacio;
 
-  const ColumnaPanel({super.key, required this.children, this.espacio = 16});
+  /// Los bloques entran uno tras otro (la página al abrirse).
+  final bool escalonado;
+
+  const ColumnaPanel({
+    super.key,
+    required this.children,
+    this.espacio = 16,
+    this.escalonado = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -408,7 +423,10 @@ class ColumnaPanel extends StatelessWidget {
       children: [
         for (var i = 0; i < children.length; i++) ...[
           if (i > 0) SizedBox(height: espacio),
-          children[i],
+          if (escalonado)
+            Aparecer(indice: i, child: children[i])
+          else
+            children[i],
         ],
       ],
     );
@@ -454,9 +472,7 @@ class FuturoPanel<T> extends StatelessWidget {
             ),
           );
         }
-        if (!s.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        if (!s.hasData) return const EsqueletoPanel();
         return builder(context, s.data as T);
       },
     );
@@ -477,7 +493,11 @@ class PaginaPanel extends StatelessWidget {
         alignment: Alignment.topLeft,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1400),
-          child: ColumnaPanel(espacio: 20, children: children),
+          child: ColumnaPanel(
+            espacio: 20,
+            escalonado: true,
+            children: children,
+          ),
         ),
       ),
     );
@@ -658,4 +678,90 @@ Future<bool> confirmarPanel(
     ),
   );
   return ok ?? false;
+}
+
+/// Un valor que cuenta desde 0 hasta su número al aparecer ("128",
+/// "S/ 290", "77 %"). Si no tiene número, se muestra tal cual.
+class ValorAnimado extends StatelessWidget {
+  final String valor;
+  final TextStyle estilo;
+
+  const ValorAnimado(this.valor, {super.key, required this.estilo});
+
+  static final _numero = RegExp(r'\d+');
+
+  @override
+  Widget build(BuildContext context) {
+    final m = _numero.firstMatch(valor);
+    if (m == null) return Text(valor, style: estilo);
+    final fin = int.parse(m.group(0)!);
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: fin.toDouble()),
+      duration: duracionAnimacion(context, const Duration(milliseconds: 900)),
+      curve: Curves.easeOutCubic,
+      builder: (context, v, _) => Text(
+        valor.replaceRange(m.start, m.end, '${v.round()}'),
+        style: estilo,
+      ),
+    );
+  }
+}
+
+/// La página del panel mientras carga: si tiene alto (página completa),
+/// título, cifras y un bloque grande; si está dentro de otra, unas barras.
+class EsqueletoPanel extends StatelessWidget {
+  const EsqueletoPanel({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        if (!c.hasBoundedHeight || c.maxHeight < 300) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Esqueleto(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Hueso(alto: 18, ancho: 220),
+                  SizedBox(height: 12),
+                  Hueso(alto: 60, radio: 14),
+                  SizedBox(height: 10),
+                  Hueso(alto: 60, radio: 14),
+                ],
+              ),
+            ),
+          );
+        }
+        return const SingleChildScrollView(
+          physics: NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(32, 28, 32, 24),
+          child: Esqueleto(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Hueso(alto: 30, ancho: 260),
+                SizedBox(height: 10),
+                Hueso(alto: 14, ancho: 420),
+                SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(child: Hueso(alto: 110, radio: 16)),
+                    SizedBox(width: 14),
+                    Expanded(child: Hueso(alto: 110, radio: 16)),
+                    SizedBox(width: 14),
+                    Expanded(child: Hueso(alto: 110, radio: 16)),
+                    SizedBox(width: 14),
+                    Expanded(child: Hueso(alto: 110, radio: 16)),
+                  ],
+                ),
+                SizedBox(height: 20),
+                Hueso(alto: 280, radio: 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
