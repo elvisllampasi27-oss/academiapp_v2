@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
+import '../../../../core/presentation/desplegables.dart';
 import '../../../../core/presentation/esqueleto.dart';
 
 import '../../domain/entities/item_mi_ruta.dart';
@@ -152,7 +153,8 @@ class _MiRutaPageState extends State<MiRutaPage> {
           ],
         ),
       ),
-      for (final item in items) _tarjeta(item, color),
+      for (final (i, item) in items.indexed)
+        Aparecer(indice: i, child: _tarjeta(item, color)),
     ];
   }
 
@@ -170,10 +172,18 @@ class _MiRutaPageState extends State<MiRutaPage> {
           children: [
             if (descripcion?.curso != null) Text(descripcion!.curso!),
             const SizedBox(height: 6),
-            LinearProgressIndicator(
-              value: item.estado.valor,
-              color: color,
-              backgroundColor: color.withValues(alpha: 0.15),
+            // La barra se llena desde cero al entrar.
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: item.estado.valor),
+              duration: (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 800),
+              curve: Curves.easeOutCubic,
+              builder: (context, valor, _) => LinearProgressIndicator(
+                value: valor,
+                color: color,
+                backgroundColor: color.withValues(alpha: 0.15),
+              ),
             ),
             const SizedBox(height: 4),
             Text(

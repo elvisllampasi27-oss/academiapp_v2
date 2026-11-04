@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
 import '../../../../core/presentation/confeti.dart';
+import '../../../../core/presentation/desplegables.dart';
 import '../../../../core/presentation/texto_con_latex.dart';
 import '../../domain/entities/examen.dart';
 import '../../domain/entities/simulacro.dart';
@@ -310,11 +311,21 @@ class _Revision extends StatelessWidget {
               ),
               TextoConLatex(textoDe[detalle.opcionCorrectaId] ?? ''),
             ],
-            if (detalle.solucion case final solucion?) ...[
-              const SizedBox(height: 8),
-              TextoConLatex(solucion),
+            if (detalle.solucion != null || detalle.imagenSolucion != null) ...[
+              const SizedBox(height: 4),
+              SolucionDesplegable(
+                abierta: !detalle.esCorrecta,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (detalle.solucion case final solucion?)
+                      TextoConLatex(solucion),
+                    if (detalle.imagenSolucion case final imagen?)
+                      ImagenFigura(imagen),
+                  ],
+                ),
+              ),
             ],
-            if (detalle.imagenSolucion case final imagen?) ImagenFigura(imagen),
           ],
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/desplegables.dart';
 import '../../domain/entities/correccion_intento.dart';
 import '../../domain/entities/evaluacion.dart';
 import '../../domain/entities/pregunta_presentada.dart';
@@ -402,11 +403,14 @@ class _TarjetaCorreccion extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             TextoConLatex(_textoOpcion(item.opcionCorrectaId)),
-            if (item.explicacion != null) ...[
-              const SizedBox(height: 8),
-              TextoConLatex(
-                item.explicacion!,
-                estilo: Theme.of(context).textTheme.bodySmall,
+            if (item.explicacion case final explicacion?) ...[
+              const SizedBox(height: 4),
+              SolucionDesplegable(
+                abierta: !item.esCorrecta,
+                child: TextoConLatex(
+                  explicacion,
+                  estilo: Theme.of(context).textTheme.bodySmall,
+                ),
               ),
             ],
           ],
