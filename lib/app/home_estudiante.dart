@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/presentation/esqueleto.dart';
 import '../features/academic/domain/entities/curso.dart';
 import '../features/academic/domain/entities/tema.dart';
 import '../features/academic/domain/services/obtener_material_tema_service.dart';
@@ -96,9 +97,7 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
         // Al recargar se mantiene lo anterior en pantalla (sin parpadeo).
         if (snapshot.connectionState != ConnectionState.done &&
             !snapshot.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: EsqueletoInicio());
         }
 
         if (snapshot.hasError) {

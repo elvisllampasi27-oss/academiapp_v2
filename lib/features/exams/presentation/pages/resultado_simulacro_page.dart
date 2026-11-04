@@ -283,9 +283,11 @@ class _Revision extends StatelessWidget {
                       : ColoresApp.naranja,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Pregunta $numero · ${pregunta.seccion}',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                Expanded(
+                  child: Text(
+                    'Pregunta $numero · ${pregunta.seccion}',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ],
             ),

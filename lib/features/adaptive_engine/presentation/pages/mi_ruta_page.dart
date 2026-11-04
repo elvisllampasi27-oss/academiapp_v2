@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
+import '../../../../core/presentation/esqueleto.dart';
 
 import '../../domain/entities/item_mi_ruta.dart';
 import '../../domain/entities/recomendacion.dart';
@@ -57,7 +58,7 @@ class _MiRutaPageState extends State<MiRutaPage> {
         future: _ruta,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return const EsqueletoLista(tarjetas: 4);
           }
 
           if (snapshot.hasError) {
@@ -138,12 +139,14 @@ class _MiRutaPageState extends State<MiRutaPage> {
           children: [
             Icon(icono, color: color, size: 20),
             const SizedBox(width: 8),
-            Text(
-              titulo,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: color,
+            Flexible(
+              child: Text(
+                titulo,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
             ),
           ],

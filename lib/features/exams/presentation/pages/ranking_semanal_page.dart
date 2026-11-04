@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
+import '../../../../core/presentation/esqueleto.dart';
 import '../../domain/entities/simulacro.dart';
 import '../../domain/repositories/servicio_examenes.dart';
 
@@ -50,7 +51,7 @@ class _RankingSemanalPageState extends State<RankingSemanalPage> {
             );
           }
           if (s.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return const EsqueletoLista(tarjetas: 5);
           }
           final ranking = s.data;
           if (ranking == null) {

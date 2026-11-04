@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
+import '../../../../core/presentation/esqueleto.dart';
 import '../../../../core/presentation/formato_fecha.dart';
 import '../../domain/entities/examen.dart';
 import '../../domain/entities/simulacro.dart';
@@ -165,10 +166,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
               ),
               const SizedBox(height: 12),
               if (snapshot.connectionState != ConnectionState.done)
-                const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
-                )
+                const EsqueletoLista(padding: EdgeInsets.zero)
               else if (snapshot.hasError) ...[
                 const Text('No se pudieron cargar los exámenes.'),
                 const SizedBox(height: 8),

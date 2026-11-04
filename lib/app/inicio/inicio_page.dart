@@ -5,6 +5,7 @@ import '../../core/presentation/formato_fecha.dart';
 import '../../features/academic/domain/entities/contexto_dia_estudiante.dart';
 import '../../features/academic/domain/entities/curso.dart';
 import '../../features/academic/domain/entities/tema.dart';
+import '../../features/academic/presentation/widgets/titulo_tema_hero.dart';
 import '../../features/adaptive_engine/domain/entities/item_mi_ruta.dart';
 import '../../features/adaptive_engine/domain/entities/recomendacion.dart';
 
@@ -339,13 +340,14 @@ class _FilaTema extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    tema.titulo,
+                  TituloTemaHero(
+                    temaId: tema.id,
+                    titulo: tema.titulo,
                     maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    estilo: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
+                      color: ColoresApp.texto,
                     ),
                   ),
                   const SizedBox(height: 2),

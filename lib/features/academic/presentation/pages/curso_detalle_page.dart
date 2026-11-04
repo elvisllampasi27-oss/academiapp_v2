@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/presentation/colores_app.dart';
 import '../../domain/entities/curso.dart';
 import '../../domain/entities/tema.dart';
+import '../widgets/titulo_tema_hero.dart';
 
 enum EstadoTemaCurso { practicado, hoy, disponible, proximamente }
 
@@ -178,15 +179,18 @@ class _TarjetaTema extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Expanded(
-                child: Text(
-                  tema.titulo,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
-                    color: bloqueado ? ColoresApp.apagado : ColoresApp.texto,
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: TituloTemaHero(
+                    temaId: tema.id,
+                    titulo: tema.titulo,
+                    maxLines: 4,
+                    estilo: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                      color: bloqueado ? ColoresApp.apagado : ColoresApp.texto,
+                    ),
                   ),
                 ),
               ),
@@ -214,7 +218,14 @@ class _Etiqueta extends StatelessWidget {
           Icon(icono, size: 14, color: color),
           const SizedBox(width: 6),
         ],
-        Text(texto, style: TextStyle(fontSize: 12, color: color)),
+        Flexible(
+          child: Text(
+            texto,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12, color: color),
+          ),
+        ),
       ],
     );
   }

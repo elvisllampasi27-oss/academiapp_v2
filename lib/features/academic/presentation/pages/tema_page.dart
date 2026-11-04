@@ -5,7 +5,9 @@ import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/presentation/colores_app.dart';
+import '../../../../core/presentation/esqueleto.dart';
 import '../../../../core/presentation/menu_gota.dart';
+import '../widgets/titulo_tema_hero.dart';
 import '../../domain/entities/contenido.dart';
 import '../../domain/entities/curso.dart';
 import '../../domain/entities/material_tema.dart';
@@ -265,13 +267,18 @@ class _TemaPageState extends State<TemaPage> {
           children: [
             Text(
               [?widget.curso?.nombre, 'Tema ${tema.orden}'].join(' · '),
-              style: const TextStyle(fontSize: 13, color: ColoresApp.apagado),
-            ),
-            Text(
-              tema.titulo,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: 13, color: ColoresApp.apagado),
+            ),
+            TituloTemaHero(
+              temaId: tema.id,
+              titulo: tema.titulo,
+              estilo: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: ColoresApp.texto,
+              ),
             ),
           ],
         ),
@@ -305,8 +312,10 @@ class _TemaPageState extends State<TemaPage> {
   List<Widget> _cuerpo(_Organizado? organizado) {
     if (_cargando) {
       return const [
-        SizedBox(height: 120),
-        Center(child: CircularProgressIndicator()),
+        SizedBox(height: 8),
+        // Forma de la clase: video, material y práctica.
+        Esqueleto(child: Hueso(alto: 200, radio: 18)),
+        EsqueletoLista(tarjetas: 2, padding: EdgeInsets.only(top: 16)),
       ];
     }
 
