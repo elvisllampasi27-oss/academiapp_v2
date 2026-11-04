@@ -2,6 +2,7 @@ import 'package:academiapp_v2/features/exams/domain/entities/simulacro.dart';
 import 'package:academiapp_v2/features/exams/infrastructure/examenes_desde_mapa.dart';
 import 'package:academiapp_v2/features/exams/presentation/pages/examenes_page.dart';
 import 'package:academiapp_v2/features/exams/presentation/pages/ranking_semanal_page.dart';
+import 'package:academiapp_v2/features/exams/presentation/pages/resultado_simulacro_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -144,5 +145,49 @@ void main() {
     await tester.tap(find.text('Todavía no'));
     await tester.pumpAndSettle();
     expect(find.text('¿Empezar el examen semanal?'), findsNothing);
+  });
+
+  testWidgets('resultado: muestra su puesto y celebra si está en el podio', (
+    tester,
+  ) async {
+    await grande(tester);
+    final servicio = ServicioExamenesFalso()
+      ..rankingSemanal = const RankingSemanal(
+        titulo: 'Semana 3 · Ciclo 2026-II',
+        participantes: 12,
+        top: [],
+        yo: PuestoRanking(
+          puesto: 2,
+          nombre: 'Luis P.',
+          puntaje: 85,
+          correctas: 17,
+          total: 20,
+          tiempoUsadoSegundos: 1500,
+          soyYo: true,
+        ),
+      );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ResultadoSimulacroPage(
+          resultado: const ResultadoSimulacro(
+            correctas: 17,
+            total: 20,
+            puntaje: 85,
+            tiempoUsadoSegundos: 1500,
+            porSeccion: [
+              ResultadoSeccion(nombre: 'Matemática', correctas: 9, total: 10),
+            ],
+            detalle: [],
+          ),
+          preguntas: const [],
+          servicio: servicio,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('17 de 20 correctas'), findsOneWidget);
+    expect(find.text('85%'), findsOneWidget); // el anillo terminó de llenarse
+    expect(find.textContaining('Puesto 2 de 12 esta semana'), findsOneWidget);
   });
 }
