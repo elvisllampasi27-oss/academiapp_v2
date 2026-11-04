@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/presentation/colores_app.dart';
+import '../../core/presentation/desplegables.dart';
 import '../../core/presentation/formato_fecha.dart';
 import '../../features/academic/domain/entities/contexto_dia_estudiante.dart';
 import '../../features/academic/domain/entities/curso.dart';
@@ -107,11 +108,13 @@ class InicioPage extends StatelessWidget {
           const SizedBox(height: 20),
           ?avisos,
           ?examen,
-          _TarjetaHoy(
-            dia: dia,
-            practicados: {for (final item in ruta) ?item.temaId},
-            curso: _curso,
-            onAbrirTema: onAbrirTema,
+          Aparecer(
+            child: _TarjetaHoy(
+              dia: dia,
+              practicados: {for (final item in ruta) ?item.temaId},
+              curso: _curso,
+              onAbrirTema: onAbrirTema,
+            ),
           ),
           const SizedBox(height: 24),
           Row(
@@ -142,12 +145,15 @@ class InicioPage extends StatelessWidget {
               ),
             )
           else
-            for (final item in refuerzos)
-              _TarjetaRefuerzo(
-                item: item,
-                tema: item.temaId == null ? null : _tema(item.temaId!),
-                curso: _curso,
-                onAbrirTema: onAbrirTema,
+            for (final (i, item) in refuerzos.indexed)
+              Aparecer(
+                indice: i + 2,
+                child: _TarjetaRefuerzo(
+                  item: item,
+                  tema: item.temaId == null ? null : _tema(item.temaId!),
+                  curso: _curso,
+                  onAbrirTema: onAbrirTema,
+                ),
               ),
         ],
       ),

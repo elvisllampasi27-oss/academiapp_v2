@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
+import '../../../../core/presentation/desplegables.dart';
 import '../../domain/entities/curso.dart';
 import '../../domain/entities/tema.dart';
 import '../widgets/titulo_tema_hero.dart';
@@ -89,11 +90,14 @@ class CursoDetallePage extends StatelessWidget {
               crossAxisSpacing: 10,
               childAspectRatio: 1.05,
               children: [
-                for (final tema in temas)
-                  _TarjetaTema(
-                    tema: tema,
-                    estado: _estado(tema),
-                    alPresionar: () => onAbrirTema(tema),
+                for (final (i, tema) in temas.indexed)
+                  Aparecer(
+                    indice: i,
+                    child: _TarjetaTema(
+                      tema: tema,
+                      estado: _estado(tema),
+                      alPresionar: () => onAbrirTema(tema),
+                    ),
                   ),
               ],
             ),

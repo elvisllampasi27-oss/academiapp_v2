@@ -377,9 +377,10 @@ class _TarjetaCorreccion extends StatelessWidget {
                       ? ReaccionRespuesta.acierto
                       : ReaccionRespuesta.error,
                   retraso: retraso,
-                  child: Icon(
-                    item.esCorrecta ? Icons.check_circle : Icons.cancel,
+                  child: MarcaDibujada(
+                    correcta: item.esCorrecta,
                     color: colorEstado,
+                    retraso: retraso,
                   ),
                 ),
                 const SizedBox(width: 8),

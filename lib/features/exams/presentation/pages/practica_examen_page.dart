@@ -7,6 +7,7 @@ import '../../domain/repositories/repositorio_examenes.dart';
 import '../../domain/repositories/servicio_examenes.dart';
 import '../../../../core/presentation/imagen_figura.dart';
 import '../../../../core/presentation/respuesta_animada.dart';
+import '../../../../core/presentation/titulo_que_vuela.dart';
 import '../widgets/opcion_examen.dart';
 
 /// Reportar la pregunta que se está viendo.
@@ -111,7 +112,15 @@ class _PracticaExamenPageState extends State<PracticaExamenPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.examen.titulo),
+        title: TituloQueVuela(
+          etiqueta: 'examen-titulo-${widget.examen.id}',
+          texto: widget.examen.titulo,
+          estilo: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: ColoresApp.texto,
+          ),
+        ),
         actions: [
           if (widget.onReportar case final reportar?)
             IconButton(
@@ -209,17 +218,32 @@ class _PracticaExamenPageState extends State<PracticaExamenPage> {
                 ),
               if (revision != null) ...[
                 const SizedBox(height: 16),
-                Text(
-                  revision.esCorrecta
-                      ? '¡Correcto! Es la ${pregunta.letraDe(revision.opcionCorrectaId)}'
-                      : 'La correcta es la ${pregunta.letraDe(revision.opcionCorrectaId)}',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: revision.esCorrecta
-                        ? ColoresApp.celeste
-                        : ColoresApp.naranja,
-                  ),
+                Row(
+                  children: [
+                    MarcaDibujada(
+                      key: ValueKey(pregunta.id),
+                      correcta: revision.esCorrecta,
+                      tamano: 30,
+                      color: revision.esCorrecta
+                          ? ColoresApp.celeste
+                          : ColoresApp.naranja,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        revision.esCorrecta
+                            ? '¡Correcto! Es la ${pregunta.letraDe(revision.opcionCorrectaId)}'
+                            : 'La correcta es la ${pregunta.letraDe(revision.opcionCorrectaId)}',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: revision.esCorrecta
+                              ? ColoresApp.celeste
+                              : ColoresApp.naranja,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 if (revision.solucion case final solucion?) ...[
                   const SizedBox(height: 8),
