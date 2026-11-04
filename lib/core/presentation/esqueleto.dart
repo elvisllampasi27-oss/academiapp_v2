@@ -98,7 +98,10 @@ class EsqueletoLista extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    // Sin desplazamiento propio, pero recorta: en una pantalla baja las
+    // tarjetas que no caben se cortan en vez de desbordarse.
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
       padding: padding,
       child: Esqueleto(
         child: Column(
