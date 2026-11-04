@@ -14,7 +14,7 @@ class MarquesinaVertical extends StatefulWidget {
   const MarquesinaVertical({
     super.key,
     required this.lineas,
-    this.cada = const Duration(milliseconds: 2800),
+    this.cada = const Duration(milliseconds: 3500),
   });
 
   @override
@@ -78,7 +78,7 @@ class _MarquesinaVerticalState extends State<MarquesinaVertical> {
           ),
           child: ClipRect(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 450),
+              duration: const Duration(milliseconds: 550),
               switchInCurve: Curves.easeOutCubic,
               switchOutCurve: Curves.easeInCubic,
               // La nueva entra desde abajo y la anterior sale por arriba.

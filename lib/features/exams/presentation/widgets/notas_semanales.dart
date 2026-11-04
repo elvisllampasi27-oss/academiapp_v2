@@ -79,7 +79,7 @@ class _GraficoNotasState extends State<GraficoNotas>
     with SingleTickerProviderStateMixin {
   late final AnimationController _trazo = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1300),
+    duration: const Duration(milliseconds: 1700),
   );
   late final Animation<double> _avance = CurvedAnimation(
     parent: _trazo,

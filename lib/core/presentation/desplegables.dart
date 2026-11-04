@@ -28,7 +28,7 @@ class _SolucionDesplegableState extends State<SolucionDesplegable> {
   Widget build(BuildContext context) {
     final duracion = _sinAnimaciones(context)
         ? Duration.zero
-        : const Duration(milliseconds: 250);
+        : const Duration(milliseconds: 320);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -73,8 +73,8 @@ class Aparecer extends StatefulWidget {
 
 class _AparecerState extends State<Aparecer>
     with SingleTickerProviderStateMixin {
-  static const _entrada = Duration(milliseconds: 380);
-  static const _paso = Duration(milliseconds: 70);
+  static const _entrada = Duration(milliseconds: 560);
+  static const _paso = Duration(milliseconds: 110);
 
   /// Desde la 8.ª tarjeta ya no se espera más (una lista larga no tarda).
   late final Duration _retraso =

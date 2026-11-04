@@ -255,7 +255,7 @@ class _ShellAdminState extends State<ShellAdmin> {
             child: AnimatedSwitcher(
               duration: duracionAnimacion(
                 context,
-                const Duration(milliseconds: 220),
+                const Duration(milliseconds: 320),
               ),
               layoutBuilder: (actual, anteriores) => Stack(
                 fit: StackFit.expand,

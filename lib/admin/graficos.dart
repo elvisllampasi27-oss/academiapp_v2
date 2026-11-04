@@ -450,7 +450,7 @@ class AnilloAvance extends StatelessWidget {
     // Se llena desde cero al aparecer (y se mueve suave si cambia).
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: valor.clamp(0.0, 1.0).toDouble()),
-      duration: duracionAnimacion(context, const Duration(milliseconds: 900)),
+      duration: duracionAnimacion(context, const Duration(milliseconds: 1200)),
       curve: Curves.easeOutCubic,
       builder: (context, v, _) => SizedBox.square(
         dimension: tamano,
@@ -532,7 +532,7 @@ class GraficoBarras extends StatelessWidget {
     final maximo = valores.fold(1, (m, v) => v > m ? v : m);
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: duracionAnimacion(context, const Duration(milliseconds: 800)),
+      duration: duracionAnimacion(context, const Duration(milliseconds: 1100)),
       curve: Curves.easeOutCubic,
       builder: (context, crece, _) => SizedBox(
         height: alto,
@@ -607,7 +607,7 @@ class Revelar extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: duracionAnimacion(context, const Duration(milliseconds: 1100)),
+      duration: duracionAnimacion(context, const Duration(milliseconds: 1500)),
       curve: Curves.easeInOutCubic,
       child: child,
       builder: (context, t, hijo) =>

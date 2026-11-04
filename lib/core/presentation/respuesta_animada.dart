@@ -22,7 +22,7 @@ class RespuestaAnimada extends StatefulWidget {
     this.retraso = Duration.zero,
   });
 
-  static const duracion = Duration(milliseconds: 450);
+  static const duracion = Duration(milliseconds: 600);
 
   @override
   State<RespuestaAnimada> createState() => _RespuestaAnimadaState();
@@ -123,7 +123,7 @@ class MarcaDibujada extends StatefulWidget {
     this.retraso = Duration.zero,
   });
 
-  static const duracion = Duration(milliseconds: 650);
+  static const duracion = Duration(milliseconds: 900);
 
   @override
   State<MarcaDibujada> createState() => _MarcaDibujadaState();

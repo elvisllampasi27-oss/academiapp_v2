@@ -104,12 +104,16 @@ class _CursosPageState extends State<CursosPage> {
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
-            sliver: SliverGrid.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.92,
-              children: [
+            // Tarjetas bajas (alto fijo): en un celular se ven 8 a la vez en
+            // lugar de 4; en pantallas anchas entran más columnas.
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 240,
+                mainAxisExtent: 112,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+              ),
+              delegate: SliverChildListDelegate([
                 for (final curso in cursos)
                   _TarjetaCurso(
                     curso: curso,
@@ -120,7 +124,7 @@ class _CursosPageState extends State<CursosPage> {
                         .length,
                     alPresionar: () => widget.onAbrirCurso(curso),
                   ),
-              ],
+              ]),
             ),
           ),
         ],
@@ -189,33 +193,45 @@ class _TarjetaCurso extends StatelessWidget {
         onTap: alPresionar,
         borderRadius: BorderRadius.circular(18),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: const Color(0x1AFFFFFF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  siglas(curso.nombre),
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-              const SizedBox(height: 12),
+              // Siglas y nombre en una fila: la tarjeta queda baja.
               Expanded(
-                child: Text(
-                  curso.nombre,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: const Color(0x1AFFFFFF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        siglas(curso.nombre),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        curso.nombre,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          height: 1.25,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Text(

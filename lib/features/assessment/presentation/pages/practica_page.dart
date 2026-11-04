@@ -314,7 +314,7 @@ class _VistaResultado extends StatelessWidget {
               pregunta: pregunta,
               item: item,
               // En cascada: cada ícono reacciona un poco después del anterior.
-              retraso: Duration(milliseconds: 90 * (i < 10 ? i : 10)),
+              retraso: Duration(milliseconds: 130 * (i < 10 ? i : 10)),
             ),
         const SizedBox(height: 16),
         // OverflowBar: en línea si caben; uno debajo del otro si no.

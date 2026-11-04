@@ -697,7 +697,7 @@ class ValorAnimado extends StatelessWidget {
     final fin = int.parse(m.group(0)!);
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: fin.toDouble()),
-      duration: duracionAnimacion(context, const Duration(milliseconds: 900)),
+      duration: duracionAnimacion(context, const Duration(milliseconds: 1300)),
       curve: Curves.easeOutCubic,
       builder: (context, v, _) => Text(
         valor.replaceRange(m.start, m.end, '${v.round()}'),

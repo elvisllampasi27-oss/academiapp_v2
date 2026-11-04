@@ -40,7 +40,7 @@ class _ResultadoSimulacroPageState extends State<ResultadoSimulacroPage>
   /// Entrada: el anillo se llena y las áreas aparecen una tras otra.
   late final AnimationController _entrada = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1400),
+    duration: const Duration(milliseconds: 1900),
   );
   late final Animation<double> _anillo = CurvedAnimation(
     parent: _entrada,
