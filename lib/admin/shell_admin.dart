@@ -236,6 +236,9 @@ class _ShellAdminState extends State<ShellAdmin> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
+        // Sin esto, una página corta queda centrada en vertical (con un
+        // hueco arriba); así siempre empieza arriba.
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _MenuLateral(
             seccion: _seccion,
