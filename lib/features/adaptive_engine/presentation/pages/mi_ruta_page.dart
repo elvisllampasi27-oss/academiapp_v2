@@ -23,6 +23,9 @@ class MiRutaPage extends StatefulWidget {
   /// "Mi Ruta" cuando se abre aparte; "Progreso" cuando es una pestaña.
   final String titulo;
 
+  /// Va arriba de todo (en Progreso: la gráfica de notas semanales).
+  final Widget? encabezado;
+
   const MiRutaPage({
     super.key,
     required this.service,
@@ -31,6 +34,7 @@ class MiRutaPage extends StatefulWidget {
     required this.describirTema,
     this.onAbrirTema,
     this.titulo = 'Mi Ruta',
+    this.encabezado,
   });
 
   @override
@@ -85,21 +89,26 @@ class _MiRutaPageState extends State<MiRutaPage> {
           final items = snapshot.data!;
 
           if (items.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Todavía no hay datos. Resuelve prácticas de tus temas '
-                  'y aquí verás qué reforzar, practicar o profundizar.',
-                  textAlign: TextAlign.center,
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+              children: [
+                ?widget.encabezado,
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    'Todavía no hay datos. Resuelve prácticas de tus temas '
+                    'y aquí verás qué reforzar, practicar o profundizar.',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
+              ],
             );
           }
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
             children: [
+              ?widget.encabezado,
               for (final tipo in TipoRecomendacion.values)
                 ..._seccion(
                   tipo,

@@ -14,6 +14,7 @@ import '../features/assessment/presentation/widgets/seccion_practica_tema.dart';
 import '../features/avisos/presentation/avisos_inicio.dart';
 import '../features/exams/presentation/pages/examenes_page.dart';
 import '../features/exams/presentation/widgets/aviso_examen_semanal.dart';
+import '../features/exams/presentation/widgets/notas_semanales.dart';
 import '../features/identity/domain/entities/usuario_academiapp.dart';
 import '../features/identity/presentation/pages/perfil_page.dart';
 import '../features/premium/presentation/premium_page.dart';
@@ -327,6 +328,9 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
       service: _servicioRuta,
       usuarioId: widget.usuario.uid,
       matriculaId: contexto.matricula.id,
+      encabezado: NotasSemanalesCard(
+        cargar: () => _d.examenes.notasSemanales(widget.usuario.uid),
+      ),
       describirTema: (temaId) {
         final tema = temas[temaId];
         if (tema == null) return null;
