@@ -58,6 +58,12 @@ function validarSolicitud(data) {
   if (entradas.some(([k, v]) => typeof k !== 'string' || typeof v !== 'string')) {
     return 'Cada respuesta debe ser texto.';
   }
+  // Id del intento que genera la app: un reintento del mismo envío no
+  // crea otro intento (opcional, por las versiones viejas de la app).
+  if (data.intentoId !== undefined
+    && (typeof data.intentoId !== 'string' || !/^[A-Za-z0-9_-]{12,64}$/.test(data.intentoId))) {
+    return 'intentoId inválido.';
+  }
   return null;
 }
 

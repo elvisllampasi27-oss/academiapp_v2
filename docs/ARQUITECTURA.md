@@ -104,6 +104,14 @@ Inicio) e `iniciarSimulacro` lo entrega: un intento, con tiempo. `enviarSimulacr
 con nombres cortos ("Ana Q.") y el puesto del que pregunta. En el panel,
 *Ranking semanal* muestra la tabla completa; la ficha, la nota por semana.
 
+**Un intento de verdad, aunque lleguen dos llamadas a la vez:** el intento
+semanal tiene id fijo (`{uid}__{examen}`) y se crea con `create()`, que
+falla si ya existe; el envío corre en una transacción y, si ya estaba
+enviado, devuelve la primera corrección. Las prácticas son idempotentes: la
+app genera el `intentoId` al empezar y lo repite en los reintentos; el
+servidor guarda `{uid}__{intentoId}` y, si ya existe, devuelve lo guardado
+sin crear otro intento ni más evidencias para el BKT.
+
 ## Seguridad
 
 1. **Las respuestas correctas nunca llegan al celular** antes de responder:

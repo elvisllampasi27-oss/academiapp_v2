@@ -71,12 +71,43 @@ const enviarIntentoEvaluacion = onCall(async (request) => {
   );
   const claves = new Map(clavesSnap.filter((s) => s.exists).map((s) => [s.id, s.data()]));
 
-  let resultado;
-  try {
-    resultado = calificar(preguntas, claves, respuestas);
-  } catch (e) {
-    throw new HttpsError('internal', 'La práctica está mal configurada.');
+  const corregir = (r) => {
+    try {
+      return calificar(preguntas, claves, r);
+    } catch (e) {
+      throw new HttpsError('internal', 'La práctica está mal configurada.');
+    }
+  };
+  const respuesta = (id, r) => ({
+    intentoId: id,
+    total: r.total,
+    correctas: r.correctas,
+    incorrectas: r.incorrectas,
+    puntaje: r.puntaje,
+    detalle: r.detalle.map(({ dificultad, ...resto }) => resto),
+  });
+
+  // Mismo intentoId = mismo envío (reintento por mala conexión o doble
+  // toque): se devuelve lo que ya se guardó, sin otro intento ni más
+  // evidencias para el BKT. El uid va en el id: nadie toca el de otro.
+  const intentoRef = request.data.intentoId
+    ? db.collection('intentos_evaluacion').doc(`${uid}__${request.data.intentoId}`)
+    : db.collection('intentos_evaluacion').doc();
+  const yaGuardado = await intentoRef.get();
+  if (yaGuardado.exists) {
+    if (yaGuardado.data().evaluacionId !== evaluacionId) {
+      throw new HttpsError('invalid-argument', 'Ese intento es de otra práctica.');
+    }
+    const guardadas = await db.collection('respuestas')
+      .where('intentoId', '==', intentoRef.id)
+      .get();
+    const anteriores = Object.fromEntries(guardadas.docs
+      .filter((d) => d.data().usuarioId === uid && typeof d.data().opcionId === 'string')
+      .map((d) => [d.data().preguntaId, d.data().opcionId]));
+    return respuesta(intentoRef.id, corregir(anteriores));
   }
+
+  const resultado = corregir(respuestas);
 
   // Número de intento del estudiante en esta evaluación (para la evidencia).
   const previos = await db.collection('intentos_evaluacion')
@@ -88,7 +119,6 @@ const enviarIntentoEvaluacion = onCall(async (request) => {
   const porPregunta = new Map(preguntas.map((p) => [p.id, p]));
 
   const ahora = FieldValue.serverTimestamp();
-  const intentoRef = db.collection('intentos_evaluacion').doc();
   const lote = db.batch();
 
   lote.set(intentoRef, {
@@ -142,16 +172,11 @@ const enviarIntentoEvaluacion = onCall(async (request) => {
     }
   }
 
+  // Si dos envíos iguales llegan a la vez, los dos escriben los mismos
+  // documentos (ids fijos): no se duplica nada.
   await lote.commit();
 
-  return {
-    intentoId: intentoRef.id,
-    total: resultado.total,
-    correctas: resultado.correctas,
-    incorrectas: resultado.incorrectas,
-    puntaje: resultado.puntaje,
-    detalle: resultado.detalle.map(({ dificultad, ...resto }) => resto),
-  };
+  return respuesta(intentoRef.id, resultado);
 });
 
 module.exports = { enviarIntentoEvaluacion };

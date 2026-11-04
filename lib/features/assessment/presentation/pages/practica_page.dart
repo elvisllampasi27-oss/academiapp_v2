@@ -35,6 +35,9 @@ class _PracticaPageState extends State<PracticaPage> {
   final Stopwatch _cronometro = Stopwatch();
 
   int _indice = 0;
+
+  /// Mismo id en los reintentos del envío; uno nuevo al repetir la práctica.
+  String _intentoId = nuevoIdIntento();
   bool _enviando = false;
   String? _error;
   CorreccionIntento? _correccion;
@@ -77,6 +80,7 @@ class _PracticaPageState extends State<PracticaPage> {
 
     try {
       final correccion = await widget.service.enviar(
+        intentoId: _intentoId,
         evaluacionId: widget.evaluacion.id,
         respuestas: Map.of(_elegidas),
         tiemposMs: Map.of(_tiemposMs),
@@ -102,6 +106,7 @@ class _PracticaPageState extends State<PracticaPage> {
 
   void _reiniciar() {
     setState(() {
+      _intentoId = nuevoIdIntento();
       _elegidas.clear();
       _tiemposMs.clear();
       _indice = 0;

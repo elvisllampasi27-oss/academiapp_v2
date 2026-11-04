@@ -12,6 +12,7 @@ class ServicioCorreccionCloudFunctions implements ServicioCorreccionEvaluacion {
 
   @override
   Future<CorreccionIntento> enviar({
+    required String intentoId,
     required String evaluacionId,
     required Map<String, String> respuestas,
     required Map<String, int> tiemposMs,
@@ -20,6 +21,7 @@ class ServicioCorreccionCloudFunctions implements ServicioCorreccionEvaluacion {
       final resultado = await functions
           .httpsCallable('enviarIntentoEvaluacion')
           .call<Map<Object?, Object?>>({
+            'intentoId': intentoId,
             'evaluacionId': evaluacionId,
             'respuestas': respuestas,
             'tiemposMs': tiemposMs,

@@ -92,6 +92,13 @@ void main() {
 
     expect(find.text('Este tema todavía no está publicado.'), findsOneWidget);
     expect(find.text('Pregunta 2 de 2'), findsOneWidget);
+
+    // Reenviar es el mismo intento: el servidor no lo cuenta dos veces.
+    correccion.errorServidor = null;
+    await tester.tap(find.text('Enviar'));
+    await tester.pumpAndSettle();
+    expect(correccion.intentos, hasLength(2));
+    expect(correccion.intentos.first, correccion.intentos.last);
   });
 
   testWidgets('sin practicas lo indica', (tester) async {

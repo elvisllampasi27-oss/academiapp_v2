@@ -42,6 +42,12 @@ test('valida la forma de la solicitud', () => {
   assert.ok(validarSolicitud({ respuestas: {} }));
   assert.ok(validarSolicitud({ evaluacionId: 'e', respuestas: ['a'] }));
   assert.ok(validarSolicitud({ evaluacionId: 'e', respuestas: { p1: 1 } }));
+  assert.strictEqual(
+    validarSolicitud({ evaluacionId: 'e', respuestas: {}, intentoId: 'aB3_x-9Kq2Lm' }),
+    null,
+  );
+  assert.ok(validarSolicitud({ evaluacionId: 'e', respuestas: {}, intentoId: 'corto' }));
+  assert.ok(validarSolicitud({ evaluacionId: 'e', respuestas: {}, intentoId: '../otro/doc__xx' }));
 });
 
 test('sin habilidades definidas usa la habilidad general del tema', () => {

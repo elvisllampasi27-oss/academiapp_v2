@@ -50,4 +50,10 @@ void main() {
       throwsStateError,
     );
   });
+
+  test('el id del intento es al azar y seguro para Firestore', () {
+    final a = nuevoIdIntento();
+    expect(a, matches(RegExp(r'^[A-Za-z0-9]{20}$')));
+    expect(nuevoIdIntento(), isNot(a));
+  });
 }

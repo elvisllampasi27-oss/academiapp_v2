@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../entities/correccion_intento.dart';
 import '../entities/evaluacion.dart';
 import '../entities/pregunta.dart';
@@ -41,12 +43,14 @@ class PracticaTemaService {
     required String evaluacionId,
     required Map<String, String> respuestas,
     Map<String, int> tiemposMs = const {},
+    String? intentoId,
   }) {
     if (respuestas.isEmpty) {
       throw StateError('Responde al menos una pregunta.');
     }
 
     return correccion.enviar(
+      intentoId: intentoId ?? nuevoIdIntento(),
       evaluacionId: evaluacionId,
       respuestas: respuestas,
       tiemposMs: tiemposMs,
@@ -57,4 +61,16 @@ class PracticaTemaService {
     final indice = DificultadPregunta.values.indexWhere((d) => d.name == nivel);
     return indice < 0 ? DificultadPregunta.values.length : indice;
   }
+}
+
+const _caracteresId =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+/// Id al azar de un intento (20 caracteres, como los de Firestore).
+String nuevoIdIntento([Random? azar]) {
+  final r = azar ?? Random.secure();
+  return String.fromCharCodes([
+    for (var i = 0; i < 20; i++)
+      _caracteresId.codeUnitAt(r.nextInt(_caracteresId.length)),
+  ]);
 }

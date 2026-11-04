@@ -52,6 +52,14 @@ function idExamenSemanal(versionId, semana) {
   return `${versionId}__s${String(semana).padStart(2, '0')}`;
 }
 
+/**
+ * Id del intento de un estudiante en un examen semanal. Fijo: así nunca
+ * puede haber dos intentos, aunque lleguen dos llamadas a la vez.
+ */
+function idSimulacroSemanal(uid, examenId) {
+  return `${uid}__${examenId}`;
+}
+
 /** "Ana María Quispe Rojas" -> "Ana Q." (el ranking no muestra el nombre completo). */
 function nombreCorto(nombre) {
   const partes = String(nombre || '').trim().split(/\s+/).filter(Boolean);
@@ -119,6 +127,7 @@ module.exports = {
   semanaDeExamen,
   cierreExamenMs,
   idExamenSemanal,
+  idSimulacroSemanal,
   nombreCorto,
   ordenarRanking,
   calificarExamen,

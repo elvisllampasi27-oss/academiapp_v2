@@ -9,6 +9,7 @@ const {
   semanaDeExamen,
   cierreExamenMs,
   idExamenSemanal,
+  idSimulacroSemanal,
   nombreCorto,
   ordenarRanking,
   calificarExamen,
@@ -67,6 +68,13 @@ const revisarPreguntaExamen = onCall(async (request) => {
   };
 });
 
+/** ¿El intento sigue abierto (con el margen para el envío automático)? */
+const sigueEnCurso = (d, ahora) => d.estado === 'en_curso'
+  && d.venceEn.toMillis() + MARGEN_SEGUNDOS * 1000 > ahora;
+
+/** Firestore: el documento ya existe (create() de dos llamadas a la vez). */
+const yaExiste = (e) => e && (e.code === 6 || e.code === 'already-exists');
+
 /** Las preguntas de un simulacro viejo (al azar) están en otra colección. */
 const coleccionesDe = (datos) => (datos.examenSemanalId
   ? { preguntas: 'preguntas_semanales', claves: 'claves_semanales' }
@@ -87,19 +95,15 @@ const estadoExamenSemanal = onCall(async (request) => {
   if (semana < 1) return { semana: 0 };
 
   const examenId = idExamenSemanal(matricula.versionId, semana);
-  const [examenSnap, previos, usuarioSnap, configuracion] = await Promise.all([
+  const [examenSnap, previoSnap, usuarioSnap, configuracion] = await Promise.all([
     db.collection('examenes_semanales').doc(examenId).get(),
-    db.collection('simulacros')
-      .where('usuarioId', '==', uid)
-      .where('examenSemanalId', '==', examenId)
-      .get(),
+    db.collection('simulacros').doc(idSimulacroSemanal(uid, examenId)).get(),
     db.collection('usuarios').doc(uid).get(),
     leerConfiguracion(db),
   ]);
   const examen = examenSnap.data();
-  const previo = previos.docs[0] ? previos.docs[0].data() : null;
-  const enCurso = previo && previo.estado === 'en_curso'
-    && previo.venceEn.toMillis() + MARGEN_SEGUNDOS * 1000 > ahora;
+  const previo = previoSnap.exists ? previoSnap.data() : null;
+  const enCurso = previo && sigueEnCurso(previo, ahora);
 
   return {
     semana,
@@ -133,29 +137,23 @@ const iniciarSimulacro = onCall(async (request) => {
   }
   const examenId = idExamenSemanal(matricula.versionId, semana);
 
-  const [examenSnap, previos, usuarioSnap, configuracion] = await Promise.all([
+  const simulacroRef = db.collection('simulacros').doc(idSimulacroSemanal(uid, examenId));
+  const [examenSnap, previoSnap, usuarioSnap, configuracion] = await Promise.all([
     db.collection('examenes_semanales').doc(examenId).get(),
-    db.collection('simulacros')
-      .where('usuarioId', '==', uid)
-      .where('examenSemanalId', '==', examenId)
-      .get(),
+    simulacroRef.get(),
     db.collection('usuarios').doc(uid).get(),
     leerConfiguracion(db),
   ]);
 
-  let simulacroRef;
+  const yaLoDio = () => new HttpsError(
+    'failed-precondition',
+    `Ya diste el examen de la semana ${semana}. Mira tu puesto en el ranking.`,
+  );
   let datos;
-  const previo = previos.docs[0];
 
-  if (previo) {
-    const d = previo.data();
-    const vigente = d.estado === 'en_curso'
-      && d.venceEn.toMillis() + MARGEN_SEGUNDOS * 1000 > ahora;
-    if (!vigente) {
-      throw new HttpsError('failed-precondition', `Ya diste el examen de la semana ${semana}. Mira tu puesto en el ranking.`);
-    }
-    simulacroRef = previo.ref;
-    datos = d;
+  if (previoSnap.exists) {
+    datos = previoSnap.data();
+    if (!sigueEnCurso(datos, ahora)) throw yaLoDio();
   } else {
     if (configuracion.simulacroSoloPremium && !esPremium(usuarioSnap.data())) {
       throw new HttpsError(
@@ -180,7 +178,6 @@ const iniciarSimulacro = onCall(async (request) => {
     }
 
     const duracionSegundos = preguntas.length * SEGUNDOS_POR_PREGUNTA;
-    simulacroRef = db.collection('simulacros').doc();
     datos = {
       usuarioId: uid,
       nombre: (usuarioSnap.data() || {}).nombre || '',
@@ -194,7 +191,15 @@ const iniciarSimulacro = onCall(async (request) => {
       iniciadoEn: Timestamp.fromMillis(ahora),
       venceEn: Timestamp.fromMillis(ahora + duracionSegundos * 1000),
     };
-    await simulacroRef.set(datos);
+    try {
+      // create() falla si ya existe: de dos llamadas a la vez, solo una crea
+      // el intento y la otra recibe ese mismo.
+      await simulacroRef.create(datos);
+    } catch (e) {
+      if (!yaExiste(e)) throw e;
+      datos = (await simulacroRef.get()).data();
+      if (!sigueEnCurso(datos, ahora)) throw yaLoDio();
+    }
   }
 
   const { preguntas: coleccion } = coleccionesDe(datos);
@@ -292,43 +297,54 @@ const enviarSimulacro = onCall(async (request) => {
   const uid = request.auth.uid;
   const ref = db.collection('simulacros').doc(simulacroId);
   const snap = await ref.get();
-  const datos = snap.data();
-
-  if (!snap.exists || datos.usuarioId !== uid) {
+  if (!snap.exists || snap.data().usuarioId !== uid) {
     throw new HttpsError('not-found', 'No se encontró tu examen.');
   }
-  if (datos.estado !== 'en_curso') {
-    throw new HttpsError('failed-precondition', 'Este examen ya fue enviado.');
-  }
 
-  const { claves: coleccionClaves } = coleccionesDe(datos);
+  const { claves: coleccionClaves } = coleccionesDe(snap.data());
   const clavesSnap = await db.getAll(
-    ...datos.preguntas.map((p) => db.collection(coleccionClaves).doc(p.id)),
+    ...snap.data().preguntas.map((p) => db.collection(coleccionClaves).doc(p.id)),
   );
   const claves = new Map(clavesSnap.filter((s) => s.exists).map((s) => [s.id, s.data()]));
+  const corregir = (preguntas, r) => {
+    try {
+      return calificarExamen(preguntas, claves, r);
+    } catch (e) {
+      throw new HttpsError('internal', 'El examen está mal configurado.');
+    }
+  };
 
-  let resultado;
-  try {
-    resultado = calificarExamen(datos.preguntas, claves, respuestas);
-  } catch (e) {
-    throw new HttpsError('internal', 'El examen está mal configurado.');
-  }
+  // En una transacción: si llegan dos envíos a la vez (doble toque o el
+  // envío automático al acabarse el tiempo), solo uno lo corrige.
+  const hecho = await db.runTransaction(async (tx) => {
+    const datos = (await tx.get(ref)).data();
+    if (datos.estado !== 'en_curso') return { yaEnviado: datos };
 
-  const usados = Math.round((Date.now() - datos.iniciadoEn.toMillis()) / 1000);
-  const tiempoUsadoSegundos = Math.min(usados, datos.duracionSegundos);
-
-  await ref.update({
-    estado: 'completado',
-    respuestas: Object.fromEntries(resultado.detalle.map((d) => [d.preguntaId, d.opcionElegidaId])),
-    correctas: resultado.correctas,
-    total: resultado.total,
-    puntaje: resultado.puntaje,
-    porSeccion: resultado.porSeccion,
-    tiempoUsadoSegundos,
-    terminadoEn: FieldValue.serverTimestamp(),
+    const resultado = corregir(datos.preguntas, respuestas);
+    const usados = Math.round((Date.now() - datos.iniciadoEn.toMillis()) / 1000);
+    const tiempoUsadoSegundos = Math.min(usados, datos.duracionSegundos);
+    tx.update(ref, {
+      estado: 'completado',
+      respuestas: Object.fromEntries(resultado.detalle.map((d) => [d.preguntaId, d.opcionElegidaId])),
+      correctas: resultado.correctas,
+      total: resultado.total,
+      puntaje: resultado.puntaje,
+      porSeccion: resultado.porSeccion,
+      tiempoUsadoSegundos,
+      terminadoEn: FieldValue.serverTimestamp(),
+    });
+    return { resultado, tiempoUsadoSegundos };
   });
 
-  return { ...resultado, tiempoUsadoSegundos };
+  // Ya estaba enviado: se devuelve lo guardado (la primera corrección).
+  if (hecho.yaEnviado) {
+    const d = hecho.yaEnviado;
+    return {
+      ...corregir(d.preguntas, d.respuestas || {}),
+      tiempoUsadoSegundos: d.tiempoUsadoSegundos || 0,
+    };
+  }
+  return { ...hecho.resultado, tiempoUsadoSegundos: hecho.tiempoUsadoSegundos };
 });
 
 module.exports = {

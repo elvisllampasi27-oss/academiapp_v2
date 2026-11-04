@@ -62,14 +62,19 @@ class CorreccionFalsa implements ServicioCorreccionEvaluacion {
   String? errorServidor;
   Map<String, String>? ultimasRespuestas;
 
+  /// Los intentoId recibidos, en orden (también los envíos que fallaron).
+  final intentos = <String>[];
+
   CorreccionFalsa(this.claves);
 
   @override
   Future<CorreccionIntento> enviar({
+    required String intentoId,
     required String evaluacionId,
     required Map<String, String> respuestas,
     required Map<String, int> tiemposMs,
   }) async {
+    intentos.add(intentoId);
     if (errorServidor != null) throw StateError(errorServidor!);
     ultimasRespuestas = respuestas;
 

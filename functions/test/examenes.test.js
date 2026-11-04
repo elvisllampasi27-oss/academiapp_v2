@@ -7,6 +7,7 @@ const {
   semanaDeExamen,
   cierreExamenMs,
   idExamenSemanal,
+  idSimulacroSemanal,
   nombreCorto,
   ordenarRanking,
   calificarExamen,
@@ -43,6 +44,7 @@ test('el examen de la semana se abre el sabado y dura hasta el siguiente', () =>
 
 test('id del examen semanal y nombre corto para el ranking', () => {
   assert.strictEqual(idExamenSemanal('v1', 3), 'v1__s03');
+  assert.strictEqual(idSimulacroSemanal('uid7', 'v1__s03'), 'uid7__v1__s03');
   assert.strictEqual(nombreCorto('Ana María Quispe Rojas'), 'Ana Q.');
   assert.strictEqual(nombreCorto('Luis Paredes'), 'Luis P.');
   assert.strictEqual(nombreCorto('  '), 'Estudiante');
