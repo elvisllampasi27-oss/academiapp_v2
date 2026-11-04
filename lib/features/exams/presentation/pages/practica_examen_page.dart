@@ -6,6 +6,7 @@ import '../../domain/entities/examen.dart';
 import '../../domain/repositories/repositorio_examenes.dart';
 import '../../domain/repositories/servicio_examenes.dart';
 import '../../../../core/presentation/imagen_figura.dart';
+import '../../../../core/presentation/respuesta_animada.dart';
 import '../widgets/opcion_examen.dart';
 
 /// Reportar la pregunta que se está viendo.
@@ -65,6 +66,7 @@ class _PracticaExamenPageState extends State<PracticaExamenPage> {
         opcionId: opcionId,
       );
       if (!mounted) return;
+      vibrarRespuesta(acierto: revision.esCorrecta);
       setState(() {
         _revision = revision;
         if (revision.esCorrecta) _aciertos++;

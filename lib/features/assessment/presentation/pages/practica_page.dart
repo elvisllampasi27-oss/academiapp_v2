@@ -4,6 +4,7 @@ import '../../domain/entities/correccion_intento.dart';
 import '../../domain/entities/evaluacion.dart';
 import '../../domain/entities/pregunta_presentada.dart';
 import '../../domain/services/practica_tema_service.dart';
+import '../../../../core/presentation/respuesta_animada.dart';
 import '../../../../core/presentation/texto_con_latex.dart';
 import '../../../../core/presentation/imagen_figura.dart';
 
@@ -88,6 +89,10 @@ class _PracticaPageState extends State<PracticaPage> {
 
       if (!mounted) return;
 
+      final resultado = correccion.resultado;
+      vibrarRespuesta(
+        acierto: resultado.respuestasCorrectas * 2 >= resultado.totalPreguntas,
+      );
       setState(() => _correccion = correccion);
     } catch (error) {
       if (!mounted) return;
@@ -303,7 +308,13 @@ class _VistaResultado extends StatelessWidget {
         const SizedBox(height: 24),
         for (final (i, item) in correccion.detalle.indexed)
           if (porPregunta[item.preguntaId] case final pregunta?)
-            _TarjetaCorreccion(numero: i + 1, pregunta: pregunta, item: item),
+            _TarjetaCorreccion(
+              numero: i + 1,
+              pregunta: pregunta,
+              item: item,
+              // En cascada: cada ícono reacciona un poco después del anterior.
+              retraso: Duration(milliseconds: 90 * (i < 10 ? i : 10)),
+            ),
         const SizedBox(height: 16),
         // OverflowBar: en línea si caben; uno debajo del otro si no.
         OverflowBar(
@@ -331,11 +342,13 @@ class _TarjetaCorreccion extends StatelessWidget {
   final int numero;
   final PreguntaPresentada pregunta;
   final CorreccionPregunta item;
+  final Duration retraso;
 
   const _TarjetaCorreccion({
     required this.numero,
     required this.pregunta,
     required this.item,
+    this.retraso = Duration.zero,
   });
 
   String _textoOpcion(String? id) {
@@ -358,9 +371,15 @@ class _TarjetaCorreccion extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  item.esCorrecta ? Icons.check_circle : Icons.cancel,
-                  color: colorEstado,
+                RespuestaAnimada(
+                  reaccion: item.esCorrecta
+                      ? ReaccionRespuesta.acierto
+                      : ReaccionRespuesta.error,
+                  retraso: retraso,
+                  child: Icon(
+                    item.esCorrecta ? Icons.check_circle : Icons.cancel,
+                    color: colorEstado,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(

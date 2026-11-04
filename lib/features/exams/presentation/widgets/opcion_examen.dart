@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
+import '../../../../core/presentation/respuesta_animada.dart';
 import '../../../../core/presentation/texto_con_latex.dart';
 
 enum EstadoOpcion { normal, elegida, correcta, incorrecta }
@@ -51,38 +52,46 @@ class OpcionExamenTile extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Material(
-        color: fondo,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: borde),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: alPresionar,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: circulo,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    letra,
-                    style: TextStyle(
-                      color: letraColor,
-                      fontWeight: FontWeight.w700,
+      // La correcta da un salto y la incorrecta elegida tiembla.
+      child: RespuestaAnimada(
+        reaccion: switch (estado) {
+          EstadoOpcion.correcta => ReaccionRespuesta.acierto,
+          EstadoOpcion.incorrecta => ReaccionRespuesta.error,
+          _ => null,
+        },
+        child: Material(
+          color: fondo,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: borde),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: alPresionar,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: circulo,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      letra,
+                      style: TextStyle(
+                        color: letraColor,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(child: TextoConLatex(texto)),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(child: TextoConLatex(texto)),
+                ],
+              ),
             ),
           ),
         ),
