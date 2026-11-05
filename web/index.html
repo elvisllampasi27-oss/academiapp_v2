@@ -18,21 +18,52 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Preparación para el examen de admisión de la UNSCH.">
+  <meta name="theme-color" content="#0B0C10">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="academiapp_v2">
+  <meta name="apple-mobile-web-app-title" content="AcademiApp">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>academiapp_v2</title>
+  <title>AcademiApp</title>
   <link rel="manifest" href="manifest.json">
+  <!-- Pantalla de carga propia (sin el logo de Flutter): la esfera
+       dorada late hasta que la app dibuja su primer cuadro. -->
+  <style>
+    html, body { margin: 0; background: #0B0C10; }
+    #carga {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px;
+      background: #0B0C10; transition: opacity .35s ease;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    #carga img { width: 96px; height: 96px; border-radius: 22px;
+      animation: latido 1.6s ease-in-out infinite; }
+    #carga span { color: #A1A1AA; font-size: 14px; letter-spacing: .3px; }
+    #carga.fuera { opacity: 0; pointer-events: none; }
+    @keyframes latido { 0%, 100% { transform: scale(1); opacity: .85; }
+                        50% { transform: scale(1.06); opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { #carga img { animation: none; } }
+  </style>
 </head>
 <body>
+  <div id="carga" aria-label="Cargando AcademiApp">
+    <img src="icons/Icon-192.png" alt="">
+    <span>AcademiApp</span>
+  </div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var carga = document.getElementById('carga');
+      if (!carga) return;
+      carga.classList.add('fuera');
+      setTimeout(function () { carga.remove(); }, 400);
+    });
+  </script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
