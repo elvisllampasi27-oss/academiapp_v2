@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../core/presentation/esqueleto.dart';
 import '../features/academic/domain/entities/curso.dart';
 import '../features/academic/domain/entities/tema.dart';
 import '../features/academic/domain/services/obtener_material_tema_service.dart';
@@ -14,7 +13,6 @@ import '../features/assessment/presentation/widgets/seccion_practica_tema.dart';
 import '../features/avisos/presentation/avisos_inicio.dart';
 import '../features/exams/presentation/pages/examenes_page.dart';
 import '../features/exams/presentation/widgets/aviso_examen_semanal.dart';
-import '../features/exams/presentation/widgets/notas_semanales.dart';
 import '../features/identity/domain/entities/usuario_academiapp.dart';
 import '../features/identity/presentation/pages/perfil_page.dart';
 import '../features/premium/presentation/premium_page.dart';
@@ -98,7 +96,9 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
         // Al recargar se mantiene lo anterior en pantalla (sin parpadeo).
         if (snapshot.connectionState != ConnectionState.done &&
             !snapshot.hasData) {
-          return const Scaffold(body: EsqueletoInicio());
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
 
         if (snapshot.hasError) {
@@ -328,9 +328,6 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
       service: _servicioRuta,
       usuarioId: widget.usuario.uid,
       matriculaId: contexto.matricula.id,
-      encabezado: NotasSemanalesCard(
-        cargar: () => _d.examenes.notasSemanales(widget.usuario.uid),
-      ),
       describirTema: (temaId) {
         final tema = temas[temaId];
         if (tema == null) return null;

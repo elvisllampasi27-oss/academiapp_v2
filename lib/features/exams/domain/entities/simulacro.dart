@@ -139,27 +139,3 @@ class EstadoExamenSemanal {
       !requierePremium &&
       intento != EstadoIntento.completado;
 }
-
-/// Nota del estudiante en un examen semanal (para su gráfica de avance).
-class NotaSemanal {
-  final int semana;
-  final int puntaje;
-  final String titulo;
-
-  const NotaSemanal({
-    required this.semana,
-    required this.puntaje,
-    this.titulo = '',
-  });
-}
-
-/// "↑ 10 puntos", "↓ 5 puntos", "igual" o null: la última contra la anterior.
-String? cambioDeNota(List<NotaSemanal> notas) {
-  if (notas.length < 2) return null;
-  final cambio = notas.last.puntaje - notas[notas.length - 2].puntaje;
-  if (cambio == 0) return 'Igual que la semana anterior';
-  final puntos = cambio.abs() == 1 ? 'punto' : 'puntos';
-  return cambio > 0
-      ? '↑ $cambio $puntos desde la semana anterior'
-      : '↓ ${-cambio} $puntos desde la semana anterior';
-}

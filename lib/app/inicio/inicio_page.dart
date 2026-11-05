@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../core/presentation/colores_app.dart';
-import '../../core/presentation/desplegables.dart';
 import '../../core/presentation/formato_fecha.dart';
 import '../../features/academic/domain/entities/contexto_dia_estudiante.dart';
 import '../../features/academic/domain/entities/curso.dart';
 import '../../features/academic/domain/entities/tema.dart';
-import '../../features/academic/presentation/widgets/titulo_tema_hero.dart';
 import '../../features/adaptive_engine/domain/entities/item_mi_ruta.dart';
 import '../../features/adaptive_engine/domain/entities/recomendacion.dart';
 
@@ -108,13 +106,11 @@ class InicioPage extends StatelessWidget {
           const SizedBox(height: 20),
           ?avisos,
           ?examen,
-          Aparecer(
-            child: _TarjetaHoy(
-              dia: dia,
-              practicados: {for (final item in ruta) ?item.temaId},
-              curso: _curso,
-              onAbrirTema: onAbrirTema,
-            ),
+          _TarjetaHoy(
+            dia: dia,
+            practicados: {for (final item in ruta) ?item.temaId},
+            curso: _curso,
+            onAbrirTema: onAbrirTema,
           ),
           const SizedBox(height: 24),
           Row(
@@ -145,15 +141,12 @@ class InicioPage extends StatelessWidget {
               ),
             )
           else
-            for (final (i, item) in refuerzos.indexed)
-              Aparecer(
-                indice: i + 2,
-                child: _TarjetaRefuerzo(
-                  item: item,
-                  tema: item.temaId == null ? null : _tema(item.temaId!),
-                  curso: _curso,
-                  onAbrirTema: onAbrirTema,
-                ),
+            for (final item in refuerzos)
+              _TarjetaRefuerzo(
+                item: item,
+                tema: item.temaId == null ? null : _tema(item.temaId!),
+                curso: _curso,
+                onAbrirTema: onAbrirTema,
               ),
         ],
       ),
@@ -346,14 +339,13 @@ class _FilaTema extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TituloTemaHero(
-                    temaId: tema.id,
-                    titulo: tema.titulo,
+                  Text(
+                    tema.titulo,
                     maxLines: 2,
-                    estilo: const TextStyle(
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: ColoresApp.texto,
                     ),
                   ),
                   const SizedBox(height: 2),

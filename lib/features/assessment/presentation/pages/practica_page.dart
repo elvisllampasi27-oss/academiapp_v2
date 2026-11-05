@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/desplegables.dart';
 import '../../domain/entities/correccion_intento.dart';
 import '../../domain/entities/evaluacion.dart';
 import '../../domain/entities/pregunta_presentada.dart';
 import '../../domain/services/practica_tema_service.dart';
-import '../../../../core/presentation/respuesta_animada.dart';
 import '../../../../core/presentation/texto_con_latex.dart';
 import '../../../../core/presentation/imagen_figura.dart';
 
@@ -90,10 +88,6 @@ class _PracticaPageState extends State<PracticaPage> {
 
       if (!mounted) return;
 
-      final resultado = correccion.resultado;
-      vibrarRespuesta(
-        acierto: resultado.respuestasCorrectas * 2 >= resultado.totalPreguntas,
-      );
       setState(() => _correccion = correccion);
     } catch (error) {
       if (!mounted) return;
@@ -309,13 +303,7 @@ class _VistaResultado extends StatelessWidget {
         const SizedBox(height: 24),
         for (final (i, item) in correccion.detalle.indexed)
           if (porPregunta[item.preguntaId] case final pregunta?)
-            _TarjetaCorreccion(
-              numero: i + 1,
-              pregunta: pregunta,
-              item: item,
-              // En cascada: cada ícono reacciona un poco después del anterior.
-              retraso: Duration(milliseconds: 130 * (i < 10 ? i : 10)),
-            ),
+            _TarjetaCorreccion(numero: i + 1, pregunta: pregunta, item: item),
         const SizedBox(height: 16),
         // OverflowBar: en línea si caben; uno debajo del otro si no.
         OverflowBar(
@@ -343,13 +331,11 @@ class _TarjetaCorreccion extends StatelessWidget {
   final int numero;
   final PreguntaPresentada pregunta;
   final CorreccionPregunta item;
-  final Duration retraso;
 
   const _TarjetaCorreccion({
     required this.numero,
     required this.pregunta,
     required this.item,
-    this.retraso = Duration.zero,
   });
 
   String _textoOpcion(String? id) {
@@ -372,16 +358,9 @@ class _TarjetaCorreccion extends StatelessWidget {
           children: [
             Row(
               children: [
-                RespuestaAnimada(
-                  reaccion: item.esCorrecta
-                      ? ReaccionRespuesta.acierto
-                      : ReaccionRespuesta.error,
-                  retraso: retraso,
-                  child: MarcaDibujada(
-                    correcta: item.esCorrecta,
-                    color: colorEstado,
-                    retraso: retraso,
-                  ),
+                Icon(
+                  item.esCorrecta ? Icons.check_circle : Icons.cancel,
+                  color: colorEstado,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -404,14 +383,11 @@ class _TarjetaCorreccion extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             TextoConLatex(_textoOpcion(item.opcionCorrectaId)),
-            if (item.explicacion case final explicacion?) ...[
-              const SizedBox(height: 4),
-              SolucionDesplegable(
-                abierta: !item.esCorrecta,
-                child: TextoConLatex(
-                  explicacion,
-                  estilo: Theme.of(context).textTheme.bodySmall,
-                ),
+            if (item.explicacion != null) ...[
+              const SizedBox(height: 8),
+              TextoConLatex(
+                item.explicacion!,
+                estilo: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           ],

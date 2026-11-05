@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
-import '../../../../core/presentation/desplegables.dart';
-import '../../../../core/presentation/esqueleto.dart';
-import '../../../../core/presentation/marquesina_vertical.dart';
-import '../../../../core/presentation/titulo_que_vuela.dart';
 import '../../../../core/presentation/formato_fecha.dart';
 import '../../domain/entities/examen.dart';
 import '../../domain/entities/simulacro.dart';
@@ -37,11 +33,6 @@ class ExamenesPage extends StatefulWidget {
 class _ExamenesPageState extends State<ExamenesPage> {
   late Future<List<ExamenPasado>> _examenes = widget.repositorio.listar();
   late Future<EstadoExamenSemanal> _estado = widget.servicio.estadoSemanal();
-
-  /// Para las noticias de arriba (si falla, simplemente no se muestra).
-  late final Future<RankingSemanal?> _ranking = widget.servicio
-      .ranking()
-      .catchError((Object _) => null);
   TipoExamen _tipo = TipoExamen.ordinario;
   bool _tipoElegido = false;
 
@@ -137,30 +128,10 @@ class _ExamenesPageState extends State<ExamenesPage> {
               const SizedBox(height: 16),
               FutureBuilder<EstadoExamenSemanal>(
                 future: _estado,
-                builder: (context, s) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    FutureBuilder<RankingSemanal?>(
-                      future: _ranking,
-                      builder: (context, r) {
-                        final lineas = noticiasExamenes(
-                          estado: s.data,
-                          ranking: r.data,
-                          examenes: examenes,
-                        );
-                        if (lineas.isEmpty) return const SizedBox.shrink();
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: MarquesinaVertical(lineas: lineas),
-                        );
-                      },
-                    ),
-                    _TarjetaSimulacro(
-                      estado: s.data,
-                      alEmpezar: _empezarSimulacro,
-                      alVerRanking: _verRanking,
-                    ),
-                  ],
+                builder: (context, s) => _TarjetaSimulacro(
+                  estado: s.data,
+                  alEmpezar: _empezarSimulacro,
+                  alVerRanking: _verRanking,
                 ),
               ),
               const SizedBox(height: 28),
@@ -194,7 +165,10 @@ class _ExamenesPageState extends State<ExamenesPage> {
               ),
               const SizedBox(height: 12),
               if (snapshot.connectionState != ConnectionState.done)
-                const EsqueletoLista(padding: EdgeInsets.zero)
+                const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else if (snapshot.hasError) ...[
                 const Text('No se pudieron cargar los exámenes.'),
                 const SizedBox(height: 8),
@@ -218,28 +192,20 @@ class _ExamenesPageState extends State<ExamenesPage> {
                   ),
                 )
               else
-                for (final (i, examen) in delTipo.indexed)
-                  Aparecer(
-                    indice: i,
-                    child: Card(
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 6,
-                        ),
-                        title: TituloQueVuela(
-                          etiqueta: 'examen-titulo-${examen.id}',
-                          texto: examen.titulo,
-                          estilo: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: ColoresApp.texto,
-                          ),
-                        ),
-                        subtitle: Text('${examen.totalPreguntas} preguntas'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => _abrirPasado(examen),
+                for (final examen in delTipo)
+                  Card(
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 6,
                       ),
+                      title: Text(
+                        examen.titulo,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text('${examen.totalPreguntas} preguntas'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _abrirPasado(examen),
                     ),
                   ),
             ],
@@ -362,49 +328,4 @@ class _TarjetaSimulacro extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Las líneas de la marquesina de Exámenes: cierre del examen semanal, el
-/// top 1 y tu puesto del último, y el examen pasado más nuevo.
-List<(IconData, String)> noticiasExamenes({
-  required EstadoExamenSemanal? estado,
-  required RankingSemanal? ranking,
-  required List<ExamenPasado> examenes,
-}) {
-  final lineas = <(IconData, String)>[];
-  if (estado != null && estado.semana > 0 && estado.publicado) {
-    if (estado.intento == EstadoIntento.completado) {
-      lineas.add((
-        Icons.task_alt,
-        'Ya diste el de la semana ${estado.semana}'
-            '${estado.puntaje == null ? '' : ' · ${estado.puntaje} %'}',
-      ));
-    } else if (estado.cierra case final cierra?) {
-      final dia = fechaCorta(cierra.subtract(const Duration(minutes: 1)))
-          .toLowerCase();
-      lineas.add((Icons.schedule, 'Semana ${estado.semana}: cierra el $dia'));
-    }
-  }
-  if (ranking != null) {
-    if (ranking.top.firstOrNull case final primero?) {
-      lineas.add((
-        Icons.emoji_events_outlined,
-        'Top 1 · ${ranking.titulo}: ${primero.nombre} con ${primero.puntaje} %',
-      ));
-    }
-    if (ranking.yo case final yo?) {
-      lineas.add((
-        Icons.leaderboard_outlined,
-        'Tu último puesto: ${yo.puesto} de ${ranking.participantes}',
-      ));
-    }
-  }
-  final masNuevo = [...examenes]..sort((a, b) => b.fecha.compareTo(a.fecha));
-  if (masNuevo.firstOrNull case final examen?) {
-    lineas.add((
-      Icons.fiber_new_outlined,
-      'Examen pasado más reciente: ${examen.titulo}',
-    ));
-  }
-  return lineas;
 }

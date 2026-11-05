@@ -58,8 +58,6 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  flutter_launcher_icons: ^0.14.4
-  flutter_native_splash: ^2.4.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -75,8 +73,6 @@ flutter:
   assets:
     - assets/images/fondo_autenticacion.jpeg
     - assets/images/google.png
-    # Íconos 3D de la bienvenida (PNG con fondo transparente).
-    - assets/3d/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -108,31 +104,3 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-
-# Ícono de la app (Android, iOS) a partir de un solo PNG de 1024 px.
-#   dart run flutter_launcher_icons
-flutter_launcher_icons:
-  image_path: "assets/marca/icono.png"
-  android: true
-  ios: true
-  remove_alpha_ios: true
-  adaptive_icon_background: "#0B0C10"
-  adaptive_icon_foreground: "assets/marca/icono_frente.png"
-  web:
-    generate: false
-  windows:
-    generate: false
-  macos:
-    generate: false
-
-# Pantalla de carga nativa (Android, iOS): fondo oscuro con la esfera, sin
-# el logo de Flutter. La web usa la de web/index.html.
-#   dart run flutter_native_splash:create
-flutter_native_splash:
-  color: "#0B0C10"
-  image: assets/marca/splash.png
-  android_12:
-    color: "#0B0C10"
-    image: assets/marca/splash.png
-  web: false
-

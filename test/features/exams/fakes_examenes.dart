@@ -29,16 +29,10 @@ class RepositorioExamenesEnMemoria implements RepositorioExamenes {
   final List<ExamenPasado> examenes;
   final List<PreguntaExamen> lista;
 
-  final List<NotaSemanal> notas;
-
   RepositorioExamenesEnMemoria({
     this.examenes = const [],
     this.lista = const [],
-    this.notas = const [],
   });
-
-  @override
-  Future<List<NotaSemanal>> notasSemanales(String uid) async => notas;
 
   @override
   Future<List<ExamenPasado>> listar() async => examenes;

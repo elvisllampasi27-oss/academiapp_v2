@@ -1,11 +1,11 @@
 {
-    "name": "AcademiApp",
-    "short_name": "AcademiApp",
+    "name": "academiapp_v2",
+    "short_name": "academiapp_v2",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0B0C10",
-    "theme_color": "#0B0C10",
-    "description": "Preparación para el examen de admisión de la UNSCH.",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "A new Flutter project.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

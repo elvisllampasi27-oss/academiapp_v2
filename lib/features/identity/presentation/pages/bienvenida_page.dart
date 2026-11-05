@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../widgets/estilo_autenticacion.dart';
-import '../widgets/iconos_3d_flotantes.dart';
 
 /// Primera pantalla para quien no ha iniciado sesión.
 class BienvenidaPage extends StatelessWidget {
@@ -38,7 +37,6 @@ class BienvenidaPage extends StatelessWidget {
               ),
             ),
           ),
-          const Iconos3DFlotantes(),
           SafeArea(
             child: LayoutBuilder(
               builder: (context, restricciones) => SingleChildScrollView(

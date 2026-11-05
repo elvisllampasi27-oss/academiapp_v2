@@ -5,27 +5,10 @@ import 'colores_app.dart';
 /// Figura de una pregunta o solución. La usan los exámenes y las prácticas.
 /// Nunca ocupa más del 40 % del alto de la pantalla (máx. 320 px); al
 /// tocarla se abre en grande y se puede ampliar con los dedos.
-class ImagenFigura extends StatefulWidget {
+class ImagenFigura extends StatelessWidget {
   final String url;
 
   const ImagenFigura(this.url, {super.key});
-
-  @override
-  State<ImagenFigura> createState() => _ImagenFiguraState();
-}
-
-class _ImagenFiguraState extends State<ImagenFigura> {
-  /// Une la miniatura con la vista grande (animación Hero).
-  final _tag = Object();
-
-  void _ampliar() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        fullscreenDialog: true,
-        builder: (_) => _FiguraAmpliada(url: widget.url, tag: _tag),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,13 +24,15 @@ class _ImagenFiguraState extends State<ImagenFigura> {
             button: true,
             label: 'Ampliar figura',
             child: GestureDetector(
-              onTap: _ampliar,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  fullscreenDialog: true,
+                  builder: (_) => _FiguraAmpliada(url: url),
+                ),
+              ),
               child: Stack(
                 children: [
-                  Hero(
-                    tag: _tag,
-                    child: _Figura(url: widget.url),
-                  ),
+                  _Figura(url: url),
                   Positioned(
                     right: 8,
                     bottom: 8,
@@ -115,9 +100,8 @@ class _Figura extends StatelessWidget {
 /// La figura a pantalla completa: se amplía con los dedos (hasta 5x).
 class _FiguraAmpliada extends StatelessWidget {
   final String url;
-  final Object tag;
 
-  const _FiguraAmpliada({required this.url, required this.tag});
+  const _FiguraAmpliada({required this.url});
 
   @override
   Widget build(BuildContext context) {
@@ -133,10 +117,7 @@ class _FiguraAmpliada extends StatelessWidget {
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: Hero(
-              tag: tag,
-              child: _Figura(url: url),
-            ),
+            child: _Figura(url: url),
           ),
         ),
       ),

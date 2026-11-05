@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
-import '../../../../core/presentation/desplegables.dart';
 import '../../domain/entities/curso.dart';
 import '../../domain/entities/tema.dart';
-import '../widgets/titulo_tema_hero.dart';
 
 enum EstadoTemaCurso { practicado, hoy, disponible, proximamente }
 
@@ -90,14 +88,11 @@ class CursoDetallePage extends StatelessWidget {
               crossAxisSpacing: 10,
               childAspectRatio: 1.05,
               children: [
-                for (final (i, tema) in temas.indexed)
-                  Aparecer(
-                    indice: i,
-                    child: _TarjetaTema(
-                      tema: tema,
-                      estado: _estado(tema),
-                      alPresionar: () => onAbrirTema(tema),
-                    ),
+                for (final tema in temas)
+                  _TarjetaTema(
+                    tema: tema,
+                    estado: _estado(tema),
+                    alPresionar: () => onAbrirTema(tema),
                   ),
               ],
             ),
@@ -183,18 +178,15 @@ class _TarjetaTema extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Expanded(
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: TituloTemaHero(
-                    temaId: tema.id,
-                    titulo: tema.titulo,
-                    maxLines: 4,
-                    estilo: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3,
-                      color: bloqueado ? ColoresApp.apagado : ColoresApp.texto,
-                    ),
+                child: Text(
+                  tema.titulo,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                    color: bloqueado ? ColoresApp.apagado : ColoresApp.texto,
                   ),
                 ),
               ),

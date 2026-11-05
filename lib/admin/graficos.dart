@@ -189,10 +189,7 @@ class _GraficoAreaState extends State<GraficoArea> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                // El gráfico se "dibuja" de izquierda a derecha al aparecer.
-                Positioned.fill(
-                  child: Revelar(child: CustomPaint(painter: pintor)),
-                ),
+                Positioned.fill(child: CustomPaint(painter: pintor)),
                 if (i != null)
                   Positioned(
                     top: 0,
@@ -447,23 +444,18 @@ class AnilloAvance extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = PaletaPanel.de(context);
-    // Se llena desde cero al aparecer (y se mueve suave si cambia).
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: valor.clamp(0.0, 1.0).toDouble()),
-      duration: duracionAnimacion(context, const Duration(milliseconds: 1200)),
-      curve: Curves.easeOutCubic,
-      builder: (context, v, _) => SizedBox.square(
-        dimension: tamano,
-        child: CustomPaint(
-          painter: _PintorAnillo(v, color ?? p.acento, grosor),
-          child: Center(
-            child: Text(
-              '${(v * 100).round()}%',
-              style: TextStyle(
-                fontSize: tamano * 0.26,
-                fontWeight: FontWeight.w700,
-                color: p.texto,
-              ),
+    final v = valor.clamp(0.0, 1.0);
+    return SizedBox.square(
+      dimension: tamano,
+      child: CustomPaint(
+        painter: _PintorAnillo(v, color ?? p.acento, grosor),
+        child: Center(
+          child: Text(
+            '${(v * 100).round()}%',
+            style: TextStyle(
+              fontSize: tamano * 0.26,
+              fontWeight: FontWeight.w700,
+              color: p.texto,
             ),
           ),
         ),
@@ -530,100 +522,56 @@ class GraficoBarras extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = PaletaPanel.de(context);
     final maximo = valores.fold(1, (m, v) => v > m ? v : m);
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: duracionAnimacion(context, const Duration(milliseconds: 1100)),
-      curve: Curves.easeOutCubic,
-      builder: (context, crece, _) => SizedBox(
-        height: alto,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            for (final (i, valor) in valores.indexed)
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      formato?.call(valor) ?? '$valor',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: p.apagado, fontSize: 12),
-                    ),
-                    const SizedBox(height: 6),
-                    // La barra usa el alto que queda: nunca se desborda.
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: FractionallySizedBox(
-                          heightFactor: valor <= 0
-                              ? 0.03
-                              : math.max(0.03, valor / maximo * crece),
-                          child: Container(
-                            width: 36,
-                            decoration: BoxDecoration(
-                              color: i == valores.length - 1
-                                  ? p.acento
-                                  : PaletaPanel.bordeFuerte,
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(8),
-                                bottom: Radius.circular(4),
-                              ),
+    return SizedBox(
+      height: alto,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (final (i, valor) in valores.indexed)
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    formato?.call(valor) ?? '$valor',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: p.apagado, fontSize: 12),
+                  ),
+                  const SizedBox(height: 6),
+                  // La barra usa el alto que queda: nunca se desborda.
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: FractionallySizedBox(
+                        heightFactor: valor <= 0 ? 0.03 : valor / maximo,
+                        child: Container(
+                          width: 36,
+                          decoration: BoxDecoration(
+                            color: i == valores.length - 1
+                                ? p.acento
+                                : PaletaPanel.bordeFuerte,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(8),
+                              bottom: Radius.circular(4),
                             ),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      i < etiquetas.length ? etiquetas[i] : '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: p.apagado, fontSize: 12),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    i < etiquetas.length ? etiquetas[i] : '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: p.apagado, fontSize: 12),
+                  ),
+                ],
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
-}
-
-/// Duración de una animación, o cero si el sistema pide reducirlas.
-Duration duracionAnimacion(BuildContext context, Duration normal) =>
-    (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
-    ? Duration.zero
-    : normal;
-
-/// Muestra su contenido de izquierda a derecha, una vez, al aparecer.
-class Revelar extends StatelessWidget {
-  final Widget child;
-
-  const Revelar({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: duracionAnimacion(context, const Duration(milliseconds: 1500)),
-      curve: Curves.easeInOutCubic,
-      child: child,
-      builder: (context, t, hijo) =>
-          ClipRect(clipper: _RecorteIzquierda(t), child: hijo),
-    );
-  }
-}
-
-class _RecorteIzquierda extends CustomClipper<Rect> {
-  final double t;
-
-  _RecorteIzquierda(this.t);
-
-  @override
-  Rect getClip(Size size) => Rect.fromLTWH(0, 0, size.width * t, size.height);
-
-  @override
-  bool shouldReclip(_RecorteIzquierda anterior) => anterior.t != t;
 }

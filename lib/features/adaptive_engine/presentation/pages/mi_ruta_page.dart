@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
-import '../../../../core/presentation/desplegables.dart';
-import '../../../../core/presentation/esqueleto.dart';
 
 import '../../domain/entities/item_mi_ruta.dart';
 import '../../domain/entities/recomendacion.dart';
@@ -23,9 +21,6 @@ class MiRutaPage extends StatefulWidget {
   /// "Mi Ruta" cuando se abre aparte; "Progreso" cuando es una pestaña.
   final String titulo;
 
-  /// Va arriba de todo (en Progreso: la gráfica de notas semanales).
-  final Widget? encabezado;
-
   const MiRutaPage({
     super.key,
     required this.service,
@@ -34,7 +29,6 @@ class MiRutaPage extends StatefulWidget {
     required this.describirTema,
     this.onAbrirTema,
     this.titulo = 'Mi Ruta',
-    this.encabezado,
   });
 
   @override
@@ -63,7 +57,7 @@ class _MiRutaPageState extends State<MiRutaPage> {
         future: _ruta,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const EsqueletoLista(tarjetas: 4);
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
@@ -89,26 +83,21 @@ class _MiRutaPageState extends State<MiRutaPage> {
           final items = snapshot.data!;
 
           if (items.isEmpty) {
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-              children: [
-                ?widget.encabezado,
-                const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text(
-                    'Todavía no hay datos. Resuelve prácticas de tus temas '
-                    'y aquí verás qué reforzar, practicar o profundizar.',
-                    textAlign: TextAlign.center,
-                  ),
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  'Todavía no hay datos. Resuelve prácticas de tus temas '
+                  'y aquí verás qué reforzar, practicar o profundizar.',
+                  textAlign: TextAlign.center,
                 ),
-              ],
+              ),
             );
           }
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
             children: [
-              ?widget.encabezado,
               for (final tipo in TipoRecomendacion.values)
                 ..._seccion(
                   tipo,
@@ -162,8 +151,7 @@ class _MiRutaPageState extends State<MiRutaPage> {
           ],
         ),
       ),
-      for (final (i, item) in items.indexed)
-        Aparecer(indice: i, child: _tarjeta(item, color)),
+      for (final item in items) _tarjeta(item, color),
     ];
   }
 
@@ -181,18 +169,10 @@ class _MiRutaPageState extends State<MiRutaPage> {
           children: [
             if (descripcion?.curso != null) Text(descripcion!.curso!),
             const SizedBox(height: 6),
-            // La barra se llena desde cero al entrar.
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: item.estado.valor),
-              duration: (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
-                  ? Duration.zero
-                  : const Duration(milliseconds: 800),
-              curve: Curves.easeOutCubic,
-              builder: (context, valor, _) => LinearProgressIndicator(
-                value: valor,
-                color: color,
-                backgroundColor: color.withValues(alpha: 0.15),
-              ),
+            LinearProgressIndicator(
+              value: item.estado.valor,
+              color: color,
+              backgroundColor: color.withValues(alpha: 0.15),
             ),
             const SizedBox(height: 4),
             Text(
