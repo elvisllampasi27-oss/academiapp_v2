@@ -7,6 +7,7 @@ import '../../domain/repositories/repositorio_examenes.dart';
 import '../../domain/repositories/servicio_examenes.dart';
 import '../../../../core/presentation/imagen_figura.dart';
 import '../widgets/opcion_examen.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 /// Reportar la pregunta que se está viendo.
 typedef ReportarPreguntaExamen = void Function(
@@ -144,10 +145,12 @@ class _PracticaExamenPageState extends State<PracticaExamenPage> {
             return const _Mensaje(texto: 'Este examen no tiene preguntas.');
           }
           if (_terminado) {
-            return _Mensaje(
-              texto: 'Acertaste $_aciertos de ${preguntas.length}.',
-              boton: 'Volver a exámenes',
-              alPresionar: () => Navigator.of(context).pop(),
+            return EntradaDifuminada(
+              child: _Mensaje(
+                texto: 'Acertaste $_aciertos de ${preguntas.length}.',
+                boton: 'Volver a exámenes',
+                alPresionar: () => Navigator.of(context).pop(),
+              ),
             );
           }
 
@@ -163,34 +166,55 @@ class _PracticaExamenPageState extends State<PracticaExamenPage> {
 
     return Column(
       children: [
-        LinearProgressIndicator(
-          value: (_indice + 1) / preguntas.length,
-          minHeight: 3,
-          color: ColoresApp.ambar,
+        TweenAnimationBuilder<double>(
+          tween: Tween(end: (_indice + 1) / preguntas.length),
+          duration: sinAnimaciones(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+          builder: (context, avance, _) => LinearProgressIndicator(
+            value: avance,
+            minHeight: 3,
+            color: ColoresApp.ambar,
+          ),
         ),
         Expanded(
+          // Con la clave, cada pregunta nueva entra con su animación.
           child: ListView(
+            key: ValueKey(pregunta.id),
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             children: [
-              Text(
-                '${_indice + 1} de ${preguntas.length} · ${pregunta.seccion}',
-                style: const TextStyle(color: ColoresApp.apagado),
+              EntradaDifuminada(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      '${_indice + 1} de ${preguntas.length} · '
+                      '${pregunta.seccion}',
+                      style: const TextStyle(color: ColoresApp.apagado),
+                    ),
+                    const SizedBox(height: 12),
+                    TextoConLatex(
+                      pregunta.enunciado,
+                      estilo: const TextStyle(fontSize: 17),
+                    ),
+                    if (pregunta.imagen case final imagen?)
+                      ImagenFigura(imagen),
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
-              TextoConLatex(
-                pregunta.enunciado,
-                estilo: const TextStyle(fontSize: 17),
-              ),
-              if (pregunta.imagen case final imagen?) ImagenFigura(imagen),
               const SizedBox(height: 12),
               for (final (i, opcion) in pregunta.opciones.indexed)
-                OpcionExamenTile(
-                  letra: String.fromCharCode(65 + i),
-                  texto: opcion.texto,
-                  estado: _estadoDe(opcion),
-                  alPresionar: revision != null || _revisando
-                      ? null
-                      : () => _responder(pregunta, opcion.id),
+                FilaEntrante(
+                  indice: i,
+                  child: OpcionExamenTile(
+                    letra: String.fromCharCode(65 + i),
+                    texto: opcion.texto,
+                    estado: _estadoDe(opcion),
+                    alPresionar: revision != null || _revisando
+                        ? null
+                        : () => _responder(pregunta, opcion.id),
+                  ),
                 ),
               if (_revisando)
                 const Padding(
@@ -205,27 +229,48 @@ class _PracticaExamenPageState extends State<PracticaExamenPage> {
                     style: const TextStyle(color: ColoresApp.naranja),
                   ),
                 ),
-              if (revision != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  revision.esCorrecta
-                      ? '¡Correcto! Es la ${pregunta.letraDe(revision.opcionCorrectaId)}'
-                      : 'La correcta es la ${pregunta.letraDe(revision.opcionCorrectaId)}',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: revision.esCorrecta
-                        ? ColoresApp.celeste
-                        : ColoresApp.naranja,
+              // El veredicto y la solución entran juntos, desenfocados.
+              if (revision != null)
+                EntradaDifuminada(
+                  retraso: const Duration(milliseconds: 150),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          IconoVeredicto(
+                            correcta: revision.esCorrecta,
+                            color: revision.esCorrecta
+                                ? ColoresApp.celeste
+                                : ColoresApp.naranja,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              revision.esCorrecta
+                                  ? '¡Correcto! Es la ${pregunta.letraDe(revision.opcionCorrectaId)}'
+                                  : 'La correcta es la ${pregunta.letraDe(revision.opcionCorrectaId)}',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                color: revision.esCorrecta
+                                    ? ColoresApp.celeste
+                                    : ColoresApp.naranja,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (revision.solucion case final solucion?) ...[
+                        const SizedBox(height: 8),
+                        TextoConLatex(solucion),
+                      ],
+                      if (revision.imagenSolucion case final imagen?)
+                        ImagenFigura(imagen),
+                    ],
                   ),
                 ),
-                if (revision.solucion case final solucion?) ...[
-                  const SizedBox(height: 8),
-                  TextoConLatex(solucion),
-                ],
-                if (revision.imagenSolucion case final imagen?)
-                  ImagenFigura(imagen),
-              ],
             ],
           ),
         ),

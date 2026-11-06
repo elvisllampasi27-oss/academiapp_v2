@@ -4,6 +4,7 @@ import '../../../../core/presentation/colores_app.dart';
 import '../../../../core/presentation/texto.dart';
 import '../../domain/entities/curriculo.dart';
 import '../../domain/entities/curso.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 /// Pestaña Cursos: grilla de cursos con filtro por área y buscador.
 class CursosPage extends StatefulWidget {
@@ -50,7 +51,7 @@ class _CursosPageState extends State<CursosPage> {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
             sliver: SliverList.list(
-              children: [
+              children: enCascada([
                 const Text(
                   'Cursos',
                   style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
@@ -99,7 +100,7 @@ class _CursosPageState extends State<CursosPage> {
                     'No hay cursos que coincidan.',
                     style: TextStyle(color: ColoresApp.apagado),
                   ),
-              ],
+              ]),
             ),
           ),
           SliverPadding(
@@ -113,16 +114,22 @@ class _CursosPageState extends State<CursosPage> {
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
               ),
+              // Las tarjetas entran una tras otra (con su clave, al filtrar
+              // solo entran las que recién aparecen).
               delegate: SliverChildListDelegate([
-                for (final curso in cursos)
-                  _TarjetaCurso(
-                    curso: curso,
-                    total: widget.curriculo.temasDe(curso.id).length,
-                    publicados: widget.curriculo
-                        .temasDe(curso.id)
-                        .where((t) => widget.publicados.contains(t.id))
-                        .length,
-                    alPresionar: () => widget.onAbrirCurso(curso),
+                for (final (i, curso) in cursos.indexed)
+                  FilaEntrante(
+                    key: ValueKey(curso.id),
+                    indice: i,
+                    child: _TarjetaCurso(
+                      curso: curso,
+                      total: widget.curriculo.temasDe(curso.id).length,
+                      publicados: widget.curriculo
+                          .temasDe(curso.id)
+                          .where((t) => widget.publicados.contains(t.id))
+                          .length,
+                      alPresionar: () => widget.onAbrirCurso(curso),
+                    ),
                   ),
               ]),
             ),
@@ -239,13 +246,7 @@ class _TarjetaCurso extends StatelessWidget {
                 style: const TextStyle(fontSize: 12, color: ColoresApp.apagado),
               ),
               const SizedBox(height: 6),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(99),
-                child: LinearProgressIndicator(
-                  value: total == 0 ? 0 : publicados / total,
-                  minHeight: 4,
-                ),
-              ),
+              BarraProgreso(valor: total == 0 ? 0 : publicados / total),
             ],
           ),
         ),

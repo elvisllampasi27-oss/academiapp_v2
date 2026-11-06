@@ -6,6 +6,7 @@ import '../../../core/presentation/formato_fecha.dart';
 import '../../../core/presentation/video/reproductor_clase.dart';
 import '../../../core/presentation/video/reproductor_youtube.dart';
 import '../domain/seminario.dart';
+import '../../../core/presentation/animaciones.dart';
 
 Future<bool> _abrirEnYoutube(Uri enlace) =>
     launchUrl(enlace, mode: LaunchMode.externalApplication);
@@ -90,7 +91,7 @@ class _SeminariosPageState extends State<SeminariosPage> {
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-            children: [
+            children: enCascada([
               const Text(
                 'Repasos complementarios. No reemplazan tus temas del día.',
                 style: TextStyle(color: ColoresApp.apagado),
@@ -131,7 +132,7 @@ class _SeminariosPageState extends State<SeminariosPage> {
                       onTap: () => _verGrabado(s),
                     ),
                   ),
-            ],
+            ]),
           );
         },
       ),

@@ -118,6 +118,7 @@ class _ItemBarra extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = activo ? ColoresApp.texto : ColoresApp.tenue;
+    const duracion = Duration(milliseconds: 220);
 
     return Semantics(
       button: true,
@@ -127,27 +128,39 @@ class _ItemBarra extends StatelessWidget {
       child: InkWell(
         onTap: alPresionar,
         borderRadius: BorderRadius.circular(14),
-        child: Container(
+        // La pastilla aparece suave y el ícono crece un poco al activarse.
+        child: AnimatedContainer(
+          duration: duracion,
+          curve: Curves.easeOutCubic,
           height: 52,
           decoration: BoxDecoration(
-            color: activo ? const Color(0x1AFFFFFF) : null,
+            color: activo ? const Color(0x1AFFFFFF) : const Color(0x00FFFFFF),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(pestana.icono, size: 22, color: color),
-              const SizedBox(height: 3),
-              Text(
-                pestana.etiqueta,
-                maxLines: 1,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: color,
-                  fontWeight: activo ? FontWeight.w600 : FontWeight.w500,
+          child: TweenAnimationBuilder<Color?>(
+            tween: ColorTween(end: color),
+            duration: duracion,
+            builder: (context, tono, _) => Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AnimatedScale(
+                  scale: activo ? 1.08 : 1,
+                  duration: duracion,
+                  curve: Curves.easeOutBack,
+                  child: Icon(pestana.icono, size: 22, color: tono),
                 ),
-              ),
-            ],
+                const SizedBox(height: 3),
+                Text(
+                  pestana.etiqueta,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: tono,
+                    fontWeight: activo ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

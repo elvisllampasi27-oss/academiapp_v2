@@ -7,6 +7,7 @@ import '../../domain/entities/simulacro.dart';
 import '../../domain/repositories/servicio_examenes.dart';
 import '../../../../core/presentation/imagen_figura.dart';
 import 'ranking_semanal_page.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 /// Resultado del examen semanal: total, por área, ranking y revisión.
 class ResultadoSimulacroPage extends StatefulWidget {
@@ -48,49 +49,68 @@ class _ResultadoSimulacroPageState extends State<ResultadoSimulacroPage> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
-          Text(
-            widget.titulo,
-            style: const TextStyle(color: ColoresApp.apagado),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${r.correctas} de ${r.total} correctas',
-            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${r.puntaje} % · tiempo usado ${_tiempo(r.tiempoUsadoSegundos)}',
-            style: const TextStyle(color: ColoresApp.apagado),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Por área',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          for (final s in r.porSeccion) _FilaSeccion(s),
-          const SizedBox(height: 20),
-          if (widget.servicio case final servicio?) ...[
-            FilledButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => RankingSemanalPage(servicio: servicio),
-                ),
-              ),
-              icon: const Icon(Icons.emoji_events_outlined, size: 18),
-              label: const Text('Ver mi puesto en el ranking'),
+          ...enCascada([
+            Text(
+              widget.titulo,
+              style: const TextStyle(color: ColoresApp.apagado),
             ),
-            const SizedBox(height: 10),
-          ],
+            const SizedBox(height: 6),
+            NumeroQueCuenta(
+              '${r.correctas} de ${r.total} correctas',
+              estilo: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${r.puntaje} % · tiempo usado ${_tiempo(r.tiempoUsadoSegundos)}',
+              style: const TextStyle(color: ColoresApp.apagado),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Por área',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            for (final s in r.porSeccion) _FilaSeccion(s),
+            const SizedBox(height: 20),
+            if (widget.servicio case final servicio?) ...[
+              FilledButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => RankingSemanalPage(servicio: servicio),
+                  ),
+                ),
+                icon: const Icon(Icons.emoji_events_outlined, size: 18),
+                label: const Text('Ver mi puesto en el ranking'),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ]),
+          // Fuera de la cascada: al tocar "Revisar", las preguntas entran
+          // una tras otra (cada una con su clave).
           if (!_revisando)
-            OutlinedButton(
-              onPressed: () => setState(() => _revisando = true),
-              child: const Text('Revisar mis respuestas'),
+            EntradaDifuminada(
+              key: const ValueKey('revisar'),
+              retraso: const Duration(milliseconds: 480),
+              child: OutlinedButton(
+                onPressed: () => setState(() => _revisando = true),
+                child: const Text('Revisar mis respuestas'),
+              ),
             )
           else
             for (final (i, d) in r.detalle.indexed)
               if (porId[d.preguntaId] case final pregunta?)
-                _Revision(numero: i + 1, pregunta: pregunta, detalle: d),
+                FilaEntrante(
+                  key: ValueKey(d.preguntaId),
+                  indice: i,
+                  child: _Revision(
+                    numero: i + 1,
+                    pregunta: pregunta,
+                    detalle: d,
+                  ),
+                ),
         ],
       ),
     );
@@ -123,13 +143,11 @@ class _FilaSeccion extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: fraccion,
-              minHeight: 6,
-              color: fraccion < 0.5 ? ColoresApp.naranja : ColoresApp.celeste,
-            ),
+          BarraProgreso(
+            valor: fraccion,
+            minHeight: 6,
+            radio: 3,
+            color: fraccion < 0.5 ? ColoresApp.naranja : ColoresApp.celeste,
           ),
         ],
       ),
@@ -161,9 +179,10 @@ class _Revision extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  detalle.esCorrecta ? Icons.check_circle : Icons.cancel,
-                  size: 18,
+                IconoVeredicto(
+                  correcta: detalle.esCorrecta,
+                  tamano: 18,
+                  retraso: const Duration(milliseconds: 350),
                   color: detalle.esCorrecta
                       ? ColoresApp.celeste
                       : ColoresApp.naranja,

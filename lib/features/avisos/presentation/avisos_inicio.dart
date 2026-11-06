@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/presentation/colores_app.dart';
 import '../domain/aviso.dart';
+import '../../../core/presentation/animaciones.dart';
 
 /// Avisos del equipo arriba del Inicio. Si no hay (o no cargan), no ocupa
 /// espacio. La X lo oculta mientras la app siga abierta.
@@ -35,19 +36,30 @@ class _AvisosInicioState extends State<AvisosInicio> {
           versionId: widget.versionId,
           ahora: widget.ahora(),
         ).where((a) => !_ocultos.contains(a.id)).toList();
-        if (avisos.isEmpty) return const SizedBox.shrink();
-        return Column(
-          children: [
-            for (final a in avisos)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _TarjetaAviso(
-                  aviso: a,
-                  onCerrar: () => setState(() => _ocultos.add(a.id)),
+        return AnimatedSize(
+          duration: sinAnimaciones(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: avisos.isEmpty
+              ? const SizedBox(width: double.infinity)
+              : Column(
+                  children: [
+                    for (final a in avisos)
+                      EntradaDifuminada(
+                        key: ValueKey(a.id),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _TarjetaAviso(
+                            aviso: a,
+                            onCerrar: () => setState(() => _ocultos.add(a.id)),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                  ],
                 ),
-              ),
-            const SizedBox(height: 8),
-          ],
         );
       },
     );

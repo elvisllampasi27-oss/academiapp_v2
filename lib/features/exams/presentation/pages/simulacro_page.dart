@@ -9,6 +9,7 @@ import '../../domain/repositories/servicio_examenes.dart';
 import '../../../../core/presentation/imagen_figura.dart';
 import '../widgets/opcion_examen.dart';
 import 'resultado_simulacro_page.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 /// Examen semanal: con tiempo y sin ver respuestas hasta el final.
 /// Al acabarse el tiempo se envía solo.
@@ -203,8 +204,9 @@ class _SimulacroPageState extends State<SimulacroPage> {
               Padding(
                 padding: const EdgeInsets.only(right: 16),
                 child: Center(
-                  child: Text(
-                    _formatoReloj(_restante),
+                  // En los últimos 5 minutos el reloj pasa a naranja suave.
+                  child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 400),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -212,6 +214,7 @@ class _SimulacroPageState extends State<SimulacroPage> {
                           ? ColoresApp.naranja
                           : ColoresApp.texto,
                     ),
+                    child: Text(_formatoReloj(_restante)),
                   ),
                 ),
               ),
@@ -274,7 +277,8 @@ class _SimulacroPageState extends State<SimulacroPage> {
               return InkWell(
                 customBorder: const CircleBorder(),
                 onTap: () => setState(() => _indice = i),
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
                   width: 36,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
@@ -304,29 +308,41 @@ class _SimulacroPageState extends State<SimulacroPage> {
             key: ValueKey(pregunta.id),
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             children: [
-              Text(
-                'Pregunta ${_indice + 1} de ${preguntas.length} · ${pregunta.seccion}',
-                style: const TextStyle(color: ColoresApp.apagado),
+              EntradaDifuminada(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Pregunta ${_indice + 1} de ${preguntas.length} · '
+                      '${pregunta.seccion}',
+                      style: const TextStyle(color: ColoresApp.apagado),
+                    ),
+                    const SizedBox(height: 12),
+                    TextoConLatex(
+                      pregunta.enunciado,
+                      estilo: const TextStyle(fontSize: 17),
+                    ),
+                    if (pregunta.imagen case final imagen?)
+                      ImagenFigura(imagen),
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
-              TextoConLatex(
-                pregunta.enunciado,
-                estilo: const TextStyle(fontSize: 17),
-              ),
-              if (pregunta.imagen case final imagen?) ImagenFigura(imagen),
               const SizedBox(height: 12),
               for (final (i, opcion) in pregunta.opciones.indexed)
-                OpcionExamenTile(
-                  letra: String.fromCharCode(65 + i),
-                  texto: opcion.texto,
-                  estado: _respuestas[pregunta.id] == opcion.id
-                      ? EstadoOpcion.elegida
-                      : EstadoOpcion.normal,
-                  alPresionar: _enviando
-                      ? null
-                      : () => setState(
-                          () => _respuestas[pregunta.id] = opcion.id,
-                        ),
+                FilaEntrante(
+                  indice: i,
+                  child: OpcionExamenTile(
+                    letra: String.fromCharCode(65 + i),
+                    texto: opcion.texto,
+                    estado: _respuestas[pregunta.id] == opcion.id
+                        ? EstadoOpcion.elegida
+                        : EstadoOpcion.normal,
+                    alPresionar: _enviando
+                        ? null
+                        : () => setState(
+                            () => _respuestas[pregunta.id] = opcion.id,
+                          ),
+                  ),
                 ),
               if (_errorEnvio case final error?)
                 Padding(

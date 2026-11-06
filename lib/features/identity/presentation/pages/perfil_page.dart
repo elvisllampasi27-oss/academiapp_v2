@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
 import '../../domain/entities/usuario_academiapp.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 class PerfilPage extends StatelessWidget {
   final UsuarioAcademiApp usuario;
@@ -31,7 +32,7 @@ class PerfilPage extends StatelessWidget {
       bottom: false,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
-        children: [
+        children: enCascada([
           Row(
             children: [
               Container(
@@ -137,7 +138,7 @@ class PerfilPage extends StatelessWidget {
               style: TextButton.styleFrom(foregroundColor: ColoresApp.apagado),
             ),
           ),
-        ],
+        ]),
       ),
     );
   }

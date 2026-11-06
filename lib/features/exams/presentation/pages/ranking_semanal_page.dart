@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/presentation/colores_app.dart';
 import '../../domain/entities/simulacro.dart';
 import '../../domain/repositories/servicio_examenes.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 /// Top 10 del último examen semanal que diste y tu puesto.
 class RankingSemanalPage extends StatefulWidget {
@@ -67,7 +68,7 @@ class _RankingSemanalPageState extends State<RankingSemanalPage> {
           }
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-            children: [
+            children: enCascada([
               Text(
                 ranking.titulo,
                 style: const TextStyle(
@@ -123,7 +124,7 @@ class _RankingSemanalPageState extends State<RankingSemanalPage> {
               ),
               const SizedBox(height: 8),
               for (final p in ranking.top) _FilaPuesto(p, _tiempo),
-            ],
+            ]),
           );
         },
       ),

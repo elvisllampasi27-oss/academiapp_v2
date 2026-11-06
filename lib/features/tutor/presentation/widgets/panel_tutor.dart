@@ -4,6 +4,7 @@ import '../../../../core/presentation/colores_app.dart';
 import '../../../../core/presentation/texto_con_latex.dart';
 import '../../domain/entities/mensaje_tutor.dart';
 import '../conversacion_tutor.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 /// Chat de dudas con el tutor, dentro de la pantalla del tema.
 class PanelTutor extends StatefulWidget {
@@ -104,9 +105,20 @@ class _PanelTutorState extends State<PanelTutor> {
                       children: [
                         if (conversacion.error case final error?)
                           _AvisoError(error),
-                        if (conversacion.pensando) const _Pensando(),
+                        if (conversacion.pensando)
+                          const FilaEntrante(
+                            key: ValueKey('pensando'),
+                            indice: 0,
+                            retraso: Duration.zero,
+                            child: _Pensando(),
+                          ),
                         for (final mensaje in mensajes.reversed)
-                          _Burbuja(mensaje),
+                          FilaEntrante(
+                            key: ObjectKey(mensaje),
+                            indice: 0,
+                            retraso: Duration.zero,
+                            child: _Burbuja(mensaje),
+                          ),
                       ],
                     ),
             ),

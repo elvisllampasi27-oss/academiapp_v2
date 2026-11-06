@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/animaciones.dart';
+
 /// Componentes visuales de las pantallas de acceso: "vidrio 2.0".
 /// Solo aquí se usa desenfoque (pantallas de entrada); dentro de la app los
 /// paneles son planos para que los celulares de gama baja vayan fluidos.
@@ -200,20 +202,25 @@ class EncabezadoAutenticacion extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          titulo,
-          style: const TextStyle(
-            fontSize: 32,
-            height: 1.05,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.8,
-            color: Colors.white,
+        EntradaDifuminada(
+          child: Text(
+            titulo,
+            style: const TextStyle(
+              fontSize: 32,
+              height: 1.05,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.8,
+              color: Colors.white,
+            ),
           ),
         ),
         const SizedBox(height: 6),
-        Text(
-          subtitulo,
-          style: const TextStyle(fontSize: 14, color: _textoSuave),
+        EntradaDifuminada(
+          retraso: const Duration(milliseconds: 100),
+          child: Text(
+            subtitulo,
+            style: const TextStyle(fontSize: 14, color: _textoSuave),
+          ),
         ),
         const SizedBox(height: 20),
       ],

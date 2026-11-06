@@ -7,6 +7,7 @@ import '../../features/academic/domain/entities/curso.dart';
 import '../../features/academic/domain/entities/tema.dart';
 import '../../features/adaptive_engine/domain/entities/item_mi_ruta.dart';
 import '../../features/adaptive_engine/domain/entities/recomendacion.dart';
+import '../../core/presentation/animaciones.dart';
 
 /// Inicio: lo primero que ve el estudiante es SU ruta de hoy
 /// y lo que le conviene reforzar.
@@ -73,7 +74,7 @@ class InicioPage extends StatelessWidget {
       bottom: false,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
-        children: [
+        children: enCascada([
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -148,7 +149,7 @@ class InicioPage extends StatelessWidget {
                 curso: _curso,
                 onAbrirTema: onAbrirTema,
               ),
-        ],
+        ]),
       ),
     );
   }
@@ -267,21 +268,18 @@ class _TarjetaHoy extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: LinearProgressIndicator(
-              value: hechos / temas.length,
-              minHeight: 6,
-            ),
-          ),
+          BarraProgreso(valor: hechos / temas.length, minHeight: 6),
           const SizedBox(height: 8),
           for (final (i, tema) in temas.indexed)
-            _FilaTema(
-              numero: i + 1,
-              tema: tema,
-              curso: curso(tema.cursoId),
-              practicado: practicados.contains(tema.id),
-              onAbrirTema: onAbrirTema,
+            FilaEntrante(
+              indice: i,
+              child: _FilaTema(
+                numero: i + 1,
+                tema: tema,
+                curso: curso(tema.cursoId),
+                practicado: practicados.contains(tema.id),
+                onAbrirTema: onAbrirTema,
+              ),
             ),
         ],
       ),
@@ -439,13 +437,10 @@ class _TarjetaRefuerzo extends StatelessWidget {
                 style: const TextStyle(fontSize: 13, color: ColoresApp.apagado),
               ),
               const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(99),
-                child: LinearProgressIndicator(
-                  value: item.estado.valor,
-                  minHeight: 5,
-                  color: ColoresApp.naranja,
-                ),
+              BarraProgreso(
+                valor: item.estado.valor,
+                minHeight: 5,
+                color: ColoresApp.naranja,
               ),
             ],
           ),

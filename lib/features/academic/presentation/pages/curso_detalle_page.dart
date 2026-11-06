@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/presentation/colores_app.dart';
 import '../../domain/entities/curso.dart';
 import '../../domain/entities/tema.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 enum EstadoTemaCurso { practicado, hoy, disponible, proximamente }
 
@@ -45,7 +46,7 @@ class CursoDetallePage extends StatelessWidget {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
             sliver: SliverList.list(
-              children: [
+              children: enCascada([
                 Text(
                   [?nombreArea, '${temas.length} temas'].join(' · '),
                   style: const TextStyle(
@@ -70,14 +71,11 @@ class CursoDetallePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(99),
-                  child: LinearProgressIndicator(
-                    value: temas.isEmpty ? 0 : disponibles / temas.length,
-                    minHeight: 6,
-                  ),
+                BarraProgreso(
+                  valor: temas.isEmpty ? 0 : disponibles / temas.length,
+                  minHeight: 6,
                 ),
-              ],
+              ]),
             ),
           ),
           SliverPadding(
@@ -88,11 +86,14 @@ class CursoDetallePage extends StatelessWidget {
               crossAxisSpacing: 10,
               childAspectRatio: 1.05,
               children: [
-                for (final tema in temas)
-                  _TarjetaTema(
-                    tema: tema,
-                    estado: _estado(tema),
-                    alPresionar: () => onAbrirTema(tema),
+                for (final (i, tema) in temas.indexed)
+                  FilaEntrante(
+                    indice: i,
+                    child: _TarjetaTema(
+                      tema: tema,
+                      estado: _estado(tema),
+                      alPresionar: () => onAbrirTema(tema),
+                    ),
                   ),
               ],
             ),

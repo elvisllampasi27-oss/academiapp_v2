@@ -5,6 +5,7 @@ import '../../../../core/presentation/colores_app.dart';
 import '../../domain/entities/item_mi_ruta.dart';
 import '../../domain/entities/recomendacion.dart';
 import '../../domain/services/construir_mi_ruta_service.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 /// Nombre visible de un tema (y su curso) a partir de su ID.
 typedef DescribirTema = ({String titulo, String? curso})? Function(
@@ -97,13 +98,13 @@ class _MiRutaPageState extends State<MiRutaPage> {
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-            children: [
+            children: enCascada([
               for (final tipo in TipoRecomendacion.values)
                 ..._seccion(
                   tipo,
                   items.where((i) => i.recomendacion.tipo == tipo).toList(),
                 ),
-            ],
+            ]),
           );
         },
       ),
@@ -169,10 +170,11 @@ class _MiRutaPageState extends State<MiRutaPage> {
           children: [
             if (descripcion?.curso != null) Text(descripcion!.curso!),
             const SizedBox(height: 6),
-            LinearProgressIndicator(
-              value: item.estado.valor,
+            BarraProgreso(
+              valor: item.estado.valor,
               color: color,
-              backgroundColor: color.withValues(alpha: 0.15),
+              fondo: color.withValues(alpha: 0.15),
+              radio: 0,
             ),
             const SizedBox(height: 4),
             Text(

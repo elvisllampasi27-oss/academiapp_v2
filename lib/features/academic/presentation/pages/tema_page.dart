@@ -18,6 +18,7 @@ import '../../domain/services/seguimiento_clase.dart';
 import '../utils/enlace_recurso.dart';
 import '../../../../core/presentation/video/reproductor_clase.dart';
 import '../../../../core/presentation/video/reproductor_youtube.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 typedef AbrirEnlace = Future<bool> Function(Uri enlace);
 
@@ -344,40 +345,53 @@ class _TemaPageState extends State<TemaPage> {
           ),
         ),
         const SizedBox(height: 12),
-        _AvanceClase(
-          titulo: organizado.clase!.titulo,
-          avance: _avance,
-          onVolver: _control.irA,
+        EntradaDifuminada(
+          retraso: const Duration(milliseconds: 120),
+          child: _AvanceClase(
+            titulo: organizado.clase!.titulo,
+            avance: _avance,
+            onVolver: _control.irA,
+          ),
         ),
         const SizedBox(height: 24),
       ],
       if (material.estaVacio)
-        const Card(
-          child: Padding(
-            padding: EdgeInsets.all(20),
-            child: Text(
-              'El material de este tema se está preparando.',
-              style: TextStyle(fontSize: 16),
+        const EntradaDifuminada(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Text(
+                'El material de este tema se está preparando.',
+                style: TextStyle(fontSize: 16),
+              ),
             ),
           ),
         ),
       if (material.contenidos.isNotEmpty) ...[
-        const _TituloSeccion('Qué aprenderás'),
-        for (final contenido in material.contenidos) _FilaContenido(contenido),
+        const EntradaDifuminada(
+          retraso: Duration(milliseconds: 200),
+          child: _TituloSeccion('Qué aprenderás'),
+        ),
+        for (final (i, contenido) in material.contenidos.indexed)
+          FilaEntrante(indice: i, child: _FilaContenido(contenido)),
         const SizedBox(height: 20),
       ],
+      // La sección del quiz trae su propia entrada (aparece al cargar).
       ?widget.practica?.call(quizHabilitado),
       if (organizado.otros.isNotEmpty) ...[
         const SizedBox(height: 20),
         const _TituloSeccion('Más material'),
-        for (final recurso in organizado.otros)
-          Card(
-            child: ListTile(
-              leading: Icon(_iconoDe(recurso.tipo)),
-              title: Text(recurso.titulo),
-              subtitle: Text(_etiquetaDe(recurso.tipo)),
-              trailing: const Icon(Icons.open_in_new, size: 18),
-              onTap: () => _abrir(recurso),
+        for (final (i, recurso) in organizado.otros.indexed)
+          FilaEntrante(
+            indice: i + 4,
+            child: Card(
+              child: ListTile(
+                leading: Icon(_iconoDe(recurso.tipo)),
+                title: Text(recurso.titulo),
+                subtitle: Text(_etiquetaDe(recurso.tipo)),
+                trailing: const Icon(Icons.open_in_new, size: 18),
+                onTap: () => _abrir(recurso),
+              ),
             ),
           ),
       ],
@@ -497,13 +511,12 @@ class _AvanceClase extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
-                value: valor.fraccion,
-                minHeight: 3,
-                color: completa ? ColoresApp.texto : ColoresApp.ambar,
-              ),
+            // Avanza suave entre cada actualización del video.
+            BarraProgreso(
+              valor: valor.fraccion,
+              minHeight: 3,
+              radio: 2,
+              color: completa ? ColoresApp.texto : ColoresApp.ambar,
             ),
             const SizedBox(height: 6),
             Text(

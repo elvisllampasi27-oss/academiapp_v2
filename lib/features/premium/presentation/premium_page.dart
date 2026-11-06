@@ -8,6 +8,7 @@ import '../domain/configuracion_academia.dart';
 import '../domain/cupon.dart';
 import '../domain/pago.dart';
 import '../domain/repositorio_premium.dart';
+import '../../../core/presentation/animaciones.dart';
 
 Future<bool> _abrirExterno(Uri enlace) =>
     launchUrl(enlace, mode: LaunchMode.externalApplication);
@@ -166,7 +167,7 @@ class _PremiumPageState extends State<PremiumPage> {
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-            children: [
+            children: enCascada([
               _Encabezado(
                 premium: premium,
                 hasta: estado.premiumHasta,
@@ -198,7 +199,7 @@ class _PremiumPageState extends State<PremiumPage> {
                 const SizedBox(height: 8),
                 for (final p in estado.pagos) _FilaPago(pago: p),
               ],
-            ],
+            ]),
           );
         },
       ),

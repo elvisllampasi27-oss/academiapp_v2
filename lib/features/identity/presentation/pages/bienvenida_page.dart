@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../widgets/estilo_autenticacion.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 /// Primera pantalla para quien no ha iniciado sesión.
 class BienvenidaPage extends StatelessWidget {
@@ -77,25 +78,34 @@ class BienvenidaPage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 const SizedBox(height: 120),
-                                const Text(
-                                  'Tu ingreso a la UNSCH empieza aquí',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 44,
-                                    height: 1.0,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -1.5,
+                                // Como en el video: el titular entra
+                                // desenfocado y luego el texto.
+                                const EntradaDifuminada(
+                                  duracion: Duration(milliseconds: 700),
+                                  child: Text(
+                                    'Tu ingreso a la UNSCH empieza aquí',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 44,
+                                      height: 1.0,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -1.5,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 18),
-                                const Text(
-                                  'Temas cada día, práctica con corrección al '
-                                  'instante y una ruta que se adapta a lo que '
-                                  'te falta.',
-                                  style: TextStyle(
-                                    color: Color(0xFFD4D4D8),
-                                    fontSize: 16,
-                                    height: 1.5,
+                                const EntradaDifuminada(
+                                  retraso: Duration(milliseconds: 200),
+                                  duracion: Duration(milliseconds: 600),
+                                  child: Text(
+                                    'Temas cada día, práctica con corrección '
+                                    'al instante y una ruta que se adapta a '
+                                    'lo que te falta.',
+                                    style: TextStyle(
+                                      color: Color(0xFFD4D4D8),
+                                      fontSize: 16,
+                                      height: 1.5,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 28),

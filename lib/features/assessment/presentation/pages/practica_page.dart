@@ -475,7 +475,7 @@ class _TarjetaCorreccion extends StatelessWidget {
           children: [
             Row(
               children: [
-                _IconoVeredicto(
+                IconoVeredicto(
                   correcta: item.esCorrecta,
                   color: colorEstado,
                   retraso: retrasoIcono,
@@ -552,93 +552,6 @@ class _AnilloPuntaje extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// El ✓ aparece con un rebote; la ✗ aparece y se sacude una vez.
-/// Corre una sola vez y queda quieto (sin efectos encima).
-class _IconoVeredicto extends StatefulWidget {
-  final bool correcta;
-  final Color color;
-  final Duration retraso;
-
-  const _IconoVeredicto({
-    required this.correcta,
-    required this.color,
-    required this.retraso,
-  });
-
-  @override
-  State<_IconoVeredicto> createState() => _IconoVeredictoState();
-}
-
-class _IconoVeredictoState extends State<_IconoVeredicto>
-    with SingleTickerProviderStateMixin {
-  static const _duracion = Duration(milliseconds: 700);
-
-  late final AnimationController _control = AnimationController(
-    vsync: this,
-    duration: widget.retraso + _duracion,
-  );
-
-  /// Parte del tiempo total en que empieza a moverse.
-  late final double _inicio =
-      widget.retraso.inMicroseconds /
-      (widget.retraso + _duracion).inMicroseconds;
-
-  late final Animation<double> _aparece = CurvedAnimation(
-    parent: _control,
-    curve: Interval(
-      _inicio,
-      _inicio + (1 - _inicio) * 0.5,
-      curve: Curves.easeOutBack,
-    ),
-  );
-  late final Animation<double> _sacude = CurvedAnimation(
-    parent: _control,
-    curve: Interval(_inicio + (1 - _inicio) * 0.5, 1),
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_control.isAnimating || _control.isCompleted) return;
-    if (sinAnimaciones(context)) {
-      _control.value = 1;
-    } else {
-      _control.forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _control.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _control,
-      child: Icon(
-        widget.correcta ? Icons.check_circle : Icons.cancel,
-        color: widget.color,
-      ),
-      builder: (context, icono) {
-        final s = _sacude.value;
-        // Tres vaivenes que se apagan; en 0 y en 1 queda en su lugar.
-        final dx = widget.correcta
-            ? 0.0
-            : math.sin(s * math.pi * 6) * 4 * (1 - s);
-        return Transform.translate(
-          offset: Offset(dx, 0),
-          child: Transform.scale(
-            scale: _aparece.value.clamp(0, 1.3).toDouble(),
-            child: icono,
-          ),
-        );
-      },
     );
   }
 }

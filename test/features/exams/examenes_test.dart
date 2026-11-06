@@ -213,6 +213,8 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Terminar').last);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
+      // La cifra del resultado cuenta hasta su valor.
+      await tester.pump(const Duration(seconds: 2));
 
       expect(servicio.enviadas, {'p1': 'b'});
       expect(find.text('1 de 2 correctas'), findsOneWidget);

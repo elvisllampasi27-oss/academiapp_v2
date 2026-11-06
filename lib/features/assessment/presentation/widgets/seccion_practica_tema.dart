@@ -4,6 +4,7 @@ import '../../../../core/presentation/colores_app.dart';
 import '../../domain/entities/evaluacion.dart';
 import '../../domain/services/practica_tema_service.dart';
 import '../pages/practica_page.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 /// Bloque "Quiz del tema" dentro de la pantalla del tema.
 /// Mientras [habilitada] sea false (la clase no se terminó) no se puede
@@ -67,66 +68,73 @@ class _SeccionPracticaTemaState extends State<SeccionPracticaTema> {
         final disponible =
             widget.habilitada && !snapshot.hasError && practicas.isNotEmpty;
 
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Quiz del tema',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
+        return EntradaDifuminada(
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Quiz del tema',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
+                      // Al terminar la clase, la etiqueta aparece con su
+                      // animación (recién se crea en ese momento).
+                      if (disponible)
+                        const EntradaDifuminada(child: _Etiqueta('Disponible')),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  if (snapshot.hasError)
+                    const Text('No se pudieron cargar las prácticas.')
+                  else if (practicas.isEmpty)
+                    const Text(
+                      'Todavía no hay quiz para este tema.',
+                      style: TextStyle(color: ColoresApp.apagado),
+                    )
+                  else if (!widget.habilitada) ...[
+                    const Text(
+                      'Termina la clase para activar el quiz.',
+                      style: TextStyle(color: ColoresApp.apagado),
                     ),
-                    if (disponible) const _Etiqueta('Disponible'),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                if (snapshot.hasError)
-                  const Text('No se pudieron cargar las prácticas.')
-                else if (practicas.isEmpty)
-                  const Text(
-                    'Todavía no hay quiz para este tema.',
-                    style: TextStyle(color: ColoresApp.apagado),
-                  )
-                else if (!widget.habilitada) ...[
-                  const Text(
-                    'Termina la clase para activar el quiz.',
-                    style: TextStyle(color: ColoresApp.apagado),
-                  ),
-                  const SizedBox(height: 12),
-                  const FilledButton(
-                    onPressed: null,
-                    child: Text('Empezar quiz'),
-                  ),
-                ] else
-                  for (final practica in practicas)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${etiquetaNivel(practica.nivel)} · '
-                              'corrección al instante',
-                              style: const TextStyle(color: ColoresApp.apagado),
+                    const SizedBox(height: 12),
+                    const FilledButton(
+                      onPressed: null,
+                      child: Text('Empezar quiz'),
+                    ),
+                  ] else
+                    for (final practica in practicas)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${etiquetaNivel(practica.nivel)} · '
+                                'corrección al instante',
+                                style: const TextStyle(
+                                  color: ColoresApp.apagado,
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          FilledButton(
-                            onPressed: () => _empezar(practica),
-                            child: const Text('Empezar quiz'),
-                          ),
-                        ],
+                            const SizedBox(width: 12),
+                            FilledButton(
+                              onPressed: () => _empezar(practica),
+                              child: const Text('Empezar quiz'),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-              ],
+                ],
+              ),
             ),
           ),
         );

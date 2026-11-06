@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/presentation/colores_app.dart';
 import '../../../core/presentation/formato_fecha.dart';
 import '../domain/reporte.dart';
+import '../../../core/presentation/animaciones.dart';
 
 /// Quién reporta (lo pone la app, no el estudiante).
 class AutorReporte {
@@ -221,61 +222,68 @@ class _MisReportesPageState extends State<MisReportesPage> {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              for (final r in lista)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                r.contexto.titulo.isEmpty
-                                    ? r.tipo.etiqueta
-                                    : r.contexto.titulo,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
+              for (final (i, r) in lista.indexed)
+                FilaEntrante(
+                  indice: i,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  r.contexto.titulo.isEmpty
+                                      ? r.tipo.etiqueta
+                                      : r.contexto.titulo,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Text(
-                              r.estado.etiqueta,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: switch (r.estado) {
-                                  EstadoReporte.nuevo => ColoresApp.apagado,
-                                  EstadoReporte.enRevision => ColoresApp.ambar,
-                                  EstadoReporte.resuelto => ColoresApp.celeste,
-                                },
+                              Text(
+                                r.estado.etiqueta,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: switch (r.estado) {
+                                    EstadoReporte.nuevo => ColoresApp.apagado,
+                                    EstadoReporte.enRevision =>
+                                      ColoresApp.ambar,
+                                    EstadoReporte.resuelto =>
+                                      ColoresApp.celeste,
+                                  },
+                                ),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${r.tipo.etiqueta} · ${fechaCorta(r.creadoEn)}',
+                            style: const TextStyle(
+                              color: ColoresApp.apagado,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(r.mensaje),
+                          if (r.respuesta case final respuesta?) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: ColoresApp.celeste.withValues(
+                                  alpha: 0.10,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text('Respuesta: $respuesta'),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${r.tipo.etiqueta} · ${fechaCorta(r.creadoEn)}',
-                          style: const TextStyle(
-                            color: ColoresApp.apagado,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(r.mensaje),
-                        if (r.respuesta case final respuesta?) ...[
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: ColoresApp.celeste.withValues(alpha: 0.10),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text('Respuesta: $respuesta'),
-                          ),
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),

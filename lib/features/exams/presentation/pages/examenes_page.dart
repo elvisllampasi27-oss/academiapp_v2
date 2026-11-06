@@ -9,6 +9,7 @@ import '../../domain/repositories/servicio_examenes.dart';
 import 'practica_examen_page.dart';
 import 'ranking_semanal_page.dart';
 import 'simulacro_page.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 /// Pestaña Exámenes: el examen semanal (sábado y domingo) y los
 /// exámenes pasados, donde se ve la respuesta al instante.
@@ -120,7 +121,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
-            children: [
+            children: enCascada([
               const Text(
                 'Exámenes',
                 style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
@@ -194,6 +195,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
               else
                 for (final examen in delTipo)
                   Card(
+                    key: ValueKey('examen-${examen.id}'),
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 18,
@@ -208,7 +210,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
                       onTap: () => _abrirPasado(examen),
                     ),
                   ),
-            ],
+            ]),
           );
         },
       ),
