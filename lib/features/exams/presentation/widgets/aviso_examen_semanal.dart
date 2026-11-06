@@ -73,16 +73,18 @@ class _AvisoExamenSemanalState extends State<AvisoExamenSemanal> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      // En una línea; si no cabe, se desliza al entrar al
+                      // Inicio y luego cada 20 s.
+                      Marquesina(
                         e.intento == EstadoIntento.enCurso
                             ? 'Tienes tu examen de la semana ${e.semana} en curso'
                             : 'Tu examen de la semana ${e.semana} está listo',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        estilo: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 2),
-                      Text(
+                      Marquesina(
                         'Un solo intento$hasta',
-                        style: const TextStyle(color: ColoresApp.apagado),
+                        estilo: const TextStyle(color: ColoresApp.apagado),
                       ),
                     ],
                   ),

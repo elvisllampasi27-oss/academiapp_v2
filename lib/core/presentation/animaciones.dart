@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
@@ -473,6 +474,203 @@ class _ReaccionState extends State<Reaccion>
           child: Transform.scale(scale: escala, child: hijo),
         );
       },
+    );
+  }
+}
+
+/// Vuelve a aparecer (desenfocado y aclarándose, corto) cada vez que
+/// [disparo] cambia, sin volver a crear su contenido: no se pierde lo
+/// escrito ni se vuelve a leer nada. Se usa al cambiar de pestaña.
+class ReaparicionDifuminada extends StatefulWidget {
+  final Object? disparo;
+  final Widget child;
+
+  const ReaparicionDifuminada({
+    super.key,
+    required this.disparo,
+    required this.child,
+  });
+
+  @override
+  State<ReaparicionDifuminada> createState() => _ReaparicionDifuminadaState();
+}
+
+class _ReaparicionDifuminadaState extends State<ReaparicionDifuminada>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _control = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 300),
+    value: 1,
+  );
+  late final Animation<double> _t = CurvedAnimation(
+    parent: _control,
+    curve: Curves.easeOutCubic,
+  );
+
+  @override
+  void didUpdateWidget(ReaparicionDifuminada anterior) {
+    super.didUpdateWidget(anterior);
+    if (widget.disparo != anterior.disparo && !sinAnimaciones(context)) {
+      _control.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _control.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _t,
+      child: widget.child,
+      builder: (context, hijo) {
+        final t = _t.value;
+        final desenfoque = 4 * (1 - t);
+        return Opacity(
+          opacity: 0.35 + 0.65 * t,
+          child: Transform.translate(
+            offset: Offset(0, 6 * (1 - t)),
+            child: ImageFiltered(
+              enabled: desenfoque >= 0.2,
+              imageFilter: ImageFilter.blur(
+                sigmaX: desenfoque,
+                sigmaY: desenfoque,
+              ),
+              child: hijo,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Texto de una línea que, si no cabe, se desliza para mostrarse completo
+/// (ida y vuelta) y se queda quieto. No corre todo el rato: una pasada al
+/// aparecer y otra cada [cada], solo si la pantalla está a la vista. Si
+/// cabe, o con "reducir animaciones", es un texto normal (con "…").
+class Marquesina extends StatefulWidget {
+  final String texto;
+  final TextStyle? estilo;
+  final Duration cada;
+
+  /// Velocidad del deslizamiento, en píxeles por segundo.
+  final double velocidad;
+
+  const Marquesina(
+    this.texto, {
+    super.key,
+    this.estilo,
+    this.cada = const Duration(seconds: 20),
+    this.velocidad = 40,
+  });
+
+  @override
+  State<Marquesina> createState() => _MarquesinaState();
+}
+
+class _MarquesinaState extends State<Marquesina>
+    with SingleTickerProviderStateMixin {
+  static const _pausa = Duration(milliseconds: 1200);
+
+  final _desplazamiento = ScrollController();
+  late final AnimationController _control = AnimationController(vsync: this)
+    ..addListener(_mover);
+  Animation<double> _recorrido = const AlwaysStoppedAnimation(0);
+  Timer? _intervalo;
+  double _sobrante = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _pasada());
+    _intervalo = Timer.periodic(widget.cada, (_) => _pasada());
+  }
+
+  @override
+  void didUpdateWidget(Marquesina anterior) {
+    super.didUpdateWidget(anterior);
+    if (widget.texto != anterior.texto) {
+      _control.stop();
+      if (_desplazamiento.hasClients) _desplazamiento.jumpTo(0);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _pasada());
+    }
+  }
+
+  /// Una pasada: espera, va hasta el final, espera y vuelve al inicio.
+  void _pasada() {
+    if (!mounted || _control.isAnimating || sinAnimaciones(context)) return;
+    // Solo si se ve: no en una pestaña oculta ni debajo de otra pantalla.
+    final visible =
+        TickerMode.of(context) &&
+        (ModalRoute.of(context)?.isCurrent ?? true);
+    if (!visible || !_desplazamiento.hasClients) return;
+
+    _sobrante = _desplazamiento.position.maxScrollExtent;
+    if (_sobrante < 1) return;
+
+    final ida = Duration(
+      milliseconds: (_sobrante / widget.velocidad * 1000).round(),
+    );
+    final vuelta = ida ~/ 2;
+    final total = _pausa * 2 + ida + vuelta;
+    double peso(Duration d) => d.inMilliseconds / total.inMilliseconds;
+
+    _recorrido = TweenSequence<double>([
+      TweenSequenceItem(tween: ConstantTween(0), weight: peso(_pausa)),
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 0,
+          end: 1,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: peso(ida),
+      ),
+      TweenSequenceItem(tween: ConstantTween(1), weight: peso(_pausa)),
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 1,
+          end: 0,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: peso(vuelta),
+      ),
+    ]).animate(_control);
+    _control
+      ..duration = total
+      ..forward(from: 0);
+  }
+
+  void _mover() {
+    if (_desplazamiento.hasClients) {
+      _desplazamiento.jumpTo(_recorrido.value * _sobrante);
+    }
+  }
+
+  @override
+  void dispose() {
+    _intervalo?.cancel();
+    _control.dispose();
+    _desplazamiento.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (sinAnimaciones(context)) {
+      return Text(
+        widget.texto,
+        style: widget.estilo,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+    return SingleChildScrollView(
+      controller: _desplazamiento,
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      child: Text(widget.texto, style: widget.estilo, maxLines: 1),
     );
   }
 }

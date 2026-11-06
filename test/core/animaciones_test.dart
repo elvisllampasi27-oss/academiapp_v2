@@ -62,4 +62,56 @@ void main() {
     expect(enMovimiento, isNot(quieto));
     expect(quieto, 0);
   });
+
+  testWidgets('la marquesina se desliza si no cabe y vuelve a quedar quieta', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        const Center(
+          child: SizedBox(
+            width: 120,
+            child: Marquesina('Un título muy largo que no entra en la línea'),
+          ),
+        ),
+      ),
+    );
+    ScrollController control() =>
+        tester.widget<SingleChildScrollView>(
+          find.byType(SingleChildScrollView),
+        ).controller!;
+
+    await tester.pump(const Duration(milliseconds: 2000));
+    expect(control().offset, greaterThan(0)); // deslizándose
+
+    await tester.pumpAndSettle();
+    expect(control().offset, 0); // de vuelta y quieta
+    expect(
+      find.text('Un título muy largo que no entra en la línea'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('la marquesina no se mueve si el texto cabe', (tester) async {
+    await tester.pumpWidget(_app(const Marquesina('Corto')));
+    await tester.pump(const Duration(seconds: 3));
+    expect(tester.hasRunningAnimations, isFalse);
+  });
+
+  testWidgets('al cambiar el disparo reaparece y termina nítido', (
+    tester,
+  ) async {
+    Widget pagina(int pestana) =>
+        _app(ReaparicionDifuminada(disparo: pestana, child: const Text('x')));
+    await tester.pumpWidget(pagina(0));
+    ImageFiltered filtro() => tester.widget(find.byType(ImageFiltered));
+    expect(filtro().enabled, isFalse);
+
+    await tester.pumpWidget(pagina(1));
+    await tester.pump(const Duration(milliseconds: 40));
+    expect(filtro().enabled, isTrue);
+
+    await tester.pumpAndSettle();
+    expect(filtro().enabled, isFalse);
+  });
 }

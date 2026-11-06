@@ -270,11 +270,11 @@ class _TemaPageState extends State<TemaPage> {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 13, color: ColoresApp.apagado),
             ),
-            Text(
+            // Si el título no cabe, se desliza para leerse completo (al
+            // entrar y luego cada 20 s), en vez de cortarse con "…".
+            Marquesina(
               tema.titulo,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              estilo: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
           ],
         ),

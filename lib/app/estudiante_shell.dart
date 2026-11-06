@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/presentation/colores_app.dart';
+import '../core/presentation/animaciones.dart';
 
 class PestanaApp {
   final String etiqueta;
@@ -43,14 +44,19 @@ class _EstudianteShellState extends State<EstudianteShell> {
 
         return Scaffold(
           extendBody: true,
-          body: IndexedStack(
-            index: actual,
-            children: [
-              for (final (i, pestana) in widget.pestanas.indexed)
-                _visitadas.contains(i)
-                    ? pestana.contenido
-                    : const SizedBox.shrink(),
-            ],
+          // Al cambiar de pestaña la página reaparece con un desenfoque
+          // corto. No se vuelve a crear: conserva su estado y no relee nada.
+          body: ReaparicionDifuminada(
+            disparo: actual,
+            child: IndexedStack(
+              index: actual,
+              children: [
+                for (final (i, pestana) in widget.pestanas.indexed)
+                  _visitadas.contains(i)
+                      ? pestana.contenido
+                      : const SizedBox.shrink(),
+              ],
+            ),
           ),
           bottomNavigationBar: BarraNavegacionApp(
             pestanas: widget.pestanas,
