@@ -80,6 +80,9 @@ void main() {
         .widget<SingleChildScrollView>(find.byType(SingleChildScrollView))
         .controller!;
 
+    // El primer cuadro solo arranca el reloj de la animación; recién desde
+    // el siguiente avanza el tiempo.
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 2000));
     expect(control().offset, greaterThan(0)); // deslizándose
 
@@ -134,6 +137,7 @@ void main() {
           ),
         ),
       );
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 2500));
       expect(tester.hasRunningAnimations, isTrue);
 

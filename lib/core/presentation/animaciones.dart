@@ -618,7 +618,8 @@ class _MarquesinaState extends State<Marquesina>
     if (!mounted || _control.isAnimating || sinAnimaciones(context)) return;
     // Solo si se ve: no en una pestaña oculta ni debajo de otra pantalla.
     final visible =
-        TickerMode.of(context) && (ModalRoute.of(context)?.isCurrent ?? true);
+        TickerMode.valuesOf(context).enabled &&
+        (ModalRoute.of(context)?.isCurrent ?? true);
     if (!visible || !_desplazamiento.hasClients) return;
 
     _sobrante = _desplazamiento.position.maxScrollExtent;
