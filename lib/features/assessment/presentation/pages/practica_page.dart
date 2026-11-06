@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/correccion_intento.dart';
@@ -6,6 +8,7 @@ import '../../domain/entities/pregunta_presentada.dart';
 import '../../domain/services/practica_tema_service.dart';
 import '../../../../core/presentation/texto_con_latex.dart';
 import '../../../../core/presentation/imagen_figura.dart';
+import '../../../../core/presentation/animaciones.dart';
 
 /// Resolver una práctica: una pregunta a la vez y, al final, la corrección
 /// que devuelve el servidor (con la respuesta correcta y la explicación).
@@ -170,31 +173,55 @@ class _PracticaPageState extends State<PracticaPage> {
 
     return Column(
       children: [
-        LinearProgressIndicator(value: (_indice + 1) / preguntas.length),
+        // La barra avanza suave hasta la pregunta actual.
+        TweenAnimationBuilder<double>(
+          tween: Tween(end: (_indice + 1) / preguntas.length),
+          duration: sinAnimaciones(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+          builder: (context, avance, _) =>
+              LinearProgressIndicator(value: avance),
+        ),
         Expanded(
+          // Con la clave, cada pregunta nueva entra desde arriba con su
+          // animación (y la lista vuelve al inicio).
           child: ListView(
+            key: ValueKey(pregunta.id),
             padding: const EdgeInsets.all(24),
             children: [
-              Text(
-                'Pregunta ${_indice + 1} de ${preguntas.length}',
-                style: Theme.of(context).textTheme.labelLarge,
+              EntradaDifuminada(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Pregunta ${_indice + 1} de ${preguntas.length}',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 12),
+                    TextoConLatex(
+                      pregunta.enunciado,
+                      estilo: const TextStyle(fontSize: 18),
+                    ),
+                    if (pregunta.imagen case final imagen?)
+                      ImagenFigura(imagen),
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
-              TextoConLatex(
-                pregunta.enunciado,
-                estilo: const TextStyle(fontSize: 18),
-              ),
-              if (pregunta.imagen case final imagen?) ImagenFigura(imagen),
               const SizedBox(height: 20),
               for (final (i, opcion) in pregunta.opciones.indexed)
-                _TarjetaOpcion(
-                  letra: String.fromCharCode(65 + i),
-                  texto: opcion.texto,
-                  seleccionada: elegida == opcion.id,
-                  alPresionar: _enviando
-                      ? null
-                      : () =>
-                            setState(() => _elegidas[pregunta.id] = opcion.id),
+                FilaEntrante(
+                  indice: i,
+                  child: _TarjetaOpcion(
+                    letra: String.fromCharCode(65 + i),
+                    texto: opcion.texto,
+                    seleccionada: elegida == opcion.id,
+                    alPresionar: _enviando
+                        ? null
+                        : () => setState(
+                            () => _elegidas[pregunta.id] = opcion.id,
+                          ),
+                  ),
                 ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
@@ -243,7 +270,9 @@ class _PracticaPageState extends State<PracticaPage> {
   }
 }
 
-class _TarjetaOpcion extends StatelessWidget {
+/// Opción de respuesta: al elegirla se hunde un poco y vuelve (como un
+/// botón físico) y sus colores cambian suave, sin saltos.
+class _TarjetaOpcion extends StatefulWidget {
   final String letra;
   final String texto;
   final bool seleccionada;
@@ -257,19 +286,83 @@ class _TarjetaOpcion extends StatelessWidget {
   });
 
   @override
+  State<_TarjetaOpcion> createState() => _TarjetaOpcionState();
+}
+
+class _TarjetaOpcionState extends State<_TarjetaOpcion>
+    with SingleTickerProviderStateMixin {
+  static const _duracion = Duration(milliseconds: 220);
+
+  late final AnimationController _pulso = AnimationController(
+    vsync: this,
+    duration: _duracion,
+    value: 1,
+  );
+  late final Animation<double> _escala = TweenSequence<double>([
+    TweenSequenceItem(tween: Tween(begin: 1, end: 0.97), weight: 40),
+    TweenSequenceItem(
+      tween: Tween<double>(
+        begin: 0.97,
+        end: 1,
+      ).chain(CurveTween(curve: Curves.easeOutBack)),
+      weight: 60,
+    ),
+  ]).animate(_pulso);
+
+  @override
+  void didUpdateWidget(_TarjetaOpcion anterior) {
+    super.didUpdateWidget(anterior);
+    if (widget.seleccionada && !anterior.seleccionada) {
+      if (!sinAnimaciones(context)) _pulso.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulso.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colores = Theme.of(context).colorScheme;
+    final elegida = widget.seleccionada;
+    final duracion = sinAnimaciones(context) ? Duration.zero : _duracion;
+    final fondoNormal =
+        Theme.of(context).cardTheme.color ?? colores.surfaceContainerLow;
 
-    return Card(
-      color: seleccionada ? colores.primaryContainer : null,
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: seleccionada ? colores.primary : null,
-          foregroundColor: seleccionada ? colores.onPrimary : null,
-          child: Text(letra),
+    return ScaleTransition(
+      scale: _escala,
+      child: TweenAnimationBuilder<Color?>(
+        tween: ColorTween(
+          end: elegida ? colores.primaryContainer : fondoNormal,
         ),
-        title: TextoConLatex(texto),
-        onTap: alPresionar,
+        duration: duracion,
+        builder: (context, fondo, hijo) => Card(color: fondo, child: hijo),
+        child: ListTile(
+          leading: AnimatedContainer(
+            duration: duracion,
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: elegida ? colores.primary : colores.secondaryContainer,
+            ),
+            child: AnimatedDefaultTextStyle(
+              duration: duracion,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: elegida
+                    ? colores.onPrimary
+                    : colores.onSecondaryContainer,
+              ),
+              child: Text(widget.letra),
+            ),
+          ),
+          title: TextoConLatex(widget.texto),
+          onTap: widget.alPresionar,
+        ),
       ),
     );
   }
@@ -294,16 +387,38 @@ class _VistaResultado extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text(
-          '${resultado.respuestasCorrectas} de ${resultado.totalPreguntas} correctas',
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        EntradaDifuminada(
+          child: Row(
+            children: [
+              _AnilloPuntaje(puntaje: resultado.puntaje),
+              const SizedBox(width: 20),
+              Expanded(
+                child: NumeroQueCuenta(
+                  '${resultado.respuestasCorrectas} de '
+                  '${resultado.totalPreguntas} correctas',
+                  estilo: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 4),
-        Text('${resultado.puntaje.round()} %'),
         const SizedBox(height: 24),
         for (final (i, item) in correccion.detalle.indexed)
           if (porPregunta[item.preguntaId] case final pregunta?)
-            _TarjetaCorreccion(numero: i + 1, pregunta: pregunta, item: item),
+            FilaEntrante(
+              indice: i,
+              child: _TarjetaCorreccion(
+                numero: i + 1,
+                pregunta: pregunta,
+                item: item,
+                retrasoIcono: Duration(
+                  milliseconds: 450 + 45 * math.min(i, 12),
+                ),
+              ),
+            ),
         const SizedBox(height: 16),
         // OverflowBar: en línea si caben; uno debajo del otro si no.
         OverflowBar(
@@ -331,11 +446,13 @@ class _TarjetaCorreccion extends StatelessWidget {
   final int numero;
   final PreguntaPresentada pregunta;
   final CorreccionPregunta item;
+  final Duration retrasoIcono;
 
   const _TarjetaCorreccion({
     required this.numero,
     required this.pregunta,
     required this.item,
+    required this.retrasoIcono,
   });
 
   String _textoOpcion(String? id) {
@@ -358,9 +475,10 @@ class _TarjetaCorreccion extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  item.esCorrecta ? Icons.check_circle : Icons.cancel,
+                _IconoVeredicto(
+                  correcta: item.esCorrecta,
                   color: colorEstado,
+                  retraso: retrasoIcono,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -393,6 +511,134 @@ class _TarjetaCorreccion extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// El puntaje en un anillo que se llena mientras el porcentaje cuenta.
+class _AnilloPuntaje extends StatelessWidget {
+  final double puntaje;
+
+  const _AnilloPuntaje({required this.puntaje});
+
+  @override
+  Widget build(BuildContext context) {
+    final colores = Theme.of(context).colorScheme;
+    final fin = (puntaje / 100).clamp(0, 1).toDouble();
+
+    return SizedBox.square(
+      dimension: 76,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: fin),
+            duration: sinAnimaciones(context)
+                ? Duration.zero
+                : const Duration(milliseconds: 1000),
+            curve: Curves.easeOutCubic,
+            builder: (context, valor, _) => CircularProgressIndicator(
+              value: valor,
+              strokeWidth: 7,
+              strokeCap: StrokeCap.round,
+              backgroundColor: colores.surfaceContainerHighest,
+            ),
+          ),
+          Center(
+            child: NumeroQueCuenta(
+              '${puntaje.round()} %',
+              estilo: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// El ✓ aparece con un rebote; la ✗ aparece y se sacude una vez.
+/// Corre una sola vez y queda quieto (sin efectos encima).
+class _IconoVeredicto extends StatefulWidget {
+  final bool correcta;
+  final Color color;
+  final Duration retraso;
+
+  const _IconoVeredicto({
+    required this.correcta,
+    required this.color,
+    required this.retraso,
+  });
+
+  @override
+  State<_IconoVeredicto> createState() => _IconoVeredictoState();
+}
+
+class _IconoVeredictoState extends State<_IconoVeredicto>
+    with SingleTickerProviderStateMixin {
+  static const _duracion = Duration(milliseconds: 700);
+
+  late final AnimationController _control = AnimationController(
+    vsync: this,
+    duration: widget.retraso + _duracion,
+  );
+
+  /// Parte del tiempo total en que empieza a moverse.
+  late final double _inicio =
+      widget.retraso.inMicroseconds /
+      (widget.retraso + _duracion).inMicroseconds;
+
+  late final Animation<double> _aparece = CurvedAnimation(
+    parent: _control,
+    curve: Interval(
+      _inicio,
+      _inicio + (1 - _inicio) * 0.5,
+      curve: Curves.easeOutBack,
+    ),
+  );
+  late final Animation<double> _sacude = CurvedAnimation(
+    parent: _control,
+    curve: Interval(_inicio + (1 - _inicio) * 0.5, 1),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_control.isAnimating || _control.isCompleted) return;
+    if (sinAnimaciones(context)) {
+      _control.value = 1;
+    } else {
+      _control.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _control.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _control,
+      child: Icon(
+        widget.correcta ? Icons.check_circle : Icons.cancel,
+        color: widget.color,
+      ),
+      builder: (context, icono) {
+        final s = _sacude.value;
+        // Tres vaivenes que se apagan; en 0 y en 1 queda en su lugar.
+        final dx = widget.correcta
+            ? 0.0
+            : math.sin(s * math.pi * 6) * 4 * (1 - s);
+        return Transform.translate(
+          offset: Offset(dx, 0),
+          child: Transform.scale(
+            scale: _aparece.value.clamp(0, 1.3).toDouble(),
+            child: icono,
+          ),
+        );
+      },
     );
   }
 }
