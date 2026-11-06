@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../animacion_panel.dart';
 import '../../features/reportes/domain/reporte.dart';
 import '../estudiantes/modelo_estudiantes.dart';
 import '../tema_panel.dart';
@@ -152,12 +153,15 @@ class _BandejaPageState extends State<BandejaPage> {
                 principal: ColumnaPanel(
                   espacio: 10,
                   children: [
-                    for (final r in lista)
-                      _TarjetaReporte(
-                        reporte: r,
-                        elegido: r.id == elegido.id,
-                        ahora: widget.ahora(),
-                        onTap: () => setState(() => _elegidoId = r.id),
+                    for (final (iFila, r) in lista.indexed)
+                      FilaEntrante(
+                        indice: iFila,
+                        child: _TarjetaReporte(
+                          reporte: r,
+                          elegido: r.id == elegido.id,
+                          ahora: widget.ahora(),
+                          onTap: () => setState(() => _elegidoId = r.id),
+                        ),
                       ),
                   ],
                 ),

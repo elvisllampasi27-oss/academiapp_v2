@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../animacion_panel.dart';
 import '../../core/presentation/texto.dart';
 import '../../features/academic/domain/entities/version_academica.dart';
 import '../importar/dialogo_importar_json.dart';
@@ -416,90 +417,94 @@ class _ExamenesAdminPageState extends State<ExamenesAdminPage> {
         }
         return ListView(
           children: [
-            for (final e in examenes)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Material(
-                  color: e.id == _examen?.id
-                      ? const Color(0x14FFFFFF)
-                      : Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(
-                      color: e.id == _examen?.id
-                          ? p.acento.withValues(alpha: 0.6)
-                          : Colors.transparent,
+            for (final (iFila, e) in examenes.indexed)
+              FilaEntrante(
+                indice: iFila,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Material(
+                    color: e.id == _examen?.id
+                        ? const Color(0x14FFFFFF)
+                        : Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: e.id == _examen?.id
+                            ? p.acento.withValues(alpha: 0.6)
+                            : Colors.transparent,
+                      ),
                     ),
-                  ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () => _elegirExamen(e),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  e.titulo,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                // Wrap: en columnas angostas baja a otra
-                                // línea en vez de desbordarse.
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 4,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  children: [
-                                    e.publicado
-                                        ? const Insignia(
-                                            'Publicado',
-                                            tono: TonoInsignia.secundario,
-                                          )
-                                        : const Insignia(
-                                            'Borrador',
-                                            tono: TonoInsignia.acento,
-                                          ),
-                                    Text(
-                                      '${e.totalPreguntas} preguntas',
-                                      style: TextStyle(
-                                        color: p.apagado,
-                                        fontSize: 12,
-                                      ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => _elegirExamen(e),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    e.titulo,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
                                     ),
-                                  ],
-                                ),
-                              ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // Wrap: en columnas angostas baja a otra
+                                  // línea en vez de desbordarse.
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    children: [
+                                      e.publicado
+                                          ? const Insignia(
+                                              'Publicado',
+                                              tono: TonoInsignia.secundario,
+                                            )
+                                          : const Insignia(
+                                              'Borrador',
+                                              tono: TonoInsignia.acento,
+                                            ),
+                                      Text(
+                                        '${e.totalPreguntas} preguntas',
+                                        style: TextStyle(
+                                          color: p.apagado,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          IconButton(
-                            tooltip: e.publicado
-                                ? 'Pasar a borrador (los estudiantes no lo ven)'
-                                : 'Publicar',
-                            icon: Icon(
-                              e.publicado
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              size: 20,
-                              color: p.apagado,
+                            IconButton(
+                              tooltip: e.publicado
+                                  ? 'Pasar a borrador (los estudiantes no lo ven)'
+                                  : 'Publicar',
+                              icon: Icon(
+                                e.publicado
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                size: 20,
+                                color: p.apagado,
+                              ),
+                              onPressed: () => _cambiarEstado(e),
                             ),
-                            onPressed: () => _cambiarEstado(e),
-                          ),
-                          IconButton(
-                            tooltip: 'Eliminar examen',
-                            icon: Icon(
-                              Icons.delete_outline,
-                              size: 20,
-                              color: p.apagado,
+                            IconButton(
+                              tooltip: 'Eliminar examen',
+                              icon: Icon(
+                                Icons.delete_outline,
+                                size: 20,
+                                color: p.apagado,
+                              ),
+                              onPressed: () => _eliminarExamen(e),
                             ),
-                            onPressed: () => _eliminarExamen(e),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

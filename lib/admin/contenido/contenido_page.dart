@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../animacion_panel.dart';
 import '../../features/academic/domain/entities/curso.dart';
 import '../../features/academic/domain/entities/tema.dart';
 import '../../features/academic/domain/entities/version_academica.dart';
@@ -198,12 +199,19 @@ class _ContenidoPageState extends State<ContenidoPage> {
                     controller: _desplazamientoCursos,
                     padding: const EdgeInsets.only(right: 10),
                     children: [
-                      for (final c in cursos)
-                        _ItemCurso(
-                          curso: c,
-                          avance: completoCurso(c.id, r.curriculo, r.material),
-                          elegido: c.id == curso.id,
-                          onTap: () => setState(() => _cursoId = c.id),
+                      for (final (iFila, c) in cursos.indexed)
+                        FilaEntrante(
+                          indice: iFila,
+                          child: _ItemCurso(
+                            curso: c,
+                            avance: completoCurso(
+                              c.id,
+                              r.curriculo,
+                              r.material,
+                            ),
+                            elegido: c.id == curso.id,
+                            onTap: () => setState(() => _cursoId = c.id),
+                          ),
                         ),
                     ],
                   ),
@@ -444,65 +452,70 @@ class _TablaTemas extends StatelessWidget {
                               style: TextStyle(color: p.apagado),
                             ),
                           ),
-                        for (final t in temas)
-                          () {
-                            final m =
-                                material[t.id] ?? MaterialTema(temaId: t.id);
-                            final publicado = publicados.contains(t.id);
-                            final quiz = m.tieneQuiz
-                                ? Insignia(
-                                    '${m.quizzes.values.where((q) => q.publicado).length} '
-                                    'nivel(es)',
-                                    tono: TonoInsignia.secundario,
-                                  )
-                                : m.quizBorrador
-                                ? const Insignia(
-                                    'Borrador',
-                                    tono: TonoInsignia.acento,
-                                  )
-                                : const Insignia('—');
-                            return fila(onTap: () => onAbrir(t), [
-                              Text(
-                                '${t.orden}',
-                                style: TextStyle(color: p.apagado),
-                              ),
-                              Text(
-                                t.titulo,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
+                        for (final (iFila, t) in temas.indexed)
+                          FilaEntrante(
+                            indice: iFila,
+                            child: () {
+                              final m =
+                                  material[t.id] ?? MaterialTema(temaId: t.id);
+                              final publicado = publicados.contains(t.id);
+                              final quiz = m.tieneQuiz
+                                  ? Insignia(
+                                      '${m.quizzes.values.where((q) => q.publicado).length} '
+                                      'nivel(es)',
+                                      tono: TonoInsignia.secundario,
+                                    )
+                                  : m.quizBorrador
+                                  ? const Insignia(
+                                      'Borrador',
+                                      tono: TonoInsignia.acento,
+                                    )
+                                  : const Insignia('—');
+                              return fila(onTap: () => onAbrir(t), [
+                                Text(
+                                  '${t.orden}',
+                                  style: TextStyle(color: p.apagado),
                                 ),
-                              ),
-                              Text(
-                                dias[t.id] == null ? '—' : 'Día ${dias[t.id]}',
-                                style: TextStyle(color: p.apagado),
-                              ),
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: publicado
-                                    ? const Insignia(
-                                        'Publicado',
-                                        tono: TonoInsignia.secundario,
-                                      )
-                                    : const Insignia('Sin publicar'),
-                              ),
-                              marca(m.video != null),
-                              marca(m.separata != null),
-                              Text(
-                                '${m.contenidos.length}',
-                                style: TextStyle(
-                                  color: m.contenidos.isEmpty
-                                      ? p.alerta
-                                      : p.apagado,
+                                Text(
+                                  t.titulo,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: quiz,
-                              ),
-                            ]);
-                          }(),
+                                Text(
+                                  dias[t.id] == null
+                                      ? '—'
+                                      : 'Día ${dias[t.id]}',
+                                  style: TextStyle(color: p.apagado),
+                                ),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: publicado
+                                      ? const Insignia(
+                                          'Publicado',
+                                          tono: TonoInsignia.secundario,
+                                        )
+                                      : const Insignia('Sin publicar'),
+                                ),
+                                marca(m.video != null),
+                                marca(m.separata != null),
+                                Text(
+                                  '${m.contenidos.length}',
+                                  style: TextStyle(
+                                    color: m.contenidos.isEmpty
+                                        ? p.alerta
+                                        : p.apagado,
+                                  ),
+                                ),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: quiz,
+                                ),
+                              ]);
+                            }(),
+                          ),
                       ],
                     ),
                   ),

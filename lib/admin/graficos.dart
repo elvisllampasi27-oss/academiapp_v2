@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'animacion_panel.dart';
 import 'tema_panel.dart';
 
 /// Gráficos del panel dibujados a mano (sin paquetes): curvas suaves con
@@ -137,11 +138,15 @@ class GraficoArea extends StatefulWidget {
   final List<SerieGrafico> series;
   final double alto;
 
+  /// Se dibuja de izquierda a derecha al aparecer.
+  final bool animar;
+
   const GraficoArea({
     super.key,
     required this.etiquetas,
     required this.series,
     this.alto = 240,
+    this.animar = true,
   });
 
   @override
@@ -189,7 +194,19 @@ class _GraficoAreaState extends State<GraficoArea> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                Positioned.fill(child: CustomPaint(painter: pintor)),
+                Positioned.fill(
+                  child: widget.animar && !sinAnimaciones(context)
+                      ? TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0, end: 1),
+                          duration: const Duration(milliseconds: 1100),
+                          curve: Curves.easeInOutCubic,
+                          child: CustomPaint(painter: pintor),
+                          builder: (context, t, hijo) => t >= 1
+                              ? hijo!
+                              : ClipRect(clipper: _HastaX(t), child: hijo),
+                        )
+                      : CustomPaint(painter: pintor),
+                ),
                 if (i != null)
                   Positioned(
                     top: 0,
@@ -433,18 +450,32 @@ class AnilloAvance extends StatelessWidget {
   final double grosor;
   final Color? color;
 
+  /// Se llena desde cero al aparecer.
+  final bool animar;
+
   const AnilloAvance(
     this.valor, {
     super.key,
     this.tamano = 40,
     this.grosor = 4,
     this.color,
+    this.animar = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final fin = valor.clamp(0.0, 1.0).toDouble();
+    if (!animar || sinAnimaciones(context)) return _anillo(context, fin);
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: fin),
+      duration: const Duration(milliseconds: 1000),
+      curve: Curves.easeOutCubic,
+      builder: (context, v, _) => _anillo(context, v),
+    );
+  }
+
+  Widget _anillo(BuildContext context, double v) {
     final p = PaletaPanel.de(context);
-    final v = valor.clamp(0.0, 1.0);
     return SizedBox.square(
       dimension: tamano,
       child: CustomPaint(
@@ -516,10 +547,24 @@ class GraficoBarras extends StatelessWidget {
     required this.valores,
     this.alto = 200,
     this.formato,
+    this.animar = true,
   });
+
+  /// Las barras crecen desde abajo al aparecer.
+  final bool animar;
 
   @override
   Widget build(BuildContext context) {
+    if (!animar || sinAnimaciones(context)) return _barras(context, 1);
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.easeOutCubic,
+      builder: (context, crece, _) => _barras(context, crece),
+    );
+  }
+
+  Widget _barras(BuildContext context, double crece) {
     final p = PaletaPanel.de(context);
     final maximo = valores.fold(1, (m, v) => v > m ? v : m);
     return SizedBox(
@@ -544,7 +589,9 @@ class GraficoBarras extends StatelessWidget {
                     child: Align(
                       alignment: Alignment.bottomCenter,
                       child: FractionallySizedBox(
-                        heightFactor: valor <= 0 ? 0.03 : valor / maximo,
+                        heightFactor: valor <= 0
+                            ? 0.03
+                            : math.max(0.03, valor / maximo * crece),
                         child: Container(
                           width: 36,
                           decoration: BoxDecoration(
@@ -572,6 +619,40 @@ class GraficoBarras extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Recorta hasta una fracción del ancho (para el revelado del gráfico).
+class _HastaX extends CustomClipper<Rect> {
+  final double t;
+
+  _HastaX(this.t);
+
+  @override
+  Rect getClip(Size size) => Rect.fromLTWH(0, 0, size.width * t, size.height);
+
+  @override
+  bool shouldReclip(_HastaX anterior) => anterior.t != t;
+}
+
+/// Muestra su contenido de izquierda a derecha una vez (si [activo]).
+class Revelado extends StatelessWidget {
+  final bool activo;
+  final Widget child;
+
+  const Revelado({super.key, required this.child, this.activo = true});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!activo || sinAnimaciones(context)) return child;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 1000),
+      curve: Curves.easeInOutCubic,
+      child: child,
+      builder: (context, t, hijo) =>
+          t >= 1 ? hijo! : ClipRect(clipper: _HastaX(t), child: hijo),
     );
   }
 }

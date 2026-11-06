@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../animacion_panel.dart';
 import '../../features/premium/domain/configuracion_academia.dart';
 import '../estudiantes/modelo_estudiantes.dart';
 import '../estudiantes/repositorio_estudiantes_admin.dart';
@@ -211,23 +212,26 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                     ),
                     if (acciones.isEmpty)
                       Text('Sin acciones.', style: TextStyle(color: p.apagado)),
-                    for (final a in acciones)
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 9),
-                        decoration: const BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: PaletaPanel.linea),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(a.descripcion),
-                            Text(
-                              '${haceCuanto(a.fecha, hoy)} · ${a.adminCorreo}',
-                              style: TextStyle(color: p.tenue, fontSize: 12),
+                    for (final (iFila, a) in acciones.indexed)
+                      FilaEntrante(
+                        indice: iFila,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: PaletaPanel.linea),
                             ),
-                          ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(a.descripcion),
+                              Text(
+                                '${haceCuanto(a.fecha, hoy)} · ${a.adminCorreo}',
+                                style: TextStyle(color: p.tenue, fontSize: 12),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                   ],

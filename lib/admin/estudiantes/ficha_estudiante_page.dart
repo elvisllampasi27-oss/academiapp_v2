@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../animacion_panel.dart';
 import '../../features/enrollment/domain/entities/matricula.dart';
 import '../tema_panel.dart';
 import '../widgets_panel.dart';
@@ -341,15 +342,18 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (final pago in pagos.take(6))
-                    FilaDato(
-                      '${fechaBreve(pago.creadoEn)} · '
-                      '${pago.metodo == MetodoPago.yape || pago.metodo == MetodoPago.plin ? 'S/ ${pago.monto} ${pago.metodo.etiqueta}' : pago.metodo.etiqueta}',
-                      switch (pago.estado) {
-                        EstadoPago.pendiente => 'Por revisar',
-                        EstadoPago.aprobado => 'Aprobado',
-                        EstadoPago.rechazado => 'Rechazado',
-                      },
+                  for (final (iFila, pago) in pagos.take(6).indexed)
+                    FilaEntrante(
+                      indice: iFila,
+                      child: FilaDato(
+                        '${fechaBreve(pago.creadoEn)} · '
+                        '${pago.metodo == MetodoPago.yape || pago.metodo == MetodoPago.plin ? 'S/ ${pago.monto} ${pago.metodo.etiqueta}' : pago.metodo.etiqueta}',
+                        switch (pago.estado) {
+                          EstadoPago.pendiente => 'Por revisar',
+                          EstadoPago.aprobado => 'Aprobado',
+                          EstadoPago.rechazado => 'Rechazado',
+                        },
+                      ),
                     ),
                   if (pagos.isEmpty)
                     Text('Sin pagos.', style: TextStyle(color: p.apagado)),
@@ -404,27 +408,30 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
               'Aún no resuelve prácticas.',
               style: TextStyle(color: p.apagado),
             ),
-          for (final d in f.dominio)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              child: Row(
-                children: [
-                  SizedBox(width: 170, child: Text(d.curso)),
-                  Expanded(
-                    child: BarraAvance(
-                      d.valor,
-                      color: d.valor >= 0.6 ? p.secundario : p.alerta,
+          for (final (iFila, d) in f.dominio.indexed)
+            FilaEntrante(
+              indice: iFila,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: Row(
+                  children: [
+                    SizedBox(width: 170, child: Text(d.curso)),
+                    Expanded(
+                      child: BarraAvance(
+                        d.valor,
+                        color: d.valor >= 0.6 ? p.secundario : p.alerta,
+                      ),
                     ),
-                  ),
-                  SizedBox(
-                    width: 52,
-                    child: Text(
-                      '${(d.valor * 100).round()} %',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(color: p.apagado, fontSize: 13),
+                    SizedBox(
+                      width: 52,
+                      child: Text(
+                        '${(d.valor * 100).round()} %',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(color: p.apagado, fontSize: 13),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           if (f.reforzar.isNotEmpty) ...[
@@ -438,8 +445,11 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
                 letterSpacing: 0.8,
               ),
             ),
-            for (final t in f.reforzar)
-              FilaDato(t.tema, '${(t.valor * 100).round()} %'),
+            for (final (iFila, t) in f.reforzar.indexed)
+              FilaEntrante(
+                indice: iFila,
+                child: FilaDato(t.tema, '${(t.valor * 100).round()} %'),
+              ),
           ],
         ],
       ),
@@ -457,11 +467,14 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
               'Aún no rinde ninguno.',
               style: TextStyle(color: PaletaPanel.de(context).apagado),
             ),
-          for (final r in f.simulacros.take(6))
-            FilaDato(
-              r.titulo?.split(' · ').first ?? fechaPanel(r.fecha),
-              '${r.correctas} de ${r.total} · '
-              '${r.segundos ~/ 60}:${(r.segundos % 60).toString().padLeft(2, '0')}',
+          for (final (iFila, r) in f.simulacros.take(6).indexed)
+            FilaEntrante(
+              indice: iFila,
+              child: FilaDato(
+                r.titulo?.split(' · ').first ?? fechaPanel(r.fecha),
+                '${r.correctas} de ${r.total} · '
+                '${r.segundos ~/ 60}:${(r.segundos % 60).toString().padLeft(2, '0')}',
+              ),
             ),
         ],
       ),
@@ -477,18 +490,21 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
           const TituloTarjeta('Historial en el panel'),
           if (f.acciones.isEmpty)
             Text('Sin cambios todavía.', style: TextStyle(color: p.apagado)),
-          for (final a in f.acciones.take(15))
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 7),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(a.descripcion),
-                  Text(
-                    '${haceCuanto(a.fecha, hoy)} · ${a.adminCorreo}',
-                    style: TextStyle(color: p.tenue, fontSize: 12),
-                  ),
-                ],
+          for (final (iFila, a) in f.acciones.take(15).indexed)
+            FilaEntrante(
+              indice: iFila,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(a.descripcion),
+                    Text(
+                      '${haceCuanto(a.fecha, hoy)} · ${a.adminCorreo}',
+                      style: TextStyle(color: p.tenue, fontSize: 12),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],

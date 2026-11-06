@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'animacion_panel.dart';
 import 'graficos.dart';
 import 'tema_panel.dart';
 
@@ -116,6 +117,9 @@ class IndicadorPanel extends StatelessWidget {
   final double? anillo;
   final VoidCallback? onTap;
 
+  /// El número cuenta desde cero y el anillo se llena al aparecer.
+  final bool animar;
+
   const IndicadorPanel({
     super.key,
     required this.etiqueta,
@@ -127,6 +131,7 @@ class IndicadorPanel extends StatelessWidget {
     this.tendencia,
     this.anillo,
     this.onTap,
+    this.animar = true,
   });
 
   @override
@@ -177,25 +182,42 @@ class IndicadorPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
-                    child: Text(
-                      valor,
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                        color: color ?? p.texto,
-                      ),
-                    ),
+                    child: animar
+                        ? NumeroQueCuenta(
+                            valor,
+                            estilo: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w800,
+                              color: color ?? p.texto,
+                            ),
+                          )
+                        : Text(
+                            valor,
+                            style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w800,
+                              color: color ?? p.texto,
+                            ),
+                          ),
                   ),
                   if (tendencia case final serie? when serie.length > 1)
                     SizedBox(
                       width: 84,
                       height: 30,
-                      child: CustomPaint(
-                        painter: PintorTendencia(serie, color ?? p.acento),
+                      child: Revelado(
+                        activo: animar,
+                        child: CustomPaint(
+                          painter: PintorTendencia(serie, color ?? p.acento),
+                        ),
                       ),
                     ),
                   if (anillo case final a?)
-                    AnilloAvance(a, tamano: 46, color: color ?? p.acento),
+                    AnilloAvance(
+                      a,
+                      tamano: 46,
+                      color: color ?? p.acento,
+                      animar: animar,
+                    ),
                 ],
               ),
               if (nota case final n?)
@@ -347,7 +369,15 @@ class RejillaPanel extends StatelessWidget {
           spacing: espacio,
           runSpacing: espacio,
           children: [
-            for (final hijo in children) SizedBox(width: ancho, child: hijo),
+            // Las tarjetas entran una tras otra, desenfocadas → nítidas.
+            for (final (i, hijo) in children.indexed)
+              SizedBox(
+                width: ancho,
+                child: EntradaDifuminada(
+                  retraso: Duration(milliseconds: 120 + 100 * (i < 6 ? i : 6)),
+                  child: hijo,
+                ),
+              ),
           ],
         );
       },
@@ -477,7 +507,20 @@ class PaginaPanel extends StatelessWidget {
         alignment: Alignment.topLeft,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1400),
-          child: ColumnaPanel(espacio: 20, children: children),
+          child: ColumnaPanel(
+            espacio: 20,
+            children: [
+              // Cada bloque de la página entra desenfocado y se aclara, uno
+              // tras otro. La rejilla de cifras anima sus tarjetas sola.
+              for (final (i, hijo) in children.indexed)
+                hijo is RejillaPanel
+                    ? hijo
+                    : EntradaDifuminada(
+                        retraso: Duration(milliseconds: 90 * (i < 6 ? i : 6)),
+                        child: hijo,
+                      ),
+            ],
+          ),
         ),
       ),
     );

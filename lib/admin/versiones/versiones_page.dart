@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../animacion_panel.dart';
 import '../../features/academic/domain/entities/curriculo.dart';
 import '../../features/academic/domain/entities/version_academica.dart';
 import '../estudiantes/modelo_estudiantes.dart';
@@ -116,12 +117,15 @@ class _VersionesPageState extends State<VersionesPage> {
                 principal: ColumnaPanel(
                   espacio: 10,
                   children: [
-                    for (final v in visibles)
-                      _TarjetaVersion(
-                        version: v,
-                        conteo: contarVersion(v.id, estudiantes, hoy),
-                        elegida: v.id == elegida.id,
-                        onTap: () => setState(() => _elegidaId = v.id),
+                    for (final (iFila, v) in visibles.indexed)
+                      FilaEntrante(
+                        indice: iFila,
+                        child: _TarjetaVersion(
+                          version: v,
+                          conteo: contarVersion(v.id, estudiantes, hoy),
+                          elegida: v.id == elegida.id,
+                          onTap: () => setState(() => _elegidaId = v.id),
+                        ),
                       ),
                     if (todas.length != visibles.length || _verArchivadas)
                       TextButton(

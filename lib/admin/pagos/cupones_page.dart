@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../animacion_panel.dart';
 import '../../features/premium/domain/cupon.dart';
 import '../estudiantes/modelo_estudiantes.dart';
 import '../tema_panel.dart';
@@ -139,67 +140,70 @@ class _CuponesPageState extends State<CuponesPage> {
                         style: TextStyle(color: p.apagado),
                       ),
                     ),
-                  for (final c in cupones)
-                    fila([
-                      Text(
-                        c.codigo,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.6,
+                  for (final (iFila, c) in cupones.indexed)
+                    FilaEntrante(
+                      indice: iFila,
+                      child: fila([
+                        Text(
+                          c.codigo,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.6,
+                          ),
                         ),
-                      ),
-                      Text(c.beneficio),
-                      Text(
-                        c.usosMaximos == null
-                            ? '${c.usos} usos'
-                            : '${c.usos} de ${c.usosMaximos}',
-                        style: TextStyle(color: p.apagado),
-                      ),
-                      Text(
-                        c.vence == null
-                            ? 'Sin vencimiento'
-                            : 'Hasta ${fechaBreve(c.vence!)}',
-                        style: TextStyle(color: p.apagado),
-                      ),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: c.vigente(ahora)
-                            ? const Insignia(
-                                'Activo',
-                                tono: TonoInsignia.secundario,
-                              )
-                            : Insignia(
-                                !c.activo
-                                    ? 'Desactivado'
-                                    : c.usosMaximos != null &&
-                                          c.usos >= c.usosMaximos!
-                                    ? 'Agotado'
-                                    : 'Vencido',
-                              ),
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: 'Editar',
-                              onPressed: () => _editar(c),
-                              icon: const Icon(Icons.edit_outlined, size: 18),
-                            ),
-                            IconButton(
-                              tooltip: 'Eliminar',
-                              onPressed: () => _eliminar(c),
-                              icon: Icon(
-                                Icons.delete_outline,
-                                size: 18,
-                                color: p.alerta,
-                              ),
-                            ),
-                          ],
+                        Text(c.beneficio),
+                        Text(
+                          c.usosMaximos == null
+                              ? '${c.usos} usos'
+                              : '${c.usos} de ${c.usosMaximos}',
+                          style: TextStyle(color: p.apagado),
                         ),
-                      ),
-                    ]),
+                        Text(
+                          c.vence == null
+                              ? 'Sin vencimiento'
+                              : 'Hasta ${fechaBreve(c.vence!)}',
+                          style: TextStyle(color: p.apagado),
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: c.vigente(ahora)
+                              ? const Insignia(
+                                  'Activo',
+                                  tono: TonoInsignia.secundario,
+                                )
+                              : Insignia(
+                                  !c.activo
+                                      ? 'Desactivado'
+                                      : c.usosMaximos != null &&
+                                            c.usos >= c.usosMaximos!
+                                      ? 'Agotado'
+                                      : 'Vencido',
+                                ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                tooltip: 'Editar',
+                                onPressed: () => _editar(c),
+                                icon: const Icon(Icons.edit_outlined, size: 18),
+                              ),
+                              IconButton(
+                                tooltip: 'Eliminar',
+                                onPressed: () => _eliminar(c),
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                  color: p.alerta,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ]),
+                    ),
                 ],
               ),
             ),

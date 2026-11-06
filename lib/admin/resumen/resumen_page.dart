@@ -6,6 +6,7 @@ import '../estudiantes/matricular_dialogo.dart';
 import '../estudiantes/modelo_estudiantes.dart';
 import '../estudiantes/repositorio_estudiantes_admin.dart';
 import '../../features/premium/domain/pago.dart';
+import '../animacion_panel.dart';
 import '../graficos.dart';
 import '../pagos/repositorio_pagos_admin.dart';
 import '../tema_panel.dart';
@@ -305,52 +306,60 @@ class _ResumenPageState extends State<ResumenPage> {
           const TituloTarjeta('Requiere tu atención'),
           if (items.isEmpty)
             Text('Todo en orden.', style: TextStyle(color: p.apagado)),
-          for (final (icono, color, titulo, detalle, boton, accion) in items)
-            InkWell(
-              onTap: accion,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: PaletaPanel.linea)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: PaletaPanel.linea,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(icono, size: 18, color: color),
+          for (final (iFila, (icono, color, titulo, detalle, boton, accion))
+              in items.indexed)
+            FilaEntrante(
+              indice: iFila,
+              child: InkWell(
+                onTap: accion,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: PaletaPanel.linea),
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            titulo,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          Text(
-                            detalle,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: p.apagado, fontSize: 13),
-                          ),
-                        ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: PaletaPanel.linea,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(icono, size: 18, color: color),
                       ),
-                    ),
-                    Text(
-                      boton,
-                      style: TextStyle(
-                        color: p.apagado,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              titulo,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              detalle,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: p.apagado, fontSize: 13),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Icon(Icons.chevron_right, size: 18, color: p.tenue),
-                  ],
+                      Text(
+                        boton,
+                        style: TextStyle(
+                          color: p.apagado,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, size: 18, color: p.tenue),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -379,64 +388,71 @@ class _ResumenPageState extends State<ResumenPage> {
               style: TextStyle(color: p.apagado),
             ),
           for (final (k, a) in acciones.indexed)
-            InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: a.usuarioId == null
-                  ? null
-                  : () => widget.onAbrirEstudiante(a.usuarioId!),
-              child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(
-                      width: 64,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: Text(
-                          haceCuanto(a.fecha, hoy),
-                          style: TextStyle(color: p.tenue, fontSize: 11),
+            FilaEntrante(
+              indice: k,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: a.usuarioId == null
+                    ? null
+                    : () => widget.onAbrirEstudiante(a.usuarioId!),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        width: 64,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Text(
+                            haceCuanto(a.fecha, hoy),
+                            style: TextStyle(color: p.tenue, fontSize: 11),
+                          ),
                         ),
                       ),
-                    ),
-                    // Línea de tiempo: punto con ícono y trazo hacia abajo.
-                    Column(
-                      children: [
-                        const SizedBox(height: 6),
-                        Container(
-                          width: 26,
-                          height: 26,
-                          decoration: BoxDecoration(
-                            color: p.acento.withValues(alpha: 0.14),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(icono(a.tipo), size: 14, color: p.acento),
-                        ),
-                        if (k < acciones.length - 1)
-                          Expanded(
-                            child: Container(
-                              width: 1,
-                              color: PaletaPanel.borde,
+                      // Línea de tiempo: punto con ícono y trazo hacia abajo.
+                      Column(
+                        children: [
+                          const SizedBox(height: 6),
+                          Container(
+                            width: 26,
+                            height: 26,
+                            decoration: BoxDecoration(
+                              color: p.acento.withValues(alpha: 0.14),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              icono(a.tipo),
+                              size: 14,
+                              color: p.acento,
                             ),
                           ),
-                      ],
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 9),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(a.descripcion),
-                            Text(
-                              a.adminCorreo,
-                              style: TextStyle(color: p.tenue, fontSize: 11),
+                          if (k < acciones.length - 1)
+                            Expanded(
+                              child: Container(
+                                width: 1,
+                                color: PaletaPanel.borde,
+                              ),
                             ),
-                          ],
+                        ],
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(a.descripcion),
+                              Text(
+                                a.adminCorreo,
+                                style: TextStyle(color: p.tenue, fontSize: 11),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

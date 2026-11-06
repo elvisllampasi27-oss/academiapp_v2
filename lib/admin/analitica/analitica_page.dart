@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../animacion_panel.dart';
 import '../../features/premium/domain/pago.dart';
 import '../estudiantes/modelo_estudiantes.dart';
 import '../estudiantes/repositorio_estudiantes_admin.dart';
@@ -251,18 +252,21 @@ class _AnaliticaPageState extends State<AnaliticaPage> {
             ],
           ),
           const SizedBox(height: 16),
-          for (final s in SituacionEstudiante.values)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              child: Row(
-                children: [
-                  insigniaSituacion(s),
-                  const Spacer(),
-                  Text(
-                    '${situaciones[s]}',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ],
+          for (final (iFila, s) in SituacionEstudiante.values.indexed)
+            FilaEntrante(
+              indice: iFila,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: Row(
+                  children: [
+                    insigniaSituacion(s),
+                    const Spacer(),
+                    Text(
+                      '${situaciones[s]}',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],
@@ -280,29 +284,32 @@ class _AnaliticaPageState extends State<AnaliticaPage> {
           if (carreras.isEmpty)
             Text('Sin datos todavía.', style: TextStyle(color: p.apagado))
           else
-            for (final (carrera, n) in carreras)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 7),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 240,
-                      child: Text(
-                        carrera,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+            for (final (iFila, (carrera, n)) in carreras.indexed)
+              FilaEntrante(
+                indice: iFila,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 7),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 240,
+                        child: Text(
+                          carrera,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    Expanded(child: BarraAvance(n / total)),
-                    SizedBox(
-                      width: 90,
-                      child: Text(
-                        '$n · ${(n * 100 / total).round()} %',
-                        textAlign: TextAlign.right,
-                        style: TextStyle(color: p.apagado),
+                      Expanded(child: BarraAvance(n / total)),
+                      SizedBox(
+                        width: 90,
+                        child: Text(
+                          '$n · ${(n * 100 / total).round()} %',
+                          textAlign: TextAlign.right,
+                          style: TextStyle(color: p.apagado),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
         ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../animacion_panel.dart';
 import '../../core/presentation/texto.dart';
 import '../../features/premium/domain/configuracion_academia.dart';
 import '../../features/premium/domain/pago.dart';
@@ -181,15 +182,18 @@ class _PagosPageState extends State<PagosPage> {
                 principal: ColumnaPanel(
                   espacio: 10,
                   children: [
-                    for (final p in lista)
-                      _TarjetaPago(
-                        pago: p,
-                        elegido: p.id == elegido?.id,
-                        ahora: widget.ahora(),
-                        onTap: () => setState(() {
-                          _elegidoId = p.id;
-                          _verificado.clear();
-                        }),
+                    for (final (iFila, p) in lista.indexed)
+                      FilaEntrante(
+                        indice: iFila,
+                        child: _TarjetaPago(
+                          pago: p,
+                          elegido: p.id == elegido?.id,
+                          ahora: widget.ahora(),
+                          onTap: () => setState(() {
+                            _elegidoId = p.id;
+                            _verificado.clear();
+                          }),
+                        ),
                       ),
                   ],
                 ),

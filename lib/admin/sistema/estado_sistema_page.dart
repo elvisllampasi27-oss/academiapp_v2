@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../animacion_panel.dart';
 import '../../core/presentation/formato_fecha.dart';
 import '../tema_panel.dart';
 import '../widgets_panel.dart';
@@ -111,36 +112,42 @@ class _EstadoSistemaPageState extends State<EstadoSistemaPage> {
                 RejillaPanel(
                   anchoMinimo: 280,
                   children: [
-                    for (final c in chequeos)
-                      TarjetaPanel(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              c.servicio,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            PildoraEstado(switch (c.nivel) {
-                              NivelEstado.bien => 'Responde',
-                              NivelEstado.atencion => 'Atención',
-                              NivelEstado.caido => 'No responde',
-                            }, color: _color(p, c.nivel)),
-                            const SizedBox(height: 10),
-                            Text(
-                              c.detalle,
-                              style: TextStyle(color: p.apagado, height: 1.4),
-                            ),
-                            if (c.milisegundos case final ms?) ...[
-                              const SizedBox(height: 8),
+                    for (final (iFila, c) in chequeos.indexed)
+                      FilaEntrante(
+                        indice: iFila,
+                        child: TarjetaPanel(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Text(
-                                '$ms ms',
-                                style: TextStyle(color: p.tenue, fontSize: 12),
+                                c.servicio,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
+                              const SizedBox(height: 10),
+                              PildoraEstado(switch (c.nivel) {
+                                NivelEstado.bien => 'Responde',
+                                NivelEstado.atencion => 'Atención',
+                                NivelEstado.caido => 'No responde',
+                              }, color: _color(p, c.nivel)),
+                              const SizedBox(height: 10),
+                              Text(
+                                c.detalle,
+                                style: TextStyle(color: p.apagado, height: 1.4),
+                              ),
+                              if (c.milisegundos case final ms?) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  '$ms ms',
+                                  style: TextStyle(
+                                    color: p.tenue,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
                   ],

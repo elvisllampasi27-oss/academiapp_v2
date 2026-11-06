@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../animacion_panel.dart';
 import '../../features/academic/domain/entities/curriculo.dart';
 import '../../features/academic/domain/entities/version_academica.dart';
 import '../graficos.dart';
@@ -365,72 +366,83 @@ class _TablaState extends State<_Tabla> {
                             style: apagado,
                           ),
                         ),
-                      for (final e in widget.estudiantes)
-                        _fila(onTap: () => widget.onAbrir(e.uid), [
-                          Row(
-                            children: [
-                              AvatarIniciales(e.nombre),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _unaLinea(
-                                      e.nombre,
-                                      const TextStyle(
-                                        fontWeight: FontWeight.w600,
+                      for (final (iFila, e) in widget.estudiantes.indexed)
+                        FilaEntrante(
+                          indice: iFila,
+                          child: _fila(onTap: () => widget.onAbrir(e.uid), [
+                            Row(
+                              children: [
+                                AvatarIniciales(e.nombre),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _unaLinea(
+                                        e.nombre,
+                                        const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                    ),
-                                    _unaLinea(
-                                      e.correo,
-                                      TextStyle(color: p.apagado, fontSize: 12),
-                                    ),
-                                  ],
+                                      _unaLinea(
+                                        e.correo,
+                                        TextStyle(
+                                          color: p.apagado,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                              ],
+                            ),
+                            _unaLinea(e.carrera ?? '—', apagado),
+                            _unaLinea(
+                              widget.nombreVersion[e.matricula?.versionId] ??
+                                  e.matricula?.versionId ??
+                                  '—',
+                              apagado,
+                            ),
+                            _unaLinea(
+                              e.matricula == null
+                                  ? '—'
+                                  : fechaBreve(
+                                      e.matricula!.fechaInicioAcademico,
+                                    ),
+                              TextStyle(color: p.texto, fontSize: 13),
+                            ),
+                            _AvanceCelda(
+                              situacion: situacion(e, hoy),
+                              avance: avanceCiclo(
+                                e,
+                                widget.temarios[e.matricula?.versionId],
+                                hoy,
                               ),
-                            ],
-                          ),
-                          _unaLinea(e.carrera ?? '—', apagado),
-                          _unaLinea(
-                            widget.nombreVersion[e.matricula?.versionId] ??
-                                e.matricula?.versionId ??
-                                '—',
-                            apagado,
-                          ),
-                          _unaLinea(
-                            e.matricula == null
-                                ? '—'
-                                : fechaBreve(e.matricula!.fechaInicioAcademico),
-                            TextStyle(color: p.texto, fontSize: 13),
-                          ),
-                          _AvanceCelda(
-                            situacion: situacion(e, hoy),
-                            avance: avanceCiclo(
-                              e,
-                              widget.temarios[e.matricula?.versionId],
-                              hoy,
+                              inicio: e.matricula?.fechaInicioAcademico,
+                              hoy: hoy,
                             ),
-                            inicio: e.matricula?.fechaInicioAcademico,
-                            hoy: hoy,
-                          ),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: e.esPremiumEn(hoy)
-                                ? Insignia(
-                                    'Premium · ${fechaBreve(e.premiumHasta!)}',
-                                    tono: TonoInsignia.acento,
-                                  )
-                                : const Insignia('Gratis'),
-                          ),
-                          _unaLinea(
-                            haceCuanto(e.ultimaActividad, hoy),
-                            TextStyle(
-                              fontSize: 13,
-                              color: sinActividad(e, hoy) ? p.alerta : p.texto,
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: e.esPremiumEn(hoy)
+                                  ? Insignia(
+                                      'Premium · ${fechaBreve(e.premiumHasta!)}',
+                                      tono: TonoInsignia.acento,
+                                    )
+                                  : const Insignia('Gratis'),
                             ),
-                          ),
-                          PuntoSituacion(situacion(e, hoy)),
-                        ]),
+                            _unaLinea(
+                              haceCuanto(e.ultimaActividad, hoy),
+                              TextStyle(
+                                fontSize: 13,
+                                color: sinActividad(e, hoy)
+                                    ? p.alerta
+                                    : p.texto,
+                              ),
+                            ),
+                            PuntoSituacion(situacion(e, hoy)),
+                          ]),
+                        ),
                     ],
                   ),
                 ),

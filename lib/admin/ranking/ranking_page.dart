@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../animacion_panel.dart';
 import '../estudiantes/modelo_estudiantes.dart';
 import '../examenes/modelo_examen_admin.dart';
 import '../examenes/repositorio_examenes_admin.dart';
@@ -187,48 +188,51 @@ class _RankingPageState extends State<RankingPage> {
                     style: TextStyle(color: p.apagado),
                   ),
                 ),
-              for (final (puesto, r) in filas)
-                fila(onTap: () => widget.onAbrirEstudiante(r.uid), [
-                  Text(switch (puesto) {
-                    1 => '🥇',
-                    2 => '🥈',
-                    3 => '🥉',
-                    _ => '$puesto',
-                  }, style: const TextStyle(fontWeight: FontWeight.w800)),
-                  Row(
-                    children: [
-                      AvatarIniciales(r.nombre),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          r.nombre.isEmpty ? r.uid : r.nombre,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+              for (final (iFila, (puesto, r)) in filas.indexed)
+                FilaEntrante(
+                  indice: iFila,
+                  child: fila(onTap: () => widget.onAbrirEstudiante(r.uid), [
+                    Text(switch (puesto) {
+                      1 => '🥇',
+                      2 => '🥈',
+                      3 => '🥉',
+                      _ => '$puesto',
+                    }, style: const TextStyle(fontWeight: FontWeight.w800)),
+                    Row(
+                      children: [
+                        AvatarIniciales(r.nombre),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            r.nombre.isEmpty ? r.uid : r.nombre,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    '${r.puntaje} %',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: r.puntaje >= 60 ? p.secundario : p.texto,
+                      ],
                     ),
-                  ),
-                  Text(
-                    '${r.correctas} de ${r.total}',
-                    style: TextStyle(color: p.apagado),
-                  ),
-                  Text(
-                    duracionBreve(r.segundos),
-                    style: TextStyle(color: p.apagado),
-                  ),
-                  Text(
-                    fechaBreve(r.terminado),
-                    style: TextStyle(color: p.apagado),
-                  ),
-                ]),
+                    Text(
+                      '${r.puntaje} %',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: r.puntaje >= 60 ? p.secundario : p.texto,
+                      ),
+                    ),
+                    Text(
+                      '${r.correctas} de ${r.total}',
+                      style: TextStyle(color: p.apagado),
+                    ),
+                    Text(
+                      duracionBreve(r.segundos),
+                      style: TextStyle(color: p.apagado),
+                    ),
+                    Text(
+                      fechaBreve(r.terminado),
+                      style: TextStyle(color: p.apagado),
+                    ),
+                  ]),
+                ),
             ],
           ),
         ),

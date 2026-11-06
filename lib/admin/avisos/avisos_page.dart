@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../animacion_panel.dart';
 import '../../features/academic/domain/entities/version_academica.dart';
 import '../../features/avisos/domain/aviso.dart';
 import '../estudiantes/modelo_estudiantes.dart';
@@ -131,17 +132,20 @@ class _AvisosPageState extends State<AvisosPage> {
                   : ColumnaPanel(
                       espacio: 12,
                       children: [
-                        for (final a in avisos)
-                          _TarjetaAviso(
-                            aviso: a,
-                            version: versiones
-                                .where((v) => v.id == a.versionId)
-                                .firstOrNull,
-                            ahora: ahora,
-                            ocupado: _ocupado,
-                            onEditar: () => _editar(versiones, a),
-                            onPausar: () => _pausar(a),
-                            onEliminar: () => _eliminar(a),
+                        for (final (iFila, a) in avisos.indexed)
+                          FilaEntrante(
+                            indice: iFila,
+                            child: _TarjetaAviso(
+                              aviso: a,
+                              version: versiones
+                                  .where((v) => v.id == a.versionId)
+                                  .firstOrNull,
+                              ahora: ahora,
+                              ocupado: _ocupado,
+                              onEditar: () => _editar(versiones, a),
+                              onPausar: () => _pausar(a),
+                              onEliminar: () => _eliminar(a),
+                            ),
                           ),
                       ],
                     ),
