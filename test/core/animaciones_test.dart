@@ -76,10 +76,9 @@ void main() {
         ),
       ),
     );
-    ScrollController control() =>
-        tester.widget<SingleChildScrollView>(
-          find.byType(SingleChildScrollView),
-        ).controller!;
+    ScrollController control() => tester
+        .widget<SingleChildScrollView>(find.byType(SingleChildScrollView))
+        .controller!;
 
     await tester.pump(const Duration(milliseconds: 2000));
     expect(control().offset, greaterThan(0)); // deslizándose
@@ -114,4 +113,38 @@ void main() {
     await tester.pumpAndSettle();
     expect(filtro().enabled, isFalse);
   });
+
+  testWidgets(
+    'una fila larga se desliza y se detiene si el alumno la arrastra',
+    (tester) async {
+      await tester.pumpWidget(
+        _app(
+          Center(
+            child: SizedBox(
+              width: 150,
+              child: Marquesina.contenido(
+                contenido: Row(
+                  children: [
+                    for (var i = 0; i < 8; i++)
+                      SizedBox(width: 60, child: Text('area $i')),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 2500));
+      expect(tester.hasRunningAnimations, isTrue);
+
+      await tester.drag(find.text('area 1'), const Offset(-40, 0));
+      await tester.pumpAndSettle();
+      // Si la pasada siguiera, terminaría de vuelta en 0. Se quedó donde la
+      // dejó el alumno.
+      final control = tester
+          .widget<SingleChildScrollView>(find.byType(SingleChildScrollView))
+          .controller!;
+      expect(control.offset, greaterThan(0));
+    },
+  );
 }

@@ -274,7 +274,10 @@ class _TemaPageState extends State<TemaPage> {
             // entrar y luego cada 20 s), en vez de cortarse con "…".
             Marquesina(
               tema.titulo,
-              estilo: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              estilo: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),

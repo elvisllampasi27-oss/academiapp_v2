@@ -75,23 +75,27 @@ class _CursosPageState extends State<CursosPage> {
                   ),
                 ),
                 const SizedBox(height: 14),
+                // Si las áreas no caben, la fila se desliza sola al entrar y
+                // cada 20 s (se puede arrastrar igual con el dedo).
                 SizedBox(
                   height: 40,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      _Chip(
-                        texto: 'Todos',
-                        activo: _areaId == null,
-                        alPresionar: () => setState(() => _areaId = null),
-                      ),
-                      for (final area in widget.curriculo.areas)
+                  child: Marquesina.contenido(
+                    contenido: Row(
+                      children: [
                         _Chip(
-                          texto: area.nombre,
-                          activo: _areaId == area.id,
-                          alPresionar: () => setState(() => _areaId = area.id),
+                          texto: 'Todos',
+                          activo: _areaId == null,
+                          alPresionar: () => setState(() => _areaId = null),
                         ),
-                    ],
+                        for (final area in widget.curriculo.areas)
+                          _Chip(
+                            texto: area.nombre,
+                            activo: _areaId == area.id,
+                            alPresionar: () =>
+                                setState(() => _areaId = area.id),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),

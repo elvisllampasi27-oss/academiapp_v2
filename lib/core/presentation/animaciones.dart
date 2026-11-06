@@ -552,21 +552,34 @@ class _ReaparicionDifuminadaState extends State<ReaparicionDifuminada>
 /// (ida y vuelta) y se queda quieto. No corre todo el rato: una pasada al
 /// aparecer y otra cada [cada], solo si la pantalla está a la vista. Si
 /// cabe, o con "reducir animaciones", es un texto normal (con "…").
+///
+/// Con [Marquesina.contenido] hace lo mismo con una fila cualquiera (p. ej.
+/// los chips de áreas). Esa fila se puede seguir arrastrando con el dedo:
+/// al tocarla, la animación se detiene y manda el alumno.
 class Marquesina extends StatefulWidget {
-  final String texto;
+  final String? texto;
   final TextStyle? estilo;
+  final Widget? contenido;
   final Duration cada;
 
   /// Velocidad del deslizamiento, en píxeles por segundo.
   final double velocidad;
 
   const Marquesina(
-    this.texto, {
+    String this.texto, {
     super.key,
     this.estilo,
     this.cada = const Duration(seconds: 20),
     this.velocidad = 40,
-  });
+  }) : contenido = null;
+
+  const Marquesina.contenido({
+    super.key,
+    required Widget this.contenido,
+    this.cada = const Duration(seconds: 20),
+    this.velocidad = 40,
+  }) : texto = null,
+       estilo = null;
 
   @override
   State<Marquesina> createState() => _MarquesinaState();
@@ -593,7 +606,7 @@ class _MarquesinaState extends State<Marquesina>
   @override
   void didUpdateWidget(Marquesina anterior) {
     super.didUpdateWidget(anterior);
-    if (widget.texto != anterior.texto) {
+    if (widget.texto != anterior.texto && widget.contenido == null) {
       _control.stop();
       if (_desplazamiento.hasClients) _desplazamiento.jumpTo(0);
       WidgetsBinding.instance.addPostFrameCallback((_) => _pasada());
@@ -605,8 +618,7 @@ class _MarquesinaState extends State<Marquesina>
     if (!mounted || _control.isAnimating || sinAnimaciones(context)) return;
     // Solo si se ve: no en una pestaña oculta ni debajo de otra pantalla.
     final visible =
-        TickerMode.of(context) &&
-        (ModalRoute.of(context)?.isCurrent ?? true);
+        TickerMode.of(context) && (ModalRoute.of(context)?.isCurrent ?? true);
     if (!visible || !_desplazamiento.hasClients) return;
 
     _sobrante = _desplazamiento.position.maxScrollExtent;
@@ -642,6 +654,12 @@ class _MarquesinaState extends State<Marquesina>
       ..forward(from: 0);
   }
 
+  /// Si el alumno arrastra la fila, se detiene la pasada en curso.
+  bool _alDesplazar(ScrollStartNotification aviso) {
+    if (aviso.dragDetails != null) _control.stop();
+    return false;
+  }
+
   void _mover() {
     if (_desplazamiento.hasClients) {
       _desplazamiento.jumpTo(_recorrido.value * _sobrante);
@@ -658,9 +676,20 @@ class _MarquesinaState extends State<Marquesina>
 
   @override
   Widget build(BuildContext context) {
+    if (widget.contenido case final contenido?) {
+      return NotificationListener<ScrollStartNotification>(
+        onNotification: _alDesplazar,
+        child: SingleChildScrollView(
+          controller: _desplazamiento,
+          scrollDirection: Axis.horizontal,
+          child: contenido,
+        ),
+      );
+    }
+    final texto = widget.texto!;
     if (sinAnimaciones(context)) {
       return Text(
-        widget.texto,
+        texto,
         style: widget.estilo,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
@@ -670,7 +699,7 @@ class _MarquesinaState extends State<Marquesina>
       controller: _desplazamiento,
       scrollDirection: Axis.horizontal,
       physics: const NeverScrollableScrollPhysics(),
-      child: Text(widget.texto, style: widget.estilo, maxLines: 1),
+      child: Text(texto, style: widget.estilo, maxLines: 1),
     );
   }
 }
