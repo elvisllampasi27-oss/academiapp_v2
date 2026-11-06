@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:academiapp_v2/admin/animacion_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('la entrada desenfocada termina sin ningún efecto encima', (
+  testWidgets('la entrada desenfocada termina con sus efectos neutros', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -12,15 +14,57 @@ void main() {
       ),
     );
     await tester.pump(const Duration(milliseconds: 120));
-    expect(find.byType(ImageFiltered), findsOneWidget); // aún entrando
+    ImageFiltered filtro() => tester.widget(find.byType(ImageFiltered));
+    Opacity opacidad() => tester.widget(
+      find.ancestor(of: find.text('Hola'), matching: find.byType(Opacity)),
+    );
+    expect(filtro().enabled, isTrue); // aún entrando
+    expect(opacidad().opacity, lessThan(1));
 
     await tester.pumpAndSettle();
     expect(find.text('Hola'), findsOneWidget);
-    expect(find.byType(ImageFiltered), findsNothing);
-    expect(
-      find.ancestor(of: find.text('Hola'), matching: find.byType(Opacity)),
-      findsNothing,
+    expect(filtro().enabled, isFalse);
+    expect(opacidad().opacity, 1);
+  });
+
+  testWidgets('al terminar no vuelve a montar el contenido (conserva estado)', (
+    tester,
+  ) async {
+    // Un stream de una sola suscripción: si el contenido se montara de
+    // nuevo al terminar la animación, fallaría con "already been listened".
+    final controlador = StreamController<int>();
+    final deFila = StreamController<int>();
+    addTearDown(controlador.close);
+    addTearDown(deFila.close);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              EntradaDifuminada(
+                child: StreamBuilder<int>(
+                  stream: controlador.stream,
+                  builder: (_, s) => Text('entrada ${s.data ?? '-'}'),
+                ),
+              ),
+              FilaEntrante(
+                indice: 0,
+                child: StreamBuilder<int>(
+                  stream: deFila.stream,
+                  builder: (_, s) => Text('fila ${s.data ?? '-'}'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
+    controlador.add(7);
+    deFila.add(3);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('entrada 7'), findsOneWidget);
+    expect(find.text('fila 3'), findsOneWidget);
   });
 
   testWidgets('la cifra cuenta y termina en su valor exacto', (tester) async {
@@ -55,11 +99,14 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.byType(ImageFiltered), findsNothing);
+    expect(
+      tester.widget<ImageFiltered>(find.byType(ImageFiltered)).enabled,
+      isFalse,
+    );
     expect(find.text('12'), findsOneWidget);
   });
 
-  testWidgets('las filas entran una tras otra y quedan limpias', (
+  testWidgets('las filas entran una tras otra y quedan nítidas', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -76,10 +123,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     for (var i = 0; i < 3; i++) {
-      expect(
+      final opacidad = tester.widget<Opacity>(
         find.ancestor(of: find.text('fila $i'), matching: find.byType(Opacity)),
-        findsNothing,
       );
+      expect(opacidad.opacity, 1);
     }
   });
 }

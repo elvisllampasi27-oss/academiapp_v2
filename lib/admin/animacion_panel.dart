@@ -3,8 +3,15 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 
 /// Animaciones del panel, livianas a propósito: cada una corre una sola vez
-/// al aparecer y, al terminar, deja el contenido sin ningún efecto encima
-/// (así no cuestan nada después). Con "reducir animaciones" no corren.
+/// al aparecer y, al terminar, sus efectos quedan neutros (opacidad 1, sin
+/// desplazamiento, desenfoque apagado), así no cuestan nada después.
+///
+/// Importante: el árbol de widgets NUNCA cambia de forma al terminar. Si los
+/// envoltorios se quitaran, Flutter volvería a montar el contenido desde cero
+/// y todo lo que tiene estado adentro se reiniciaría (un StreamBuilder se
+/// volvería a suscribir a Firestore, un campo de texto perdería lo escrito).
+///
+/// Con "reducir animaciones" no corren.
 
 bool sinAnimaciones(BuildContext context) =>
     MediaQuery.maybeDisableAnimationsOf(context) ?? false;
@@ -67,21 +74,19 @@ class _EntradaDifuminadaState extends State<EntradaDifuminada>
       child: widget.child,
       builder: (context, hijo) {
         final t = _t.value;
-        if (t >= 1) return hijo!;
         final desenfoque = 6 * (1 - t);
         return Opacity(
           opacity: t,
           child: Transform.translate(
             offset: Offset(0, 10 * (1 - t)),
-            child: desenfoque < 0.2
-                ? hijo
-                : ImageFiltered(
-                    imageFilter: ImageFilter.blur(
-                      sigmaX: desenfoque,
-                      sigmaY: desenfoque,
-                    ),
-                    child: hijo,
-                  ),
+            child: ImageFiltered(
+              enabled: desenfoque >= 0.2,
+              imageFilter: ImageFilter.blur(
+                sigmaX: desenfoque,
+                sigmaY: desenfoque,
+              ),
+              child: hijo,
+            ),
           ),
         );
       },
@@ -223,7 +228,6 @@ class _FilaEntranteState extends State<FilaEntrante>
       child: widget.child,
       builder: (context, hijo) {
         final t = _t.value;
-        if (t >= 1) return hijo!;
         return Opacity(
           opacity: t,
           child: Transform.translate(

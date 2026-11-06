@@ -201,9 +201,11 @@ class _GraficoAreaState extends State<GraficoArea> {
                           duration: const Duration(milliseconds: 1100),
                           curve: Curves.easeInOutCubic,
                           child: CustomPaint(painter: pintor),
-                          builder: (context, t, hijo) => t >= 1
-                              ? hijo!
-                              : ClipRect(clipper: _HastaX(t), child: hijo),
+                          builder: (context, t, hijo) => ClipRect(
+                            clipper: _HastaX(t),
+                            clipBehavior: t >= 1 ? Clip.none : Clip.hardEdge,
+                            child: hijo,
+                          ),
                         )
                       : CustomPaint(painter: pintor),
                 ),
@@ -651,8 +653,11 @@ class Revelado extends StatelessWidget {
       duration: const Duration(milliseconds: 1000),
       curve: Curves.easeInOutCubic,
       child: child,
-      builder: (context, t, hijo) =>
-          t >= 1 ? hijo! : ClipRect(clipper: _HastaX(t), child: hijo),
+      builder: (context, t, hijo) => ClipRect(
+        clipper: _HastaX(t),
+        clipBehavior: t >= 1 ? Clip.none : Clip.hardEdge,
+        child: hijo,
+      ),
     );
   }
 }
