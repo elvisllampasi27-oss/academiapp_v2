@@ -77,18 +77,41 @@ void main() {
     expect(_rutaMostrada(tester), PumaTutor.rutaDe(GestoPuma.contento));
   });
 
-  testWidgets('hablando: abre la boca en cada sílaba y no parpadea', (
+  testWidgets('hablando: se queda con el dibujo atento y no parpadea', (
     tester,
   ) async {
-    Widget puma({required bool boca}) => MaterialApp(
-      home: Scaffold(body: PumaTutor(hablando: true, bocaAbierta: boca)),
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: PumaTutor(gesto: GestoPuma.contento, hablando: true),
+        ),
+      ),
     );
-    await tester.pumpWidget(puma(boca: true));
-    expect(_rutaMostrada(tester), PumaTutor.rutaHablando);
-
-    await tester.pumpWidget(puma(boca: false));
-    await tester.pump(const Duration(seconds: 6)); // sin parpadeo
+    await tester.pumpAndSettle();
+    // Habla sobre el atento (la mandíbula se recorta de él), sin cambiar de
+    // dibujo en cada palabra.
     expect(_rutaMostrada(tester), PumaTutor.rutaDe(GestoPuma.atento));
+
+    await tester.pump(const Duration(seconds: 6));
+    expect(_rutaMostrada(tester), PumaTutor.rutaDe(GestoPuma.atento));
+  });
+
+  testWidgets('cada palabra abre la boca y luego la cierra sola', (
+    tester,
+  ) async {
+    Widget puma(int silabas) => MaterialApp(
+      home: Scaffold(body: PumaTutor(hablando: true, silabas: silabas)),
+    );
+    await tester.pumpWidget(puma(0));
+    await tester.pumpAndSettle();
+    expect(tester.hasRunningAnimations, isFalse);
+
+    await tester.pumpWidget(puma(1));
+    await tester.pump(const Duration(milliseconds: 40));
+    expect(tester.hasRunningAnimations, isTrue); // abriendo
+
+    await tester.pumpAndSettle();
+    expect(tester.hasRunningAnimations, isFalse); // ya cerrada
   });
 
   group('voz en español', () {

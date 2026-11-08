@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
@@ -30,27 +28,25 @@ class PanelTutor extends StatefulWidget {
 class _PanelTutorState extends State<PanelTutor> with WidgetsBindingObserver {
   final _texto = TextEditingController();
 
-  /// Cuánto queda abierta la boca del puma en cada palabra.
-  static const _silaba = Duration(milliseconds: 140);
-
   late final VozPuma _voz = VozPuma.crear(
     alCambiar: (hablando) {
       if (!mounted) return;
       setState(() {
         if (!hablando) {
           _leyendo = null;
-          _bocaAbierta = false;
         }
       });
     },
-    alPalabra: _moverBoca,
+    // Cada palabra dicha: el puma abre y cierra la boca.
+    alPalabra: () {
+      if (mounted) setState(() => _silabas++);
+    },
   );
   bool _hayVoz = false;
 
   /// Respuesta que el puma está leyendo en voz alta (si alguna).
   MensajeTutor? _leyendo;
-  bool _bocaAbierta = false;
-  Timer? _cerrarBoca;
+  int _silabas = 0;
 
   @override
   void initState() {
@@ -67,15 +63,6 @@ class _PanelTutorState extends State<PanelTutor> with WidgetsBindingObserver {
     if (estado != AppLifecycleState.resumed && _leyendo != null) {
       _voz.callar();
     }
-  }
-
-  void _moverBoca() {
-    if (!mounted || sinAnimaciones(context)) return;
-    setState(() => _bocaAbierta = true);
-    _cerrarBoca?.cancel();
-    _cerrarBoca = Timer(_silaba, () {
-      if (mounted) setState(() => _bocaAbierta = false);
-    });
   }
 
   void _escuchar(MensajeTutor mensaje) {
@@ -98,7 +85,6 @@ class _PanelTutorState extends State<PanelTutor> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _cerrarBoca?.cancel();
     _voz.cerrar(); // al cerrar el chat deja de hablar
     _texto.dispose();
     super.dispose();
@@ -133,7 +119,7 @@ class _PanelTutorState extends State<PanelTutor> with WidgetsBindingObserver {
                     gesto: _gesto(conversacion),
                     tamano: 52,
                     hablando: _leyendo != null,
-                    bocaAbierta: _bocaAbierta,
+                    silabas: _silabas,
                   ),
                   const SizedBox(width: 10),
                   Expanded(

@@ -76,14 +76,18 @@ class VozPumaDispositivo implements VozPuma {
         await _tts.setVoice({'name': voz.nombre, 'locale': voz.locale});
       }
       final hombre = voz?.esHombre ?? false;
+      final natural = voz?.natural ?? false;
       if (kDebugMode) {
         debugPrint(
           'Voz del puma: ${voz?.nombre ?? elegido}'
           '${hombre ? ' (hombre)' : ' (no hay voz de hombre en español)'}',
         );
       }
-      await _tts.setSpeechRate(kIsWeb ? 0.95 : 0.46);
-      await _tts.setPitch(hombre ? 0.82 : 0.95);
+      // Velocidad y tono normales: bajar el tono deforma la voz (suena áspera
+      // y metálica), sobre todo las "Natural", que ya son graves. Solo a una
+      // voz de hombre básica se le baja un poco.
+      await _tts.setSpeechRate(kIsWeb ? 1.0 : 0.5);
+      await _tts.setPitch(hombre && !natural ? 0.93 : 1.0);
       await _tts.awaitSpeakCompletion(false);
       return _lista = true;
     } catch (_) {
@@ -162,10 +166,9 @@ class VozPumaDispositivo implements VozPuma {
   /// Elige la mejor voz en español: primero de hombre, luego las de mejor
   /// calidad ("Natural", "Neural"...) y luego el acento más cercano.
   @visibleForTesting
-  static ({String nombre, String locale, bool esHombre})? elegirVoz(
-    List<Map<Object?, Object?>> voces,
-  ) {
-    ({String nombre, String locale, bool esHombre})? mejor;
+  static ({String nombre, String locale, bool esHombre, bool natural})?
+  elegirVoz(List<Map<Object?, Object?>> voces) {
+    ({String nombre, String locale, bool esHombre, bool natural})? mejor;
     var mejorPuntaje = -1;
     for (final voz in voces) {
       final nombre = voz['name']?.toString() ?? '';
@@ -196,7 +199,12 @@ class VozPumaDispositivo implements VozPuma {
           (acento == -1 ? 4 : 10 - acento * 2);
       if (puntaje > mejorPuntaje) {
         mejorPuntaje = puntaje;
-        mejor = (nombre: nombre, locale: locale, esHombre: esHombre);
+        mejor = (
+          nombre: nombre,
+          locale: locale,
+          esHombre: esHombre,
+          natural: calidad,
+        );
       }
     }
     return mejor;

@@ -479,11 +479,7 @@ class _PumaDelResultadoState extends State<_PumaDelResultado>
     with WidgetsBindingObserver {
   static const _revisando = Duration(milliseconds: 700);
 
-  /// Cuánto queda abierta la boca en cada palabra.
-  static const _silaba = Duration(milliseconds: 140);
-
   Timer? _espera;
-  Timer? _cerrarBoca;
   bool _listo = false;
 
   late final VozPuma _voz = VozPuma.crear(
@@ -491,14 +487,16 @@ class _PumaDelResultadoState extends State<_PumaDelResultado>
       if (!mounted) return;
       setState(() {
         _hablando = hablando;
-        if (!hablando) _bocaAbierta = false;
       });
     },
-    alPalabra: _moverBoca,
+    // Cada palabra dicha: el puma abre y cierra la boca.
+    alPalabra: () {
+      if (mounted) setState(() => _silabas++);
+    },
   );
   bool _hayVoz = false;
   bool _hablando = false;
-  bool _bocaAbierta = false;
+  int _silabas = 0;
 
   @override
   void initState() {
@@ -529,15 +527,6 @@ class _PumaDelResultadoState extends State<_PumaDelResultado>
     if (estado != AppLifecycleState.resumed && _hablando) _voz.callar();
   }
 
-  void _moverBoca() {
-    if (!mounted || sinAnimaciones(context)) return;
-    setState(() => _bocaAbierta = true);
-    _cerrarBoca?.cancel();
-    _cerrarBoca = Timer(_silaba, () {
-      if (mounted) setState(() => _bocaAbierta = false);
-    });
-  }
-
   void _alternarVoz() {
     if (_hablando) {
       _voz.callar();
@@ -550,7 +539,6 @@ class _PumaDelResultadoState extends State<_PumaDelResultado>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _espera?.cancel();
-    _cerrarBoca?.cancel();
     _voz.cerrar(); // al salir de la pantalla deja de hablar
     super.dispose();
   }
@@ -566,7 +554,7 @@ class _PumaDelResultadoState extends State<_PumaDelResultado>
             gesto: _listo ? widget.mensaje.gesto : GestoPuma.pensando,
             tamano: 104,
             hablando: _hablando,
-            bocaAbierta: _bocaAbierta,
+            silabas: _silabas,
           ),
           const SizedBox(width: 10),
           Expanded(
