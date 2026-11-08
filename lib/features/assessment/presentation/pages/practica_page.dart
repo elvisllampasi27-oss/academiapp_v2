@@ -12,6 +12,7 @@ import '../../../../core/presentation/imagen_figura.dart';
 import '../../../../core/presentation/animaciones.dart';
 import '../../../../core/presentation/carga_puma.dart';
 import '../../../../core/presentation/puma_tutor.dart';
+import '../../../../core/presentation/voz_puma.dart';
 import '../widgets/mensaje_puma.dart';
 
 /// Resolver una práctica: una pregunta a la vez y, al final, la corrección
@@ -474,11 +475,40 @@ class _PumaDelResultado extends StatefulWidget {
   State<_PumaDelResultado> createState() => _PumaDelResultadoState();
 }
 
-class _PumaDelResultadoState extends State<_PumaDelResultado> {
+class _PumaDelResultadoState extends State<_PumaDelResultado>
+    with WidgetsBindingObserver {
   static const _revisando = Duration(milliseconds: 700);
 
+  /// Cuánto queda abierta la boca en cada palabra.
+  static const _silaba = Duration(milliseconds: 140);
+
   Timer? _espera;
+  Timer? _cerrarBoca;
   bool _listo = false;
+
+  late final VozPuma _voz = VozPuma.crear(
+    alCambiar: (hablando) {
+      if (!mounted) return;
+      setState(() {
+        _hablando = hablando;
+        if (!hablando) _bocaAbierta = false;
+      });
+    },
+    alPalabra: _moverBoca,
+  );
+  bool _hayVoz = false;
+  bool _hablando = false;
+  bool _bocaAbierta = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Si no hay voz en español, simplemente no aparece el botón.
+    _voz.preparar().then((hay) {
+      if (mounted && hay) setState(() => _hayVoz = true);
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -493,9 +523,35 @@ class _PumaDelResultadoState extends State<_PumaDelResultado> {
     }
   }
 
+  /// Al pasar la app a segundo plano, se calla.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState estado) {
+    if (estado != AppLifecycleState.resumed && _hablando) _voz.callar();
+  }
+
+  void _moverBoca() {
+    if (!mounted || sinAnimaciones(context)) return;
+    setState(() => _bocaAbierta = true);
+    _cerrarBoca?.cancel();
+    _cerrarBoca = Timer(_silaba, () {
+      if (mounted) setState(() => _bocaAbierta = false);
+    });
+  }
+
+  void _alternarVoz() {
+    if (_hablando) {
+      _voz.callar();
+    } else {
+      _voz.hablar(widget.mensaje.texto);
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _espera?.cancel();
+    _cerrarBoca?.cancel();
+    _voz.cerrar(); // al salir de la pantalla deja de hablar
     super.dispose();
   }
 
@@ -509,12 +565,14 @@ class _PumaDelResultadoState extends State<_PumaDelResultado> {
           PumaTutor(
             gesto: _listo ? widget.mensaje.gesto : GestoPuma.pensando,
             tamano: 104,
+            hablando: _hablando,
+            bocaAbierta: _bocaAbierta,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Container(
               margin: const EdgeInsets.only(bottom: 18),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
               decoration: BoxDecoration(
                 color: colores.surfaceContainerHigh,
                 borderRadius: const BorderRadius.only(
@@ -525,23 +583,47 @@ class _PumaDelResultadoState extends State<_PumaDelResultado> {
                 ),
                 border: Border.all(color: colores.outlineVariant),
               ),
-              child: AnimatedSize(
-                duration: sinAnimaciones(context)
-                    ? Duration.zero
-                    : const Duration(milliseconds: 250),
-                alignment: Alignment.topLeft,
-                child: _listo
-                    ? EntradaDifuminada(
-                        key: const ValueKey('frase'),
-                        child: Text(
-                          widget.mensaje.texto,
-                          style: const TextStyle(fontSize: 15, height: 1.4),
-                        ),
-                      )
-                    : Text(
-                        'Revisando tus respuestas…',
-                        style: TextStyle(color: colores.onSurfaceVariant),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: AnimatedSize(
+                      duration: sinAnimaciones(context)
+                          ? Duration.zero
+                          : const Duration(milliseconds: 250),
+                      alignment: Alignment.topLeft,
+                      child: _listo
+                          ? EntradaDifuminada(
+                              key: const ValueKey('frase'),
+                              child: Text(
+                                widget.mensaje.texto,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  height: 1.4,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              'Revisando tus respuestas…',
+                              style: TextStyle(
+                                color: colores.onSurfaceVariant,
+                              ),
+                            ),
+                    ),
+                  ),
+                  // Voz opcional: apagada hasta que el alumno la pide.
+                  if (_listo && _hayVoz)
+                    IconButton(
+                      tooltip: _hablando ? 'Callar' : 'Escuchar',
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(
+                        _hablando
+                            ? Icons.stop_circle_outlined
+                            : Icons.volume_up_outlined,
                       ),
+                      onPressed: _alternarVoz,
+                    ),
+                ],
               ),
             ),
           ),

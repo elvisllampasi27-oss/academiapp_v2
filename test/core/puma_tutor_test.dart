@@ -1,4 +1,5 @@
 import 'package:academiapp_v2/core/presentation/puma_tutor.dart';
+import 'package:academiapp_v2/core/presentation/voz_puma.dart';
 import 'package:academiapp_v2/features/assessment/presentation/widgets/mensaje_puma.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -74,5 +75,37 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 6));
     expect(_rutaMostrada(tester), PumaTutor.rutaDe(GestoPuma.contento));
+  });
+
+  testWidgets('hablando: abre la boca en cada sílaba y no parpadea', (
+    tester,
+  ) async {
+    Widget puma({required bool boca}) => MaterialApp(
+      home: Scaffold(body: PumaTutor(hablando: true, bocaAbierta: boca)),
+    );
+    await tester.pumpWidget(puma(boca: true));
+    expect(_rutaMostrada(tester), PumaTutor.rutaHablando);
+
+    await tester.pumpWidget(puma(boca: false));
+    await tester.pump(const Duration(seconds: 6)); // sin parpadeo
+    expect(_rutaMostrada(tester), PumaTutor.rutaDe(GestoPuma.atento));
+  });
+
+  group('voz en español', () {
+    test('prefiere el acento peruano o latino', () {
+      expect(
+        VozPumaDispositivo.elegirIdioma(['en-US', 'es-ES', 'es-US']),
+        'es-US',
+      );
+      expect(VozPumaDispositivo.elegirIdioma(['es_PE', 'es-ES']), 'es_PE');
+    });
+
+    test('si no hay acento preferido, cualquier español', () {
+      expect(VozPumaDispositivo.elegirIdioma(['en-GB', 'es-AR']), 'es-AR');
+    });
+
+    test('sin español no hay voz (queda solo el texto)', () {
+      expect(VozPumaDispositivo.elegirIdioma(['en-US', 'pt-BR']), isNull);
+    });
   });
 }

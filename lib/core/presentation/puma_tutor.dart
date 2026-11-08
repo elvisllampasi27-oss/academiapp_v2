@@ -30,10 +30,18 @@ class PumaTutor extends StatefulWidget {
   final GestoPuma gesto;
   final double tamano;
 
+  /// Mientras habla no parpadea y la boca cambia sin fundido.
+  final bool hablando;
+
+  /// Boca abierta (una sílaba): la mueve quien controla la voz.
+  final bool bocaAbierta;
+
   const PumaTutor({
     super.key,
     this.gesto = GestoPuma.atento,
     this.tamano = 120,
+    this.hablando = false,
+    this.bocaAbierta = false,
   });
 
   static String rutaDe(GestoPuma gesto) =>
@@ -45,6 +53,7 @@ class PumaTutor extends StatefulWidget {
       }}.webp';
 
   static const _rutaParpadeo = 'assets/puma/tutor/parpadeo.webp';
+  static const rutaHablando = 'assets/puma/tutor/hablando.webp';
 
   @override
   State<PumaTutor> createState() => _PumaTutorState();
@@ -68,6 +77,7 @@ class _PumaTutorState extends State<PumaTutor> {
       for (final ruta in {
         for (final g in GestoPuma.values) PumaTutor.rutaDe(g),
         PumaTutor._rutaParpadeo,
+        PumaTutor.rutaHablando,
       }) {
         precacheImage(AssetImage(ruta), context, onError: (_, _) {});
       }
@@ -78,12 +88,18 @@ class _PumaTutorState extends State<PumaTutor> {
   @override
   void didUpdateWidget(PumaTutor anterior) {
     super.didUpdateWidget(anterior);
-    if (anterior.gesto != widget.gesto) _programarParpadeo();
+    if (anterior.gesto != widget.gesto ||
+        anterior.hablando != widget.hablando) {
+      _programarParpadeo();
+    }
   }
 
   /// Solo parpadea atento y con las animaciones permitidas.
   void _programarParpadeo() {
-    final debe = widget.gesto == GestoPuma.atento && !sinAnimaciones(context);
+    final debe =
+        widget.gesto == GestoPuma.atento &&
+        !widget.hablando &&
+        !sinAnimaciones(context);
     if (!debe) {
       _parpadeos?.cancel();
       _parpadeos = null;
@@ -110,18 +126,22 @@ class _PumaTutorState extends State<PumaTutor> {
 
   @override
   Widget build(BuildContext context) {
-    final ruta = _parpadeando && widget.gesto == GestoPuma.atento
+    final ruta = widget.hablando && widget.bocaAbierta
+        ? PumaTutor.rutaHablando
+        : _parpadeando && widget.gesto == GestoPuma.atento
         ? PumaTutor._rutaParpadeo
         : PumaTutor.rutaDe(widget.gesto);
 
     return Semantics(
       image: true,
-      label: 'Puma tutor ${widget.gesto.name}',
+      label: widget.hablando
+          ? 'Puma tutor hablando'
+          : 'Puma tutor ${widget.gesto.name}',
       child: SizedBox.square(
         dimension: widget.tamano,
         child: AnimatedSwitcher(
           // El parpadeo es instantáneo; los cambios de gesto, un fundido.
-          duration: _parpadeando || sinAnimaciones(context)
+          duration: _parpadeando || widget.hablando || sinAnimaciones(context)
               ? Duration.zero
               : const Duration(milliseconds: 220),
           child: Image(
