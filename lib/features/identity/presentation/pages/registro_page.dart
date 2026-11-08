@@ -102,7 +102,6 @@ class _RegistroPageState extends State<RegistroPage> {
           ),
           const SizedBox(height: 28),
           TarjetaVidrio(
-            capaTrasera: true,
             child: AutofillGroup(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

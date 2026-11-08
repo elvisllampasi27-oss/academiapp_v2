@@ -96,7 +96,6 @@ class _CompletarPerfilPageState extends State<CompletarPerfilPage> {
             const BarraAutenticacion(),
             const SizedBox(height: 28),
             TarjetaVidrio(
-              capaTrasera: true,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

@@ -181,7 +181,6 @@ class _LoginPageState extends State<LoginPage> {
             BarraAutenticacion(alVolver: ocupado ? null : widget.onVolver),
             const SizedBox(height: 28),
             TarjetaVidrio(
-              capaTrasera: true,
               child: AutofillGroup(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,

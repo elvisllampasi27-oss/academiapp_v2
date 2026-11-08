@@ -115,32 +115,10 @@ class _BienvenidaPageState extends State<BienvenidaPage>
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(22, 24, 22, 28),
                           child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            // Sin letrero arriba: el puma ya es la marca.
+                            mainAxisAlignment: MainAxisAlignment.end,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              EntradaDifuminada(
-                                retraso: _retraso(0),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Vidrio(
-                                    suave: true,
-                                    radio: BorderRadius.circular(20),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 8,
-                                    ),
-                                    child: const Text(
-                                      'AcademiApp',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.6,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [

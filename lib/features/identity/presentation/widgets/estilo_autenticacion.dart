@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/animaciones.dart';
 
-/// Componentes visuales de las pantallas de acceso: "vidrio 2.0".
-/// Solo aquí se usa desenfoque (pantallas de entrada); dentro de la app los
-/// paneles son planos para que los celulares de gama baja vayan fluidos.
+/// Componentes visuales de las pantallas de acceso: "vidrio líquido" (al
+/// estilo Liquid Glass). Solo aquí se usa desenfoque (pantallas de entrada);
+/// dentro de la app los paneles son planos para que los celulares de gama
+/// baja vayan fluidos.
 
 const _bordeVidrio = Color(0x47FFFFFF);
 const _bordeCampo = Color(0x38FFFFFF);
@@ -15,21 +16,13 @@ const _rellenoVentana = Color(0x99000000);
 const _textoSuave = Color(0xFFD4D4D8);
 const _desenfoque = 20.0;
 
-/// Relleno del vidrio: más claro arriba a la izquierda, como luz que entra.
-const _degradadoVidrio = LinearGradient(
-  begin: Alignment(-0.6, -1),
-  end: Alignment(0.6, 1),
-  colors: [Color(0x33FFFFFF), Color(0x12FFFFFF), Color(0x08FFFFFF)],
-  stops: [0, 0.45, 1],
-);
-
-const _degradadoVidrioSuave = LinearGradient(
-  begin: Alignment(-0.6, -1),
-  end: Alignment(0.6, 1),
-  colors: [Color(0x1FFFFFFF), Color(0x05FFFFFF)],
-);
-
-/// Vidrio con desenfoque, borde claro, brillo en el canto superior y sombra.
+/// Vidrio líquido: casi transparente (desenfoque leve y colores un poco más
+/// vivos detrás), con un canto de luz que brilla más arriba a la izquierda y
+/// abajo a la derecha, un reflejo suave arriba y algo de grosor abajo.
+///
+/// La refracción real (que deforme lo de atrás como una lente) necesita un
+/// shader propio que no funciona bien en la web ni en gama baja; este es el
+/// mismo aspecto sin ese costo.
 class Vidrio extends StatelessWidget {
   final Widget child;
   final BorderRadius radio;
@@ -44,9 +37,17 @@ class Vidrio extends StatelessWidget {
     this.suave = false,
   });
 
+  /// Satura un poco lo que se ve a través (los colores "se encienden").
+  static const _saturar = ColorFilter.matrix(<double>[
+    1.2765, -0.2503, -0.0262, 0, 0, //
+    -0.0745, 1.0997, -0.0252, 0, 0, //
+    -0.0745, -0.2503, 1.3248, 0, 0, //
+    0, 0, 0, 1, 0, //
+  ]);
+
   @override
   Widget build(BuildContext context) {
-    final desenfoque = suave ? 8.0 : _desenfoque;
+    final desenfoque = suave ? 4.0 : 7.0;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -55,55 +56,116 @@ class Vidrio extends StatelessWidget {
             ? null
             : const [
                 BoxShadow(
-                  color: Color(0x73000000),
-                  blurRadius: 60,
-                  offset: Offset(0, 24),
+                  color: Color(0x4D000000),
+                  blurRadius: 40,
+                  offset: Offset(0, 18),
                 ),
               ],
       ),
       child: ClipRRect(
         borderRadius: radio,
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: desenfoque, sigmaY: desenfoque),
-          child: Stack(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: padding,
-                decoration: BoxDecoration(
-                  borderRadius: radio,
-                  gradient: suave ? _degradadoVidrioSuave : _degradadoVidrio,
-                  border: Border.all(
-                    color: suave ? const Color(0x29FFFFFF) : _bordeVidrio,
-                  ),
-                ),
-                child: child,
+          filter: ImageFilter.compose(
+            outer: _saturar,
+            inner: ImageFilter.blur(sigmaX: desenfoque, sigmaY: desenfoque),
+          ),
+          child: CustomPaint(
+            painter: _LuzLiquida(radio: radio, suave: suave, frente: false),
+            foregroundPainter: _LuzLiquida(
+              radio: radio,
+              suave: suave,
+              frente: true,
+            ),
+            child: Container(
+              width: double.infinity,
+              padding: padding,
+              decoration: BoxDecoration(
+                borderRadius: radio,
+                color: suave
+                    ? const Color(0x0DFFFFFF)
+                    : const Color(0x12FFFFFF),
               ),
-              if (!suave)
-                // Brillo del canto superior (el "inset" del diseño).
-                const Positioned(
-                  left: 18,
-                  right: 18,
-                  top: 0,
-                  height: 1,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Color(0x00FFFFFF),
-                          Color(0x73FFFFFF),
-                          Color(0x00FFFFFF),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+              child: child,
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Las luces del vidrio líquido. Detrás del contenido: el reflejo de arriba
+/// y el grosor de abajo. Delante: el canto de luz.
+class _LuzLiquida extends CustomPainter {
+  final BorderRadius radio;
+  final bool suave;
+  final bool frente;
+
+  const _LuzLiquida({
+    required this.radio,
+    required this.suave,
+    required this.frente,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final forma = radio.toRRect(rect);
+
+    if (!frente) {
+      // Reflejo: luz que entra por arriba y se apaga hacia el medio.
+      canvas.drawRRect(
+        forma,
+        Paint()
+          ..shader = const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x26FFFFFF), Color(0x00FFFFFF)],
+            stops: [0, 0.38],
+          ).createShader(rect),
+      );
+      // Grosor: el borde de abajo un poco más oscuro, como vidrio grueso.
+      canvas.drawRRect(
+        forma,
+        Paint()
+          ..shader = const LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [Color(0x1F000000), Color(0x00000000)],
+            stops: [0, 0.22],
+          ).createShader(rect),
+      );
+      return;
+    }
+
+    // Canto de luz: fuerte arriba a la izquierda, casi nada a los lados y
+    // un segundo brillo abajo a la derecha.
+    final ancho = suave ? 1.0 : 1.4;
+    canvas.drawRRect(
+      forma.deflate(ancho / 2),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = ancho
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xD9FFFFFF),
+            Color(0x33FFFFFF),
+            Color(0x0FFFFFFF),
+            Color(0x33FFFFFF),
+            Color(0x99FFFFFF),
+          ],
+          stops: [0, 0.22, 0.5, 0.78, 1],
+        ).createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_LuzLiquida anterior) =>
+      anterior.radio != radio ||
+      anterior.suave != suave ||
+      anterior.frente != frente;
 }
 
 /// Letra de las pantallas de acceso: Comic Neue (el estilo de Comic Sans,
@@ -300,47 +362,18 @@ class EncabezadoAutenticacion extends StatelessWidget {
   }
 }
 
-/// Tarjeta principal de vidrio. Con [capaTrasera] muestra una segunda hoja
-/// detrás, asomando por arriba (profundidad del diseño).
+/// Tarjeta principal de vidrio líquido.
 class TarjetaVidrio extends StatelessWidget {
   final Widget child;
-  final bool capaTrasera;
 
-  const TarjetaVidrio({
-    super.key,
-    required this.child,
-    this.capaTrasera = false,
-  });
+  const TarjetaVidrio({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    final tarjeta = Vidrio(
+    return Vidrio(
       radio: BorderRadius.circular(30),
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 26),
       child: child,
-    );
-
-    if (!capaTrasera) return tarjeta;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 14),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: 22,
-            right: 22,
-            top: -14,
-            bottom: 14,
-            child: Vidrio(
-              suave: true,
-              radio: BorderRadius.circular(30),
-              child: const SizedBox.expand(),
-            ),
-          ),
-          tarjeta,
-        ],
-      ),
     );
   }
 }

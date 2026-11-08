@@ -66,7 +66,6 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
           BarraAutenticacion(alVolver: () => Navigator.of(context).pop()),
           const SizedBox(height: 28),
           TarjetaVidrio(
-            capaTrasera: true,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
