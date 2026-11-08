@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,8 @@ import '../../../../core/presentation/texto_con_latex.dart';
 import '../../../../core/presentation/imagen_figura.dart';
 import '../../../../core/presentation/animaciones.dart';
 import '../../../../core/presentation/carga_puma.dart';
+import '../../../../core/presentation/puma_tutor.dart';
+import '../widgets/mensaje_puma.dart';
 
 /// Resolver una práctica: una pregunta a la vez y, al final, la corrección
 /// que devuelve el servidor (con la respuesta correcta y la explicación).
@@ -161,6 +164,7 @@ class _PracticaPageState extends State<PracticaPage> {
                   preguntas: preguntas,
                   correccion: correccion,
                   alReintentar: _reiniciar,
+                  tema: widget.subtitulo,
                 );
         },
       ),
@@ -373,11 +377,13 @@ class _VistaResultado extends StatelessWidget {
   final List<PreguntaPresentada> preguntas;
   final CorreccionIntento correccion;
   final VoidCallback alReintentar;
+  final String tema;
 
   const _VistaResultado({
     required this.preguntas,
     required this.correccion,
     required this.alReintentar,
+    required this.tema,
   });
 
   @override
@@ -404,6 +410,20 @@ class _VistaResultado extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        _PumaDelResultado(
+          mensaje: mensajeDelPuma(
+            correctas: resultado.respuestasCorrectas,
+            total: resultado.totalPreguntas,
+            tema: tema,
+            primeraFallada: switch (correccion.detalle.indexed
+                .where((e) => !e.$2.esCorrecta)
+                .firstOrNull) {
+              (var i, _)? => i + 1,
+              null => null,
+            },
           ),
         ),
         const SizedBox(height: 24),
@@ -439,6 +459,94 @@ class _VistaResultado extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// El puma comenta el resultado: primero "revisa" (mira hacia arriba) y
+/// enseguida pone su gesto y dice su frase en un globo.
+class _PumaDelResultado extends StatefulWidget {
+  final MensajePuma mensaje;
+
+  const _PumaDelResultado({required this.mensaje});
+
+  @override
+  State<_PumaDelResultado> createState() => _PumaDelResultadoState();
+}
+
+class _PumaDelResultadoState extends State<_PumaDelResultado> {
+  static const _revisando = Duration(milliseconds: 700);
+
+  Timer? _espera;
+  bool _listo = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_listo || _espera != null) return;
+    if (sinAnimaciones(context)) {
+      _listo = true;
+    } else {
+      _espera = Timer(_revisando, () {
+        if (mounted) setState(() => _listo = true);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _espera?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colores = Theme.of(context).colorScheme;
+    return EntradaDifuminada(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          PumaTutor(
+            gesto: _listo ? widget.mensaje.gesto : GestoPuma.pensando,
+            tamano: 104,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: colores.surfaceContainerHigh,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  topRight: Radius.circular(18),
+                  bottomRight: Radius.circular(18),
+                  bottomLeft: Radius.circular(4),
+                ),
+                border: Border.all(color: colores.outlineVariant),
+              ),
+              child: AnimatedSize(
+                duration: sinAnimaciones(context)
+                    ? Duration.zero
+                    : const Duration(milliseconds: 250),
+                alignment: Alignment.topLeft,
+                child: _listo
+                    ? EntradaDifuminada(
+                        key: const ValueKey('frase'),
+                        child: Text(
+                          widget.mensaje.texto,
+                          style: const TextStyle(fontSize: 15, height: 1.4),
+                        ),
+                      )
+                    : Text(
+                        'Revisando tus respuestas…',
+                        style: TextStyle(color: colores.onSurfaceVariant),
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

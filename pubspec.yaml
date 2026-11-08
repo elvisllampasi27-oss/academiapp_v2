@@ -75,6 +75,8 @@ flutter:
     # Puma de AcademiApp (sin fondo, brillo celeste): se forma mientras carga.
     - assets/puma/rostro.webp
     - assets/puma/lineas.webp
+    # Gestos del puma tutor (mismo encuadre en todos, sin fondo).
+    - assets/puma/tutor/
 
   # Comic Neue (licencia libre SIL OFL, ver assets/fonts/OFL-ComicNeue.txt):
   # el estilo de Comic Sans, que no se puede incluir en la app (es de
