@@ -71,6 +71,52 @@ test('si falla la red, avisa el motivo (503)', async (t) => {
 
   await assert.rejects(
     generarConGemini({ clave: 'x', instrucciones: 'i', mensajes: [{ rol: 'estudiante', texto: 'a' }] }),
-    (e) => e.estado === 503 && e.detalle === 'ENOTFOUND',
+    // También prueba el respaldo; el detalle conserva la causa.
+    (e) => e.estado === 503 && /ENOTFOUND/.test(e.detalle),
+  );
+});
+
+test('si el modelo principal está saturado, responde el de respaldo', async (t) => {
+  const pedidos = [];
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    pedidos.push(url);
+    if (pedidos.length === 1) {
+      return { ok: false, status: 503, text: async () => 'high demand' };
+    }
+    return {
+      ok: true,
+      json: async () => ({ candidates: [{ content: { parts: [{ text: 'desde el respaldo' }] } }] }),
+    };
+  });
+
+  const texto = await generarConGemini({
+    clave: 'x', instrucciones: 'i', mensajes: [{ rol: 'estudiante', texto: 'a' }],
+  });
+
+  assert.strictEqual(texto, 'desde el respaldo');
+  assert.match(pedidos[0], /gemini-3\.8-flash:/);
+  assert.match(pedidos[1], /gemini-3\.1-flash-lite:/);
+});
+
+test('un error que no es de saturación (400) no prueba el respaldo', async (t) => {
+  let llamadas = 0;
+  t.mock.method(globalThis, 'fetch', async () => {
+    llamadas += 1;
+    return { ok: false, status: 400, text: async () => 'mal' };
+  });
+
+  await assert.rejects(
+    generarConGemini({ clave: 'x', instrucciones: 'i', mensajes: [{ rol: 'estudiante', texto: 'a' }] }),
+    (e) => e.estado === 400,
+  );
+  assert.strictEqual(llamadas, 1);
+});
+
+test('si los dos están saturados, avisa de ambos', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => ({ ok: false, status: 503, text: async () => 'ocupado' }));
+
+  await assert.rejects(
+    generarConGemini({ clave: 'x', instrucciones: 'i', mensajes: [{ rol: 'estudiante', texto: 'a' }] }),
+    (e) => e.estado === 503 && /principal .*503 .*respaldo .*503/.test(e.detalle),
   );
 });

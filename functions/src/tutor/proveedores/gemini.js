@@ -10,10 +10,43 @@
  *   con un error claro en vez de quedarse colgada hasta el límite de la función.
  * @returns {Promise<string>} texto de la respuesta
  */
-async function generarConGemini({
-  clave, modelo, instrucciones, mensajes, json = false, maxTokens = 1536, tiempoMaximoMs = 30000,
+/** Modelo principal (se cambia con GEMINI_MODELO). */
+const MODELO_PRINCIPAL = 'gemini-3.8-flash';
+
+/**
+ * Respaldo cuando el principal está saturado: más liviano y con su propia
+ * capacidad (se cambia con GEMINI_MODELO_RESPALDO).
+ */
+const MODELO_RESPALDO = 'gemini-3.1-flash-lite';
+
+/** Saturado (503), sin cupo (429), caído (500) o sin respuesta a tiempo (504). */
+const reintentable = (e) => [429, 500, 503, 504].includes(e && e.estado);
+
+/**
+ * Pide la respuesta al modelo principal y, si está saturado o no responde,
+ * una sola vez al de respaldo. Los demás errores (clave, petición mal
+ * formada...) se devuelven tal cual, sin reintentar.
+ */
+async function generarConGemini({ modelo, respaldo, ...opciones }) {
+  const principal = modelo || MODELO_PRINCIPAL;
+  const otro = respaldo || process.env.GEMINI_MODELO_RESPALDO || MODELO_RESPALDO;
+  try {
+    return await generarConModelo({ ...opciones, nombre: principal });
+  } catch (e) {
+    if (!reintentable(e) || otro === principal) throw e;
+    try {
+      return await generarConModelo({ ...opciones, nombre: otro });
+    } catch (e2) {
+      // Se informa el error del principal y que el respaldo tampoco pudo.
+      e2.detalle = `principal ${principal}: ${e.estado} · respaldo ${otro}: ${e2.estado} ${e2.detalle || ''}`;
+      throw e2;
+    }
+  }
+}
+
+async function generarConModelo({
+  clave, nombre, instrucciones, mensajes, json = false, maxTokens = 1536, tiempoMaximoMs = 30000,
 }) {
-  const nombre = modelo || 'gemini-3.8-flash';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${nombre}:generateContent`;
 
   let respuesta;
@@ -79,4 +112,4 @@ function llamar(url, clave, { instrucciones, mensajes, json, maxTokens, tiempoMa
   });
 }
 
-module.exports = { generarConGemini };
+module.exports = { generarConGemini, MODELO_PRINCIPAL, MODELO_RESPALDO };

@@ -76,6 +76,14 @@ const preguntarTutor = onCall(
       throw new HttpsError('failed-precondition', 'No se encontró el tema.');
     }
 
+    // Solo en el emulador y si se pide (functions/.env.local con
+    // TUTOR_SIMULADO=true): una respuesta de prueba al instante, para poder
+    // trabajar la app (puma, voz, chat) sin depender de que Gemini responda.
+    // No descuenta dudas del día.
+    if (process.env.FUNCTIONS_EMULATOR === 'true' && process.env.TUTOR_SIMULADO === 'true') {
+      return { respuesta: respuestaSimulada(tema.titulo, pregunta), restantesHoy: null, limiteDiario: null };
+    }
+
     const clave = GEMINI_API_KEY.value();
     if (!clave) {
       throw new HttpsError(
@@ -131,8 +139,10 @@ const preguntarTutor = onCall(
         modelo: process.env.GEMINI_MODELO,
         instrucciones,
         mensajes: [...historial, { rol: 'estudiante', texto: pregunta }],
-        // Bien por debajo del límite de la función (90 s) y del de la app.
-        tiempoMaximoMs: 30000,
+        // Por intento: si el principal no responde se prueba el respaldo, y
+        // los dos juntos quedan por debajo del límite de la función (90 s)
+        // y del de la app (60 s).
+        tiempoMaximoMs: 25000,
       });
     } catch (e) {
       await usoRef.update({ consultas: FieldValue.increment(-1) }).catch(() => {});
@@ -163,4 +173,11 @@ const preguntarTutor = onCall(
   },
 );
 
-module.exports = { preguntarTutor };
+/** Respuesta de prueba del modo simulado (con una fórmula, para la voz). */
+function respuestaSimulada(tema, pregunta) {
+  return `(Respuesta de prueba, sin Gemini) Preguntaste: «${pregunta}». `
+    + `En ${tema}, por ejemplo: si $P(x) = x^2 + 3$, entonces $P(1) = 4$, `
+    + 'y $\\frac{12}{4} = 3$. Cuando Gemini responda, aquí verás la explicación real.';
+}
+
+module.exports = { preguntarTutor, respuestaSimulada };
