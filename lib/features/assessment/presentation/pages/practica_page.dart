@@ -605,9 +605,7 @@ class _PumaDelResultadoState extends State<_PumaDelResultado>
                             )
                           : Text(
                               'Revisando tus respuestas…',
-                              style: TextStyle(
-                                color: colores.onSurfaceVariant,
-                              ),
+                              style: TextStyle(color: colores.onSurfaceVariant),
                             ),
                     ),
                   ),

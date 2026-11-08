@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/colores_app.dart';
@@ -5,6 +7,8 @@ import '../../../../core/presentation/texto_con_latex.dart';
 import '../../domain/entities/mensaje_tutor.dart';
 import '../conversacion_tutor.dart';
 import '../../../../core/presentation/animaciones.dart';
+import '../../../../core/presentation/puma_tutor.dart';
+import '../../../../core/presentation/voz_puma.dart';
 
 /// Chat de dudas con el tutor, dentro de la pantalla del tema.
 class PanelTutor extends StatefulWidget {
@@ -23,8 +27,65 @@ class PanelTutor extends StatefulWidget {
   State<PanelTutor> createState() => _PanelTutorState();
 }
 
-class _PanelTutorState extends State<PanelTutor> {
+class _PanelTutorState extends State<PanelTutor> with WidgetsBindingObserver {
   final _texto = TextEditingController();
+
+  /// Cuánto queda abierta la boca del puma en cada palabra.
+  static const _silaba = Duration(milliseconds: 140);
+
+  late final VozPuma _voz = VozPuma.crear(
+    alCambiar: (hablando) {
+      if (!mounted) return;
+      setState(() {
+        if (!hablando) {
+          _leyendo = null;
+          _bocaAbierta = false;
+        }
+      });
+    },
+    alPalabra: _moverBoca,
+  );
+  bool _hayVoz = false;
+
+  /// Respuesta que el puma está leyendo en voz alta (si alguna).
+  MensajeTutor? _leyendo;
+  bool _bocaAbierta = false;
+  Timer? _cerrarBoca;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _voz.preparar().then((hay) {
+      if (mounted && hay) setState(() => _hayVoz = true);
+    });
+  }
+
+  /// Al pasar la app a segundo plano, el puma se calla.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState estado) {
+    if (estado != AppLifecycleState.resumed && _leyendo != null) {
+      _voz.callar();
+    }
+  }
+
+  void _moverBoca() {
+    if (!mounted || sinAnimaciones(context)) return;
+    setState(() => _bocaAbierta = true);
+    _cerrarBoca?.cancel();
+    _cerrarBoca = Timer(_silaba, () {
+      if (mounted) setState(() => _bocaAbierta = false);
+    });
+  }
+
+  void _escuchar(MensajeTutor mensaje) {
+    if (identical(_leyendo, mensaje)) {
+      _voz.callar();
+      return;
+    }
+    setState(() => _leyendo = mensaje);
+    _voz.hablar(mensaje.texto);
+  }
 
   void _enviar() {
     final texto = _texto.text;
@@ -36,8 +97,18 @@ class _PanelTutorState extends State<PanelTutor> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cerrarBoca?.cancel();
+    _voz.cerrar(); // al cerrar el chat deja de hablar
     _texto.dispose();
     super.dispose();
+  }
+
+  /// La cara del puma según lo que pasa en el chat.
+  GestoPuma _gesto(ConversacionTutor conversacion) {
+    if (conversacion.pensando) return GestoPuma.pensando;
+    if (conversacion.error != null) return GestoPuma.serio;
+    return GestoPuma.atento;
   }
 
   @override
@@ -56,6 +127,15 @@ class _PanelTutorState extends State<PanelTutor> {
               padding: const EdgeInsets.fromLTRB(18, 12, 6, 10),
               child: Row(
                 children: [
+                  // El puma es la cara del tutor: piensa mientras espera la
+                  // respuesta y mueve la boca al leerla.
+                  PumaTutor(
+                    gesto: _gesto(conversacion),
+                    tamano: 52,
+                    hablando: _leyendo != null,
+                    bocaAbierta: _bocaAbierta,
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +197,14 @@ class _PanelTutorState extends State<PanelTutor> {
                             key: ObjectKey(mensaje),
                             indice: 0,
                             retraso: Duration.zero,
-                            child: _Burbuja(mensaje),
+                            child: _Burbuja(
+                              mensaje,
+                              leyendo: identical(_leyendo, mensaje),
+                              onEscuchar:
+                                  _hayVoz && mensaje.autor == AutorMensaje.tutor
+                                  ? () => _escuchar(mensaje)
+                                  : null,
+                            ),
                           ),
                       ],
                     ),
@@ -178,13 +265,23 @@ class _Bienvenida extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(28),
-        child: Text(
-          'Escribe lo que no entendiste de «$tituloTema»: un paso, '
-          'un concepto o un ejercicio.',
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: ColoresApp.apagado, height: 1.5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const EntradaDifuminada(child: PumaTutor(tamano: 112)),
+            const SizedBox(height: 12),
+            EntradaDifuminada(
+              retraso: const Duration(milliseconds: 150),
+              child: Text(
+                'Escribe lo que no entendiste de «$tituloTema»: un paso, '
+                'un concepto o un ejercicio.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: ColoresApp.apagado, height: 1.5),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -194,7 +291,11 @@ class _Bienvenida extends StatelessWidget {
 class _Burbuja extends StatelessWidget {
   final MensajeTutor mensaje;
 
-  const _Burbuja(this.mensaje);
+  /// Si se da, la respuesta del tutor ofrece "Escuchar".
+  final VoidCallback? onEscuchar;
+  final bool leyendo;
+
+  const _Burbuja(this.mensaje, {this.onEscuchar, this.leyendo = false});
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +316,31 @@ class _Burbuja extends StatelessWidget {
         ),
         child: esEstudiante
             ? Text(mensaje.texto)
-            : TextoConLatex(mensaje.texto),
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextoConLatex(mensaje.texto),
+                  if (onEscuchar case final escuchar?)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: escuchar,
+                        style: TextButton.styleFrom(
+                          foregroundColor: ColoresApp.apagado,
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                        ),
+                        icon: Icon(
+                          leyendo
+                              ? Icons.stop_circle_outlined
+                              : Icons.volume_up_outlined,
+                          size: 18,
+                        ),
+                        label: Text(leyendo ? 'Callar' : 'Escuchar'),
+                      ),
+                    ),
+                ],
+              ),
       ),
     );
   }

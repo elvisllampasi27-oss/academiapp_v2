@@ -5,11 +5,10 @@ import 'package:flutter_tts/flutter_tts.dart';
 
 /// Crea la voz con sus avisos: [alCambiar] cuando empieza o termina de hablar
 /// y [alPalabra] en cada palabra (para mover la boca del puma).
-typedef CrearVozPuma =
-    VozPuma Function({
-      required void Function(bool hablando) alCambiar,
-      required VoidCallback alPalabra,
-    });
+typedef CrearVozPuma = VozPuma Function({
+  required void Function(bool hablando) alCambiar,
+  required VoidCallback alPalabra,
+});
 
 /// La voz del puma tutor. Opcional: solo habla cuando el alumno lo pide.
 abstract class VozPuma {
@@ -67,10 +66,24 @@ class VozPumaDispositivo implements VozPuma {
       }
       final elegido = elegirIdioma(idiomas);
       if (elegido == null) return _lista = false;
-
       await _tts.setLanguage(elegido);
-      await _tts.setSpeechRate(kIsWeb ? 1.0 : 0.5);
-      await _tts.setPitch(0.95);
+
+      // Voz de hombre si el dispositivo tiene una; un poco más grave y
+      // pausada para que suene firme.
+      final voz = elegirVoz(await _voces());
+      if (voz != null) {
+        await _tts.setLanguage(voz.locale);
+        await _tts.setVoice({'name': voz.nombre, 'locale': voz.locale});
+      }
+      final hombre = voz?.esHombre ?? false;
+      if (kDebugMode) {
+        debugPrint(
+          'Voz del puma: ${voz?.nombre ?? elegido}'
+          '${hombre ? ' (hombre)' : ' (no hay voz de hombre en español)'}',
+        );
+      }
+      await _tts.setSpeechRate(kIsWeb ? 0.95 : 0.46);
+      await _tts.setPitch(hombre ? 0.82 : 0.95);
       await _tts.awaitSpeakCompletion(false);
       return _lista = true;
     } catch (_) {
@@ -83,6 +96,110 @@ class VozPumaDispositivo implements VozPuma {
     final lista = await _tts.getLanguages;
     if (lista is! List) return const [];
     return [for (final idioma in lista) ?idioma?.toString()];
+  }
+
+  Future<List<Map<Object?, Object?>>> _voces() async {
+    try {
+      final lista = await _tts.getVoices;
+      if (lista is! List) return const [];
+      return [
+        for (final voz in lista)
+          if (voz is Map) voz,
+      ];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Nombres de voces de hombre en español que traen Windows, Edge (las
+  /// "Natural"), iOS y otros motores.
+  static const _nombresDeHombre = {
+    'alex',
+    'alvaro',
+    'álvaro',
+    'andres',
+    'andrés',
+    'antonio',
+    'arnau',
+    'carlos',
+    'dario',
+    'darío',
+    'diego',
+    'emilio',
+    'enrique',
+    'federico',
+    'gerardo',
+    'gonzalo',
+    'jorge',
+    'javier',
+    'juan',
+    'liberto',
+    'lorenzo',
+    'luciano',
+    'luis',
+    'manuel',
+    'marcelo',
+    'mario',
+    'mateo',
+    'nicolas',
+    'nicolás',
+    'pablo',
+    'raul',
+    'raúl',
+    'ricardo',
+    'rodrigo',
+    'saul',
+    'saúl',
+    'sebastian',
+    'sebastián',
+    'tomas',
+    'tomás',
+    'victor',
+    'víctor',
+    'yago',
+  };
+
+  /// Elige la mejor voz en español: primero de hombre, luego las de mejor
+  /// calidad ("Natural", "Neural"...) y luego el acento más cercano.
+  @visibleForTesting
+  static ({String nombre, String locale, bool esHombre})? elegirVoz(
+    List<Map<Object?, Object?>> voces,
+  ) {
+    ({String nombre, String locale, bool esHombre})? mejor;
+    var mejorPuntaje = -1;
+    for (final voz in voces) {
+      final nombre = voz['name']?.toString() ?? '';
+      final locale = voz['locale']?.toString() ?? '';
+      final idioma = locale.replaceAll('_', '-').toLowerCase();
+      if (nombre.isEmpty || !idioma.startsWith('es')) continue;
+
+      final genero = voz['gender']?.toString().toLowerCase();
+      final palabras = nombre
+          .toLowerCase()
+          .split(RegExp(r'[^a-záéíóúñ]+'))
+          .where((p) => p.isNotEmpty);
+      final esHombre =
+          genero == 'male' ||
+          (genero == null &&
+              (palabras.any(_nombresDeHombre.contains) ||
+                  palabras.contains('male')));
+
+      final calidad = RegExp(
+        'natural|neural|online|enhanced|premium',
+        caseSensitive: false,
+      ).hasMatch(nombre);
+      final acento = _acentos.indexWhere((a) => a.toLowerCase() == idioma);
+
+      final puntaje =
+          (esHombre ? 100 : 0) +
+          (calidad ? 20 : 0) +
+          (acento == -1 ? 4 : 10 - acento * 2);
+      if (puntaje > mejorPuntaje) {
+        mejorPuntaje = puntaje;
+        mejor = (nombre: nombre, locale: locale, esHombre: esHombre);
+      }
+    }
+    return mejor;
   }
 
   /// El acento preferido que haya; si no, cualquier español.
@@ -105,7 +222,7 @@ class VozPumaDispositivo implements VozPuma {
     if (_cerrada || texto.trim().isEmpty) return;
     try {
       await _tts.stop();
-      await _tts.speak(texto);
+      await _tts.speak(textoParaVoz(texto));
     } catch (_) {
       _avisar(false);
     }
@@ -127,4 +244,37 @@ class VozPumaDispositivo implements VozPuma {
     _cerrada = true;
     unawaited(_tts.stop().then<void>((_) {}, onError: (Object _) {}));
   }
+}
+
+/// Prepara un texto para leerlo en voz alta: las fórmulas (LaTeX) se dicen
+/// como se leen ("a entre b", "al cuadrado") y se quitan las marcas de
+/// formato que la voz leería como símbolos.
+String textoParaVoz(String texto) {
+  var t = texto;
+  // Fracciones y raíces (pueden repetirse o anidarse un nivel).
+  final fraccion = RegExp(r'\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}');
+  final raiz = RegExp(r'\\sqrt\{([^{}]*)\}');
+  for (var i = 0; i < 3; i++) {
+    t = t
+        .replaceAllMapped(fraccion, (m) => ' ${m[1]} entre ${m[2]} ')
+        .replaceAllMapped(raiz, (m) => ' raíz de ${m[1]} ');
+  }
+  t = t
+      .replaceAll(RegExp(r'\^\{?2\}?'), ' al cuadrado')
+      .replaceAll(RegExp(r'\^\{?3\}?'), ' al cubo')
+      .replaceAllMapped(RegExp(r'\^\{([^{}]*)\}'), (m) => ' elevado a ${m[1]}')
+      .replaceAllMapped(RegExp(r'\^(\w)'), (m) => ' elevado a ${m[1]}')
+      .replaceAll(RegExp(r'\\(cdot|times)'), ' por ')
+      .replaceAll(r'\div', ' entre ')
+      .replaceAll(r'\pi', ' pi ')
+      .replaceAll(RegExp(r'\\(leq|le)\b'), ' menor o igual que ')
+      .replaceAll(RegExp(r'\\(geq|ge)\b'), ' mayor o igual que ')
+      .replaceAll(r'\neq', ' distinto de ')
+      .replaceAll('≤', ' menor o igual que ')
+      .replaceAll('≥', ' mayor o igual que ')
+      .replaceAll('=', ' igual a ')
+      .replaceAll(RegExp(r'\\[a-zA-Z]+'), ' ')
+      .replaceAll(RegExp(r'[{}$*#_`]'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ');
+  return t.trim();
 }

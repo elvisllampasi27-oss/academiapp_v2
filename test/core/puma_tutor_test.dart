@@ -108,4 +108,46 @@ void main() {
       expect(VozPumaDispositivo.elegirIdioma(['en-US', 'pt-BR']), isNull);
     });
   });
+
+  group('voz de hombre', () {
+    test('elige la voz masculina aunque haya otras mejores en acento', () {
+      final voz = VozPumaDispositivo.elegirVoz([
+        {
+          'name': 'Microsoft Camila Online (Natural) - Spanish (Peru)',
+          'locale': 'es-PE',
+        },
+        {
+          'name': 'Microsoft Alex Online (Natural) - Spanish (Peru)',
+          'locale': 'es-PE',
+        },
+        {'name': 'Microsoft Raul - Spanish (Mexico)', 'locale': 'es-MX'},
+      ]);
+      expect(voz?.nombre, 'Microsoft Alex Online (Natural) - Spanish (Peru)');
+      expect(voz?.esHombre, isTrue);
+    });
+
+    test('usa el género cuando el sistema lo dice (iOS)', () {
+      final voz = VozPumaDispositivo.elegirVoz([
+        {'name': 'Paulina', 'locale': 'es-MX', 'gender': 'female'},
+        {'name': 'Desconocida', 'locale': 'es-ES', 'gender': 'male'},
+      ]);
+      expect(voz?.nombre, 'Desconocida');
+    });
+
+    test('"female" no se confunde con "male"', () {
+      final voz = VozPumaDispositivo.elegirVoz([
+        {'name': 'es-us-female-1', 'locale': 'es-US'},
+      ]);
+      expect(voz?.esHombre, isFalse);
+    });
+
+    test('sin voces en español no elige ninguna', () {
+      expect(
+        VozPumaDispositivo.elegirVoz([
+          {'name': 'Microsoft David - English', 'locale': 'en-US'},
+        ]),
+        isNull,
+      );
+    });
+  });
 }
