@@ -1,4 +1,5 @@
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/correccion_intento.dart';
 import '../../domain/repositories/servicio_correccion_evaluacion.dart';
@@ -29,6 +30,14 @@ class ServicioCorreccionCloudFunctions implements ServicioCorreccionEvaluacion {
 
       return correccionDesdeMapa(resultado.data);
     } on FirebaseFunctionsException catch (error) {
+      // Al alumno se le muestra un mensaje amable; el detalle técnico sale
+      // solo en la consola mientras se desarrolla.
+      if (kDebugMode) {
+        debugPrint(
+          'enviarIntentoEvaluacion falló: ${error.code} · ${error.message}'
+          ' · ${error.details}',
+        );
+      }
       throw StateError(mensajeErrorCorreccion(error.code, error.message));
     }
   }

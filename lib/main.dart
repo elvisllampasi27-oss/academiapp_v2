@@ -24,10 +24,12 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   if (kDebugMode && _usarEmuladorFunctions) {
-    FirebaseFunctions.instance.useFunctionsEmulator('localhost', 5001);
+    // 127.0.0.1 y no "localhost": en Windows "localhost" puede ir por IPv6
+    // (::1) y el emulador solo escucha en IPv4.
+    FirebaseFunctions.instance.useFunctionsEmulator('127.0.0.1', 5001);
   }
   if (kDebugMode && _usarEmuladorStorage) {
-    await FirebaseStorage.instance.useStorageEmulator('localhost', 9199);
+    await FirebaseStorage.instance.useStorageEmulator('127.0.0.1', 9199);
   }
 
   runApp(AcademiApp(dependencias: Dependencias.firebase()));
