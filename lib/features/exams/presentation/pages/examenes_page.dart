@@ -10,6 +10,7 @@ import 'practica_examen_page.dart';
 import 'ranking_semanal_page.dart';
 import 'simulacro_page.dart';
 import '../../../../core/presentation/animaciones.dart';
+import '../../../../core/presentation/carga_puma.dart';
 
 /// Pestaña Exámenes: el examen semanal (sábado y domingo) y los
 /// exámenes pasados, donde se ve la respuesta al instante.
@@ -168,7 +169,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
               if (snapshot.connectionState != ConnectionState.done)
                 const Padding(
                   padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(child: CargaPuma.compacta()),
                 )
               else if (snapshot.hasError) ...[
                 const Text('No se pudieron cargar los exámenes.'),

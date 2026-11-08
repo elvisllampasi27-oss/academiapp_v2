@@ -9,6 +9,7 @@ import '../domain/cupon.dart';
 import '../domain/pago.dart';
 import '../domain/repositorio_premium.dart';
 import '../../../core/presentation/animaciones.dart';
+import '../../../core/presentation/carga_puma.dart';
 
 Future<bool> _abrirExterno(Uri enlace) =>
     launchUrl(enlace, mode: LaunchMode.externalApplication);
@@ -158,7 +159,7 @@ class _PremiumPageState extends State<PremiumPage> {
           }
           final estado = s.data;
           if (estado == null) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CargaPuma.compacta());
           }
           final c = estado.configuracion;
           final ahora = widget.ahora();

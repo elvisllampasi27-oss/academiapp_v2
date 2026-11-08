@@ -19,6 +19,7 @@ import '../utils/enlace_recurso.dart';
 import '../../../../core/presentation/video/reproductor_clase.dart';
 import '../../../../core/presentation/video/reproductor_youtube.dart';
 import '../../../../core/presentation/animaciones.dart';
+import '../../../../core/presentation/carga_puma.dart';
 
 typedef AbrirEnlace = Future<bool> Function(Uri enlace);
 
@@ -310,10 +311,7 @@ class _TemaPageState extends State<TemaPage> {
 
   List<Widget> _cuerpo(_Organizado? organizado) {
     if (_cargando) {
-      return const [
-        SizedBox(height: 120),
-        Center(child: CircularProgressIndicator()),
-      ];
+      return const [SizedBox(height: 120), Center(child: CargaPuma.compacta())];
     }
 
     if (_error || organizado == null) {

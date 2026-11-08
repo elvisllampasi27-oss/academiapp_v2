@@ -73,6 +73,9 @@ flutter:
   assets:
     - assets/images/fondo_autenticacion.jpeg
     - assets/images/google.png
+    # Puma de AcademiApp (sin fondo, brillo celeste): se forma mientras carga.
+    - assets/puma/rostro.webp
+    - assets/puma/lineas.webp
 
   # To add assets to your application, add an assets section, like this:
   # assets:

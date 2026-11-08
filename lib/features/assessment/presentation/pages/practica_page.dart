@@ -9,6 +9,7 @@ import '../../domain/services/practica_tema_service.dart';
 import '../../../../core/presentation/texto_con_latex.dart';
 import '../../../../core/presentation/imagen_figura.dart';
 import '../../../../core/presentation/animaciones.dart';
+import '../../../../core/presentation/carga_puma.dart';
 
 /// Resolver una práctica: una pregunta a la vez y, al final, la corrección
 /// que devuelve el servidor (con la respuesta correcta y la explicación).
@@ -129,7 +130,7 @@ class _PracticaPageState extends State<PracticaPage> {
         future: _preguntas,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CargaPuma.compacta());
           }
 
           if (snapshot.hasError) {

@@ -4,6 +4,7 @@ import '../../../core/presentation/colores_app.dart';
 import '../../../core/presentation/formato_fecha.dart';
 import '../domain/reporte.dart';
 import '../../../core/presentation/animaciones.dart';
+import '../../../core/presentation/carga_puma.dart';
 
 /// Quién reporta (lo pone la app, no el estudiante).
 class AutorReporte {
@@ -209,7 +210,7 @@ class _MisReportesPageState extends State<MisReportesPage> {
           }
           final lista = s.data;
           if (lista == null) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CargaPuma.compacta());
           }
           if (lista.isEmpty) {
             return const Center(

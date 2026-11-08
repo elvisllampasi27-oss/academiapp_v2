@@ -8,6 +8,7 @@ import '../../domain/repositories/servicio_examenes.dart';
 import '../../../../core/presentation/imagen_figura.dart';
 import '../widgets/opcion_examen.dart';
 import '../../../../core/presentation/animaciones.dart';
+import '../../../../core/presentation/carga_puma.dart';
 
 /// Reportar la pregunta que se está viendo.
 typedef ReportarPreguntaExamen = void Function(
@@ -128,7 +129,7 @@ class _PracticaExamenPageState extends State<PracticaExamenPage> {
         future: _preguntas,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CargaPuma.compacta());
           }
           if (snapshot.hasError) {
             return _Mensaje(
@@ -219,7 +220,7 @@ class _PracticaExamenPageState extends State<PracticaExamenPage> {
               if (_revisando)
                 const Padding(
                   padding: EdgeInsets.all(12),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(child: CargaPuma.compacta()),
                 ),
               if (_error case final error?)
                 Padding(

@@ -25,6 +25,7 @@ import 'dependencias.dart';
 import 'estudiante_shell.dart';
 import 'inicio/contexto_academico.dart';
 import 'inicio/inicio_page.dart';
+import 'carga_arranque.dart';
 
 /// Inicio del estudiante con sesión: carga su contexto académico y arma
 /// las pestañas y la navegación entre módulos.
@@ -48,6 +49,9 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
   late Future<ContextoAcademico?> _contextoAcademico;
   final ValueNotifier<int> _pestana = ValueNotifier(0);
   int _recargas = 0;
+
+  /// Si el puma del arranque ya terminó de formarse y se entró a la app.
+  bool _entro = false;
 
   @override
   void initState() {
@@ -96,8 +100,14 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
         // Al recargar se mantiene lo anterior en pantalla (sin parpadeo).
         if (snapshot.connectionState != ConnectionState.done &&
             !snapshot.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return const CargaArranque();
+        }
+
+        // Ya están los datos: el puma termina de formarse y recién se entra.
+        if (!_entro) {
+          return CargaArranque(
+            lista: true,
+            alCompletar: () => setState(() => _entro = true),
           );
         }
 

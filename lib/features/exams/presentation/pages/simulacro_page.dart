@@ -10,6 +10,7 @@ import '../../../../core/presentation/imagen_figura.dart';
 import '../widgets/opcion_examen.dart';
 import 'resultado_simulacro_page.dart';
 import '../../../../core/presentation/animaciones.dart';
+import '../../../../core/presentation/carga_puma.dart';
 
 /// Examen semanal: con tiempo y sin ver respuestas hasta el final.
 /// Al acabarse el tiempo se envía solo.
@@ -228,7 +229,7 @@ class _SimulacroPageState extends State<SimulacroPage> {
   Widget _cargando() {
     final error = _errorInicio;
     if (error == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CargaPuma.compacta());
     }
 
     return Center(

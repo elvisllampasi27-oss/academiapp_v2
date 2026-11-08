@@ -6,6 +6,7 @@ import '../../domain/entities/item_mi_ruta.dart';
 import '../../domain/entities/recomendacion.dart';
 import '../../domain/services/construir_mi_ruta_service.dart';
 import '../../../../core/presentation/animaciones.dart';
+import '../../../../core/presentation/carga_puma.dart';
 
 /// Nombre visible de un tema (y su curso) a partir de su ID.
 typedef DescribirTema = ({String titulo, String? curso})? Function(
@@ -58,7 +59,7 @@ class _MiRutaPageState extends State<MiRutaPage> {
         future: _ruta,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CargaPuma.compacta());
           }
 
           if (snapshot.hasError) {

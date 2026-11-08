@@ -7,6 +7,7 @@ import '../../../core/presentation/video/reproductor_clase.dart';
 import '../../../core/presentation/video/reproductor_youtube.dart';
 import '../domain/seminario.dart';
 import '../../../core/presentation/animaciones.dart';
+import '../../../core/presentation/carga_puma.dart';
 
 Future<bool> _abrirEnYoutube(Uri enlace) =>
     launchUrl(enlace, mode: LaunchMode.externalApplication);
@@ -62,7 +63,7 @@ class _SeminariosPageState extends State<SeminariosPage> {
         future: _seminarios,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CargaPuma.compacta());
           }
           if (snapshot.hasError) {
             return Center(

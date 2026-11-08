@@ -13,6 +13,7 @@ import '../features/identity/presentation/pages/login_page.dart';
 import '../features/identity/presentation/pages/registro_page.dart';
 import 'dependencias.dart';
 import 'home_estudiante.dart';
+import 'carga_arranque.dart';
 
 /// Decide qué ve el estudiante: bienvenida, login o su inicio.
 class PuertaSesionPage extends StatefulWidget {
@@ -29,6 +30,10 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
 
   /// Sin sesión se muestra primero la bienvenida; luego el login.
   bool _mostrarLogin = false;
+
+  /// Consulta de sesión para la que el puma del arranque ya terminó de
+  /// formarse (cada consulta nueva vuelve a mostrarlo).
+  Future<EstadoSesionEstudiante>? _arranqueTerminadoPara;
 
   Dependencias get _d => widget.dependencias;
 
@@ -90,9 +95,7 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
       future: _estadoInicial,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const CargaArranque();
         }
 
         final estado = snapshot.data;
@@ -105,6 +108,16 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
             usuario: usuario,
             dependencias: _d,
             onCerrarSesion: _cerrarSesion,
+          );
+        }
+
+        // Sin sesión: el puma termina de formarse y recién entra la
+        // bienvenida (con sesión, lo termina el home al tener los datos).
+        if (!identical(_arranqueTerminadoPara, _estadoInicial)) {
+          return CargaArranque(
+            lista: true,
+            alCompletar: () =>
+                setState(() => _arranqueTerminadoPara = _estadoInicial),
           );
         }
 

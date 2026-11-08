@@ -4,6 +4,7 @@ import '../../../../core/presentation/colores_app.dart';
 import '../../domain/entities/simulacro.dart';
 import '../../domain/repositories/servicio_examenes.dart';
 import '../../../../core/presentation/animaciones.dart';
+import '../../../../core/presentation/carga_puma.dart';
 
 /// Top 10 del último examen semanal que diste y tu puesto.
 class RankingSemanalPage extends StatefulWidget {
@@ -51,7 +52,7 @@ class _RankingSemanalPageState extends State<RankingSemanalPage> {
             );
           }
           if (s.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CargaPuma.compacta());
           }
           final ranking = s.data;
           if (ranking == null) {
