@@ -26,6 +26,9 @@ class InicioPage extends StatelessWidget {
   /// Aviso del examen semanal abierto.
   final Widget? examen;
 
+  /// Seminarios (en vivo, próximos y los que le ayudan a reforzar).
+  final Widget? seminarios;
+
   /// Cuántas recomendaciones de "Reforzar" se muestran en el inicio.
   final int maximoRefuerzos;
 
@@ -40,6 +43,7 @@ class InicioPage extends StatelessWidget {
     required this.onAbrirPerfil,
     this.avisos,
     this.examen,
+    this.seminarios,
     this.maximoRefuerzos = 2,
   });
 
@@ -149,6 +153,10 @@ class InicioPage extends StatelessWidget {
                 curso: _curso,
                 onAbrirTema: onAbrirTema,
               ),
+          if (seminarios case final seminarios?) ...[
+            const SizedBox(height: 24),
+            seminarios,
+          ],
         ]),
       ),
     );

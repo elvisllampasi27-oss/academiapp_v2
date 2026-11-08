@@ -5,7 +5,9 @@ import '../../../core/presentation/colores_app.dart';
 import '../../../core/presentation/formato_fecha.dart';
 import '../../../core/presentation/video/reproductor_clase.dart';
 import '../../../core/presentation/video/reproductor_youtube.dart';
+import '../domain/relevancia_seminario.dart';
 import '../domain/seminario.dart';
+import 'tarjeta_seminario.dart';
 import '../../../core/presentation/animaciones.dart';
 import '../../../core/presentation/carga_puma.dart';
 
@@ -20,9 +22,14 @@ class SeminariosPage extends StatefulWidget {
   final Future<bool> Function(Uri enlace) abrirEnlace;
   final ConstructorReproductor reproductor;
 
+  /// Temas que el alumno debe reforzar, por curso: resalta los seminarios
+  /// que le ayudan con ellos.
+  final Map<String, TemaPorReforzar> porReforzar;
+
   const SeminariosPage({
     super.key,
     required this.repositorio,
+    this.porReforzar = const {},
     this.ahora = DateTime.now,
     this.abrirEnlace = _abrirEnYoutube,
     this.reproductor = reproductorYoutube,
@@ -108,6 +115,7 @@ class _SeminariosPageState extends State<SeminariosPage> {
                 _TarjetaVivo(
                   seminario: proximo,
                   enVivo: proximo.estado(ahora) == EstadoSeminario.enVivo,
+                  ayuda: ayudaDelSeminario(proximo, widget.porReforzar),
                   alAbrir: () => _abrirVivo(proximo),
                 ),
               const SizedBox(height: 28),
@@ -119,19 +127,11 @@ class _SeminariosPageState extends State<SeminariosPage> {
                 )
               else
                 for (final s in grabados)
-                  Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.play_circle_outline),
-                      title: Text(s.titulo),
-                      subtitle: Text(
-                        [
-                          ?s.curso,
-                          fechaCorta(s.fecha),
-                          '${s.duracionMinutos} min',
-                        ].join(' · '),
-                      ),
-                      onTap: () => _verGrabado(s),
-                    ),
+                  TarjetaSeminario(
+                    seminario: s,
+                    estado: EstadoSeminario.grabado,
+                    ayuda: ayudaDelSeminario(s, widget.porReforzar),
+                    alAbrir: () => _verGrabado(s),
                   ),
             ]),
           );
@@ -166,12 +166,14 @@ class _Rotulo extends StatelessWidget {
 class _TarjetaVivo extends StatelessWidget {
   final Seminario seminario;
   final bool enVivo;
+  final TemaPorReforzar? ayuda;
   final VoidCallback alAbrir;
 
   const _TarjetaVivo({
     required this.seminario,
     required this.enVivo,
     required this.alAbrir,
+    this.ayuda,
   });
 
   @override
@@ -215,6 +217,17 @@ class _TarjetaVivo extends StatelessWidget {
               ].join(' · '),
               style: const TextStyle(color: ColoresApp.apagado),
             ),
+            if (ayuda case final ayuda?) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Te ayuda con ${ayuda.tema} · dominio '
+                '${(ayuda.dominio * 100).round()} %',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: ColoresApp.naranja,
+                ),
+              ),
+            ],
             const SizedBox(height: 4),
             const Text(
               'Las preguntas se hacen en el chat de YouTube.',

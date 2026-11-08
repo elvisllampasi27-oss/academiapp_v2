@@ -80,12 +80,16 @@ class CursoDetallePage extends StatelessWidget {
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-            sliver: SliverGrid.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.05,
-              children: [
+            // Altura fija (no proporcional al ancho): en pantallas anchas las
+            // tarjetas no se estiran; caben 3 líneas de título.
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 260,
+                mainAxisExtent: 128,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+              ),
+              delegate: SliverChildListDelegate([
                 for (final (i, tema) in temas.indexed)
                   FilaEntrante(
                     indice: i,
@@ -95,7 +99,7 @@ class CursoDetallePage extends StatelessWidget {
                       alPresionar: () => onAbrirTema(tema),
                     ),
                   ),
-              ],
+              ]),
             ),
           ),
         ],
@@ -181,7 +185,7 @@ class _TarjetaTema extends StatelessWidget {
               Expanded(
                 child: Text(
                   tema.titulo,
-                  maxLines: 4,
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 14,

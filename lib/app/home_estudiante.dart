@@ -26,6 +26,9 @@ import 'estudiante_shell.dart';
 import 'inicio/contexto_academico.dart';
 import 'inicio/inicio_page.dart';
 import 'carga_arranque.dart';
+import 'inicio/temas_por_reforzar.dart';
+import '../features/seminars/presentation/seminarios_inicio.dart';
+import '../features/student_model/domain/entities/actividad_alumno.dart';
 
 /// Inicio del estudiante con sesión: carga su contexto académico y arma
 /// las pestañas y la navegación entre módulos.
@@ -133,6 +136,12 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
           );
         }
 
+        // Temas flojos por curso (BKT): resaltan los seminarios que ayudan.
+        final porReforzar = temasPorReforzarPorCurso(
+          contexto.ruta,
+          contexto.curriculo,
+        );
+
         return EstudianteShell(
           indice: _pestana,
           pestanas: [
@@ -154,6 +163,18 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                 examen: AvisoExamenSemanal(
                   servicio: _d.servicioExamenes,
                   onAbrir: () => _pestana.value = 2,
+                ),
+                seminarios: SeminariosInicio(
+                  repositorio: _d.seminarios,
+                  porReforzar: porReforzar,
+                  onVerTodos: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SeminariosPage(
+                        repositorio: _d.seminarios,
+                        porReforzar: porReforzar,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -195,10 +216,11 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
               contenido: PerfilPage(
                 usuario: widget.usuario,
                 onCerrarSesion: widget.onCerrarSesion,
-                onAbrirSeminarios: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => SeminariosPage(repositorio: _d.seminarios),
-                  ),
+                actividad: ActividadAlumno.desde(
+                  fechas: contexto.actividad,
+                  inicio: contexto.matricula.fechaInicioAcademico,
+                  fin: contexto.matricula.fechaFin,
+                  hoy: DateTime.now(),
                 ),
                 onAbrirPremium: () => Navigator.of(context).push(
                   MaterialPageRoute(

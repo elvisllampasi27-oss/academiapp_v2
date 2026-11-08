@@ -69,6 +69,10 @@ class _EstudianteShellState extends State<EstudianteShell> {
   }
 }
 
+/// Barra flotante al estilo de la versión anterior: una pastilla de bordes
+/// suaves; la pestaña elegida se marca con el celeste del puma (el color de
+/// la marca) y muestra su nombre, las demás solo el ícono. Sin desenfoque (dentro de la app los paneles son
+/// planos para que los celulares de gama baja vayan fluidos).
 class BarraNavegacionApp extends StatelessWidget {
   final List<PestanaApp> pestanas;
   final int actual;
@@ -85,23 +89,30 @@ class BarraNavegacionApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 14),
       child: Container(
-        padding: const EdgeInsets.all(6),
+        height: 64,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: ColoresApp.barra,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: ColoresApp.borde),
+          color: const Color(0xF21A1B22),
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: const Color(0x40FFFFFF)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x66000000),
+              blurRadius: 24,
+              offset: Offset(0, 10),
+            ),
+          ],
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             for (final (i, pestana) in pestanas.indexed)
-              Expanded(
-                child: _ItemBarra(
-                  pestana: pestana,
-                  activo: i == actual,
-                  alPresionar: () => alSeleccionar(i),
-                ),
+              _ItemBarra(
+                pestana: pestana,
+                activo: i == actual,
+                alPresionar: () => alSeleccionar(i),
               ),
           ],
         ),
@@ -121,52 +132,63 @@ class _ItemBarra extends StatelessWidget {
     required this.alPresionar,
   });
 
+  static const _duracion = Duration(milliseconds: 280);
+
   @override
   Widget build(BuildContext context) {
-    final color = activo ? ColoresApp.texto : ColoresApp.tenue;
-    const duracion = Duration(milliseconds: 220);
+    final duracion = sinAnimaciones(context) ? Duration.zero : _duracion;
 
     return Semantics(
       button: true,
       selected: activo,
       label: pestana.etiqueta,
       excludeSemantics: true,
-      child: InkWell(
+      child: GestureDetector(
         onTap: alPresionar,
-        borderRadius: BorderRadius.circular(14),
-        // La pastilla aparece suave y el ícono crece un poco al activarse.
+        behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: duracion,
           curve: Curves.easeOutCubic,
-          height: 52,
-          decoration: BoxDecoration(
-            color: activo ? const Color(0x1AFFFFFF) : const Color(0x00FFFFFF),
-            borderRadius: BorderRadius.circular(14),
+          constraints: const BoxConstraints(minWidth: 46, minHeight: 44),
+          padding: EdgeInsets.symmetric(
+            horizontal: activo ? 16 : 12,
+            vertical: 10,
           ),
-          child: TweenAnimationBuilder<Color?>(
-            tween: ColorTween(end: color),
-            duration: duracion,
-            builder: (context, tono, _) => Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AnimatedScale(
-                  scale: activo ? 1.08 : 1,
-                  duration: duracion,
-                  curve: Curves.easeOutBack,
-                  child: Icon(pestana.icono, size: 22, color: tono),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  pestana.etiqueta,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: tono,
-                    fontWeight: activo ? FontWeight.w600 : FontWeight.w500,
-                  ),
-                ),
-              ],
+          decoration: BoxDecoration(
+            color: activo ? const Color(0x2E7CC4FF) : const Color(0x007CC4FF),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: activo ? const Color(0x597CC4FF) : const Color(0x007CC4FF),
             ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                pestana.icono,
+                size: 22,
+                color: activo ? ColoresApp.celeste : Colors.white54,
+              ),
+              // El nombre aparece (y la pastilla crece) solo en la elegida.
+              AnimatedSize(
+                duration: duracion,
+                curve: Curves.easeOutCubic,
+                child: activo
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: Text(
+                          pestana.etiqueta,
+                          maxLines: 1,
+                          style: const TextStyle(
+                            color: ColoresApp.celeste,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
           ),
         ),
       ),

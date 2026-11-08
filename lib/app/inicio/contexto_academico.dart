@@ -20,6 +20,9 @@ class ContextoAcademico {
   final Curriculo curriculo;
   final Set<String> publicados;
 
+  /// Cuándo respondió preguntas el alumno (de sus evidencias): su actividad.
+  final List<DateTime> actividad;
+
   const ContextoAcademico({
     required this.matricula,
     required this.versionAcademica,
@@ -27,6 +30,7 @@ class ContextoAcademico {
     required this.ruta,
     required this.curriculo,
     required this.publicados,
+    this.actividad = const [],
   });
 }
 
@@ -83,25 +87,31 @@ class CargarContextoAcademicoService {
       );
     }
 
+    final (:items, :actividad) = await _ruta(usuarioId, matricula.id);
     return ContextoAcademico(
       matricula: matricula,
       versionAcademica: version,
       diaEstudiante: dia,
-      ruta: await _ruta(usuarioId, matricula.id),
+      ruta: items,
       curriculo: await curriculo.obtener(),
       publicados: await curriculo.temasPublicados(),
+      actividad: actividad,
     );
   }
 
-  /// La ruta es un complemento: si falla, el inicio igual se muestra.
-  Future<List<ItemMiRuta>> _ruta(String usuarioId, String matriculaId) async {
+  /// La ruta (y la actividad) son un complemento: si fallan, el inicio
+  /// igual se muestra.
+  Future<({List<ItemMiRuta> items, List<DateTime> actividad})> _ruta(
+    String usuarioId,
+    String matriculaId,
+  ) async {
     try {
-      return await ruta.construir(
+      return await ruta.construirConActividad(
         usuarioId: usuarioId,
         matriculaId: matriculaId,
       );
     } catch (_) {
-      return const [];
+      return (items: const <ItemMiRuta>[], actividad: const <DateTime>[]);
     }
   }
 }

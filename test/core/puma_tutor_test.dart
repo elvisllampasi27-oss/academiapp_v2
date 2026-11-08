@@ -10,15 +10,11 @@ String _rutaMostrada(WidgetTester tester) {
 }
 
 void main() {
-  test('el ánimo nunca usa el dibujo sonriendo', () {
-    expect(
-      PumaTutor.rutaDe(GestoPuma.animo),
-      PumaTutor.rutaDe(GestoPuma.serio),
-    );
-    expect(
-      PumaTutor.rutaDe(GestoPuma.animo),
-      isNot(PumaTutor.rutaDe(GestoPuma.contento)),
-    );
+  test('el ánimo tiene su propio dibujo (ni el contento ni el serio)', () {
+    final animo = PumaTutor.rutaDe(GestoPuma.animo);
+    expect(animo, endsWith('animo.webp'));
+    expect(animo, isNot(PumaTutor.rutaDe(GestoPuma.contento)));
+    expect(animo, isNot(PumaTutor.rutaDe(GestoPuma.serio)));
   });
 
   group('mensaje del puma', () {

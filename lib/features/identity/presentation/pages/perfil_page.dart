@@ -3,23 +3,27 @@ import 'package:flutter/material.dart';
 import '../../../../core/presentation/colores_app.dart';
 import '../../domain/entities/usuario_academiapp.dart';
 import '../../../../core/presentation/animaciones.dart';
+import '../../../student_model/domain/entities/actividad_alumno.dart';
+import '../../../student_model/presentation/mapa_actividad.dart';
 
 class PerfilPage extends StatelessWidget {
   final UsuarioAcademiApp usuario;
   final VoidCallback onCerrarSesion;
-  final VoidCallback? onAbrirSeminarios;
   final VoidCallback? onAbrirPremium;
   final VoidCallback? onReportar;
   final VoidCallback? onMisReportes;
+
+  /// Actividad del alumno en su matrícula (el mapa de cuadritos).
+  final ActividadAlumno? actividad;
 
   const PerfilPage({
     super.key,
     required this.usuario,
     required this.onCerrarSesion,
-    this.onAbrirSeminarios,
     this.onAbrirPremium,
     this.onReportar,
     this.onMisReportes,
+    this.actividad,
   });
 
   @override
@@ -78,6 +82,10 @@ class PerfilPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
+          if (actividad case final actividad?) ...[
+            MapaActividad(actividad: actividad),
+            const SizedBox(height: 16),
+          ],
           if (onAbrirPremium != null)
             Card(
               child: ListTile(
@@ -98,16 +106,6 @@ class PerfilPage extends StatelessWidget {
               subtitle: Text(usuario.correo),
             ),
           ),
-          if (onAbrirSeminarios != null)
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.live_tv_outlined),
-                title: const Text('Seminarios en vivo'),
-                subtitle: const Text('Repasos por YouTube y sus grabaciones'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: onAbrirSeminarios,
-              ),
-            ),
           if (onReportar != null)
             Card(
               child: ListTile(

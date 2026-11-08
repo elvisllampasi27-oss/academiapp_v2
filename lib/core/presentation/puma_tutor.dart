@@ -17,8 +17,8 @@ enum GestoPuma {
   /// Contento: acertó o le fue bien.
   contento,
 
-  /// Ánimo ante un error: sereno, sin burlarse. Mientras no haya un dibujo
-  /// propio de este gesto, usa el del puma serio (nunca uno sonriendo).
+  /// Ánimo ante un error: ojos cerrados, cabeza inclinada y sonrisa suave
+  /// con la boca cerrada ("tranquilo, ya lo vas a lograr"). Nunca burlón.
   animo,
 
   /// Serio: una corrección importante, con calma.
@@ -53,7 +53,8 @@ class PumaTutor extends StatefulWidget {
         GestoPuma.atento => 'atento',
         GestoPuma.pensando => 'pensando',
         GestoPuma.contento => 'contento',
-        GestoPuma.animo || GestoPuma.serio => 'serio',
+        GestoPuma.animo => 'animo',
+        GestoPuma.serio => 'serio',
       }}.webp';
 
   static const _rutaParpadeo = 'assets/puma/tutor/parpadeo.webp';

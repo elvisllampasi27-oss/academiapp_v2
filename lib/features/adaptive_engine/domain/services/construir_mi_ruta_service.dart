@@ -27,6 +27,19 @@ class ConstruirMiRutaService {
     required String usuarioId,
     required String matriculaId,
     DateTime? ahora,
+  }) async => (await construirConActividad(
+    usuarioId: usuarioId,
+    matriculaId: matriculaId,
+    ahora: ahora,
+  )).items;
+
+  /// La ruta y, de las mismas evidencias (sin leer de nuevo), cuándo
+  /// respondió el alumno cada pregunta: su actividad en la plataforma.
+  Future<({List<ItemMiRuta> items, List<DateTime> actividad})>
+  construirConActividad({
+    required String usuarioId,
+    required String matriculaId,
+    DateTime? ahora,
   }) async {
     final fecha = ahora ?? DateTime.now();
     final registro = await repositorio.obtenerDeMatricula(
@@ -72,6 +85,9 @@ class ConstruirMiRutaService {
           : a.estado.valor.compareTo(b.estado.valor);
     });
 
-    return items;
+    return (
+      items: items,
+      actividad: [for (final e in registro.evidencias) e.fecha],
+    );
   }
 }

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/animaciones.dart';
+import '../../../../core/presentation/tipografia.dart';
 
 /// Componentes visuales de las pantallas de acceso: "vidrio líquido" (al
 /// estilo Liquid Glass). Solo aquí se usa desenfoque (pantallas de entrada);
@@ -168,9 +169,8 @@ class _LuzLiquida extends CustomPainter {
       anterior.frente != frente;
 }
 
-/// Letra de las pantallas de acceso: Comic Neue (el estilo de Comic Sans,
-/// con licencia libre).
-const fuenteAcceso = 'ComicNeue';
+/// Letra de las pantallas de acceso: la misma de toda la app (Comic Neue).
+const fuenteAcceso = fuenteApp;
 
 /// Aplica la letra de acceso a todo lo de abajo: textos, campos y botones.
 class LetraAcceso extends StatelessWidget {

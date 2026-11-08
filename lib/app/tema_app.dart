@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/presentation/colores_app.dart';
+import '../core/presentation/tipografia.dart';
 
 /// Tema oscuro de la app del estudiante. Las pantallas toman de aquí sus
 /// colores y formas, así el diseño se cambia en un solo lugar.
@@ -24,6 +25,7 @@ ThemeData temaApp() {
 
   return ThemeData(
     useMaterial3: true,
+    fontFamily: fuenteApp,
     colorScheme: esquema,
     scaffoldBackgroundColor: ColoresApp.fondo,
     appBarTheme: const AppBarTheme(

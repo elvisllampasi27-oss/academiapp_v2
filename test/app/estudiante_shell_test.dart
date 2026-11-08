@@ -33,7 +33,8 @@ void main() {
     // La pestaña Perfil todavía no existe: no hace lecturas innecesarias.
     expect(find.text('contenido perfil', skipOffstage: false), findsNothing);
 
-    await tester.tap(find.text('Perfil'));
+    // Las pestañas no elegidas muestran solo su ícono.
+    await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pump();
 
     expect(indice.value, 1);
