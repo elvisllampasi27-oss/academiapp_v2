@@ -131,6 +131,8 @@ const preguntarTutor = onCall(
         modelo: process.env.GEMINI_MODELO,
         instrucciones,
         mensajes: [...historial, { rol: 'estudiante', texto: pregunta }],
+        // Bien por debajo del límite de la función (90 s) y del de la app.
+        tiempoMaximoMs: 30000,
       });
     } catch (e) {
       await usoRef.update({ consultas: FieldValue.increment(-1) }).catch(() => {});
@@ -146,6 +148,9 @@ const preguntarTutor = onCall(
 
       if (e.estado === 429) {
         throw new HttpsError('resource-exhausted', 'El tutor está muy ocupado. Inténtalo en un minuto.');
+      }
+      if (e.estado === 504 || e.estado === 503) {
+        throw new HttpsError('unavailable', 'El tutor tardó demasiado en responder. Inténtalo de nuevo.');
       }
       throw new HttpsError('internal', 'El tutor no pudo responder.');
     }

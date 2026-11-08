@@ -39,3 +39,38 @@ test('un error HTTP conserva el estado (429 = ocupado)', async (t) => {
     (e) => e.estado === 429,
   );
 });
+
+test('si Gemini no responde a tiempo, corta con un error claro (504)', async (t) => {
+  t.mock.method(globalThis, 'fetch', (url, opciones) => new Promise((_, rechazar) => {
+    // Un Gemini que nunca contesta. (El temporizador mantiene viva la prueba:
+    // el del corte no lo hace por sí solo.)
+    const colgado = setTimeout(() => {}, 5000);
+    opciones.signal.addEventListener('abort', () => {
+      clearTimeout(colgado);
+      rechazar(opciones.signal.reason);
+    });
+  }));
+
+  await assert.rejects(
+    generarConGemini({
+      clave: 'x',
+      instrucciones: 'i',
+      mensajes: [{ rol: 'estudiante', texto: 'a' }],
+      tiempoMaximoMs: 20,
+    }),
+    (e) => e.estado === 504 && /no respondió/.test(e.message),
+  );
+});
+
+test('si falla la red, avisa el motivo (503)', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => {
+    const error = new TypeError('fetch failed');
+    error.cause = { code: 'ENOTFOUND' };
+    throw error;
+  });
+
+  await assert.rejects(
+    generarConGemini({ clave: 'x', instrucciones: 'i', mensajes: [{ rol: 'estudiante', texto: 'a' }] }),
+    (e) => e.estado === 503 && e.detalle === 'ENOTFOUND',
+  );
+});

@@ -61,6 +61,8 @@ const generarPreguntas = onCall(
         mensajes: [{ rol: 'estudiante', texto: `Genera las ${cantidad} preguntas.` }],
         json: true,
         maxTokens: 8192,
+        // Generar varias preguntas toma más; la función tiene 120 s.
+        tiempoMaximoMs: 100000,
       });
       return { preguntas: leerPreguntasGeneradas(texto).slice(0, cantidad) };
     } catch (e) {
