@@ -25,7 +25,7 @@ test('envia instrucciones e historial y devuelve el texto', async (t) => {
   });
 
   assert.strictEqual(texto, 'P(1) = 7');
-  assert.match(enviado.url, /gemini-3\.8-flash:generateContent$/);
+  assert.match(enviado.url, /gemini-3\.1-flash-lite:generateContent$/);
   assert.strictEqual(enviado.clave, 'clave-prueba');
   assert.deepStrictEqual(enviado.cuerpo.contents.map((c) => c.role), ['user', 'model', 'user']);
   assert.strictEqual(enviado.cuerpo.systemInstruction.parts[0].text, 'Eres el tutor');
@@ -94,8 +94,8 @@ test('si el modelo principal está saturado, responde el de respaldo', async (t)
   });
 
   assert.strictEqual(texto, 'desde el respaldo');
-  assert.match(pedidos[0], /gemini-3\.8-flash:/);
-  assert.match(pedidos[1], /gemini-3\.1-flash-lite:/);
+  assert.match(pedidos[0], /gemini-3\.1-flash-lite:/);
+  assert.match(pedidos[1], /gemini-3\.8-flash:/);
 });
 
 test('un error que no es de saturación (400) no prueba el respaldo', async (t) => {

@@ -10,14 +10,18 @@
  *   con un error claro en vez de quedarse colgada hasta el límite de la función.
  * @returns {Promise<string>} texto de la respuesta
  */
-/** Modelo principal (se cambia con GEMINI_MODELO). */
-const MODELO_PRINCIPAL = 'gemini-3.8-flash';
+/**
+ * Modelo principal (se cambia con GEMINI_MODELO). Flash-Lite: estable,
+ * rápido (~2 s) y barato; en las pruebas respondió siempre, mientras que
+ * gemini-3.8-flash se quedaba sin responder por saturación.
+ */
+const MODELO_PRINCIPAL = 'gemini-3.1-flash-lite';
 
 /**
- * Respaldo cuando el principal está saturado: más liviano y con su propia
- * capacidad (se cambia con GEMINI_MODELO_RESPALDO).
+ * Respaldo si el principal falla o no responde (se cambia con
+ * GEMINI_MODELO_RESPALDO).
  */
-const MODELO_RESPALDO = 'gemini-3.1-flash-lite';
+const MODELO_RESPALDO = 'gemini-3.8-flash';
 
 /** Saturado (503), sin cupo (429), caído (500) o sin respuesta a tiempo (504). */
 const reintentable = (e) => [429, 500, 503, 504].includes(e && e.estado);
