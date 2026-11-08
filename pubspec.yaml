@@ -71,11 +71,20 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/fondo_autenticacion.jpeg
     - assets/images/google.png
     # Puma de AcademiApp (sin fondo, brillo celeste): se forma mientras carga.
     - assets/puma/rostro.webp
     - assets/puma/lineas.webp
+
+  # Comic Neue (licencia libre SIL OFL, ver assets/fonts/OFL-ComicNeue.txt):
+  # el estilo de Comic Sans, que no se puede incluir en la app (es de
+  # Microsoft y no viene en Android ni en la web).
+  fonts:
+    - family: ComicNeue
+      fonts:
+        - asset: assets/fonts/ComicNeue-Regular.ttf
+        - asset: assets/fonts/ComicNeue-Bold.ttf
+          weight: 700
 
   # To add assets to your application, add an assets section, like this:
   # assets:

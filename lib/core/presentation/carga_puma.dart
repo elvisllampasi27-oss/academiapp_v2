@@ -24,6 +24,10 @@ class CargaPuma extends StatefulWidget {
   final VoidCallback? alCompletar;
   final double tamano;
   final String? etiqueta;
+
+  /// Si la [etiqueta] se muestra debajo (si no, solo la leen los lectores
+  /// de pantalla).
+  final bool mostrarEtiqueta;
   final ValueNotifier<double>? avanceCompartido;
 
   /// Espera antes de mostrarse: si la carga es más corta, no aparece (evita
@@ -37,6 +41,7 @@ class CargaPuma extends StatefulWidget {
     this.alCompletar,
     this.tamano = 220,
     this.etiqueta,
+    this.mostrarEtiqueta = true,
     this.avanceCompartido,
     this.retrasoAparicion = Duration.zero,
   });
@@ -49,6 +54,7 @@ class CargaPuma extends StatefulWidget {
       alCompletar = null,
       tamano = 84,
       etiqueta = null,
+      mostrarEtiqueta = false,
       avanceCompartido = null,
       retrasoAparicion = const Duration(milliseconds: 300);
 
@@ -237,7 +243,8 @@ class _CargaPumaState extends State<CargaPuma> with TickerProviderStateMixin {
         mainAxisSize: MainAxisSize.min,
         children: [
           RepaintBoundary(child: figura),
-          if (widget.etiqueta case final etiqueta?) ...[
+          if (widget.etiqueta case final etiqueta?
+              when widget.mostrarEtiqueta) ...[
             const SizedBox(height: 18),
             Text(
               etiqueta,

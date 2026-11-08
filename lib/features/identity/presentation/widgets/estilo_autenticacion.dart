@@ -106,6 +106,79 @@ class Vidrio extends StatelessWidget {
   }
 }
 
+/// Letra de las pantallas de acceso: Comic Neue (el estilo de Comic Sans,
+/// con licencia libre).
+const fuenteAcceso = 'ComicNeue';
+
+/// Aplica la letra de acceso a todo lo de abajo: textos, campos y botones.
+class LetraAcceso extends StatelessWidget {
+  final Widget child;
+
+  const LetraAcceso({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Theme(
+      data: tema.copyWith(
+        textTheme: tema.textTheme.apply(fontFamily: fuenteAcceso),
+        primaryTextTheme: tema.primaryTextTheme.apply(fontFamily: fuenteAcceso),
+      ),
+      child: DefaultTextStyle.merge(
+        style: const TextStyle(fontFamily: fuenteAcceso),
+        child: child,
+      ),
+    );
+  }
+}
+
+/// El puma de AcademiApp como fondo de las pantallas de acceso: grande,
+/// arriba y tenue, para que las letras se lean bien encima.
+class PumaDeFondo extends StatelessWidget {
+  /// Qué tan visible queda (más bajo = más tenue).
+  static const opacidad = 0.4;
+  static const ruta = 'assets/puma/rostro.webp';
+
+  /// Proporción de la imagen (ancho / alto).
+  static const proporcion = 659 / 624;
+
+  const PumaDeFondo({super.key});
+
+  /// Ancho del puma de fondo para una pantalla de [tamano].
+  static double anchoPara(Size tamano) =>
+      (tamano.width * 0.95).clamp(0, 520).toDouble();
+
+  /// Centro del puma de fondo: arriba, detrás del título.
+  static Offset centroPara(Size tamano) =>
+      Offset(tamano.width / 2, tamano.height * 0.33);
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, restricciones) {
+        final tamano = restricciones.biggest;
+        final ancho = anchoPara(tamano);
+        final centro = centroPara(tamano);
+        return Stack(
+          children: [
+            Positioned(
+              left: centro.dx - ancho / 2,
+              top: centro.dy - ancho / proporcion / 2,
+              width: ancho,
+              // Opacidad directa en la imagen: no crea una capa aparte.
+              child: const Image(
+                image: AssetImage(ruta),
+                fit: BoxFit.contain,
+                opacity: AlwaysStoppedAnimation(opacidad),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class FondoAutenticacion extends StatelessWidget {
   final Widget child;
 
@@ -113,30 +186,29 @@ class FondoAutenticacion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(
-            'assets/images/fondo_autenticacion.jpeg',
-            fit: BoxFit.cover,
-          ),
-          const ColoredBox(color: Color(0x8C050609)),
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 20,
-                ),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: child,
+    return LetraAcceso(
+      child: Scaffold(
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            const PumaDeFondo(),
+            const ColoredBox(color: Color(0x73050609)),
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 20,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: child,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

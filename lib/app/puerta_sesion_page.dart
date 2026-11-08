@@ -35,6 +35,10 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
   /// formarse (cada consulta nueva vuelve a mostrarlo).
   Future<EstadoSesionEstudiante>? _arranqueTerminadoPara;
 
+  /// La bienvenida recién sale del puma de carga: anima el paso (el puma
+  /// sube y queda de fondo). Al volver desde el login ya no se repite.
+  bool _bienvenidaDesdeCarga = false;
+
   Dependencias get _d => widget.dependencias;
 
   @override
@@ -116,14 +120,20 @@ class _PuertaSesionPageState extends State<PuertaSesionPage> {
         if (!identical(_arranqueTerminadoPara, _estadoInicial)) {
           return CargaArranque(
             lista: true,
-            alCompletar: () =>
-                setState(() => _arranqueTerminadoPara = _estadoInicial),
+            alCompletar: () => setState(() {
+              _arranqueTerminadoPara = _estadoInicial;
+              _bienvenidaDesdeCarga = true;
+            }),
           );
         }
 
         if (!_mostrarLogin) {
           return BienvenidaPage(
-            onEmpezar: () => setState(() => _mostrarLogin = true),
+            desdeCarga: _bienvenidaDesdeCarga,
+            onEmpezar: () => setState(() {
+              _mostrarLogin = true;
+              _bienvenidaDesdeCarga = false;
+            }),
             onCrearCuenta: _crearCuenta,
           );
         }
