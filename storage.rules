@@ -43,6 +43,18 @@ service firebase.storage {
                    && request.resource.contentType.matches('image/.*');
     }
 
+    // Narraciones de los temas: audio de hasta 20 MB que sube el
+    // administrador; lo escucha cualquier estudiante con sesión.
+    match /narraciones/{ruta=**} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null
+                            && request.auth.token.admin == true
+                            && request.resource.size < 20 * 1024 * 1024
+                            && request.resource.contentType.matches('audio/.*');
+      allow delete: if request.auth != null
+                    && request.auth.token.admin == true;
+    }
+
     match /{todo=**} {
       allow read, write: if false;
     }

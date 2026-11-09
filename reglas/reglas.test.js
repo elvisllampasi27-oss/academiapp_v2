@@ -223,6 +223,16 @@ test('material del tutor y material de los temas: solo el administrador', async 
   await assertSucceeds(setDoc(doc(admin(), 'claves_preguntas/v1__q__p01'), { opcionCorrectaId: 'a' }));
 });
 
+test('narraciones: las agrega el administrador; las lee quien tiene sesión', async () => {
+  const narracion = { versionId: 'v1', temaId: 'lit-03', titulo: 'Paco Yunque', tipo: 'Cuento', url: 'https://x.pe/a.mp3' };
+  await assertSucceeds(setDoc(doc(admin(), 'narraciones/n1'), narracion));
+  await assertFails(setDoc(doc(alumno(), 'narraciones/n2'), narracion));
+  await assertSucceeds(getDoc(doc(alumno(), 'narraciones/n1')));
+  await assertFails(getDoc(doc(anonimo(), 'narraciones/n1')));
+  await assertFails(deleteDoc(doc(alumno(), 'narraciones/n1')));
+  await assertSucceeds(deleteDoc(doc(admin(), 'narraciones/n1')));
+});
+
 test('reportes: el estudiante manda el suyo como nuevo; el admin responde', async () => {
   const reporte = {
     usuarioId: 'alumno',

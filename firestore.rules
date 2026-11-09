@@ -232,6 +232,15 @@ service cloud.firestore {
       allow write: if esAdmin();
     }
 
+    // NARRACIONES (audio de los temas: cuentos, leyendas, batallas…).
+    // Las agrega el administrador desde el panel.
+    match /narraciones/{narracionId} {
+
+      allow read: if request.auth != null;
+
+      allow write: if esAdmin();
+    }
+
     // EVALUACIONES Y PREGUNTAS (sin respuestas correctas)
     match /evaluaciones/{evaluacionId} {
 

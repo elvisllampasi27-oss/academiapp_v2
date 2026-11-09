@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'acceso/puerta_admin.dart';
 import 'avisos/repositorio_avisos_admin.dart';
 import 'bandeja/repositorio_bandeja.dart';
+import 'contenido/narraciones_admin_firestore.dart';
 import 'contenido/repositorio_contenido_admin_firestore.dart';
 import 'estudiantes/repositorio_estudiantes_admin_firestore.dart';
 import 'examenes/repositorio_examenes_admin_firestore.dart';
@@ -33,6 +34,7 @@ class _AppAdminState extends State<AppAdmin> {
   final _versiones = RepositorioVersionesAdminFirestore();
   final _contenido = RepositorioContenidoAdminFirestore();
   final _generador = GeneradorQuizFunctions();
+  final _narraciones = RepositorioNarracionesAdminFirestore();
   final _bandeja = RepositorioBandejaFirestore();
   final _avisos = RepositorioAvisosAdminFirestore();
   final _sonda = SondaSistemaFirebase();
@@ -57,6 +59,7 @@ class _AppAdminState extends State<AppAdmin> {
           repositorioVersiones: _versiones,
           repositorioContenido: _contenido,
           generadorQuiz: _generador,
+          repositorioNarraciones: _narraciones,
           repositorioBandeja: _bandeja,
           repositorioAvisos: _avisos,
           sondaSistema: _sonda,

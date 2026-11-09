@@ -39,6 +39,8 @@ import '../features/premium/infrastructure/elegir_foto.dart';
 import '../features/premium/infrastructure/repositorio_premium_firestore.dart';
 import '../features/premium/infrastructure/servicio_comprobante_storage.dart';
 import '../features/seminars/infrastructure/repositorio_seminarios_firestore.dart';
+import '../features/narrations/domain/narracion.dart';
+import '../features/narrations/infrastructure/repositorio_narraciones_firestore.dart';
 import '../features/student_model/domain/repositories/repositorio_evidencia.dart';
 import '../features/student_model/infrastructure/repositories/repositorio_evidencia_firestore.dart';
 import '../features/tutor/domain/repositories/servicio_tutor.dart';
@@ -71,6 +73,7 @@ class Dependencias {
   final RepositorioExamenes examenes;
   final ServicioExamenes servicioExamenes;
   final RepositorioSeminarios seminarios;
+  final RepositorioNarraciones narraciones;
   final RepositorioPremium premium;
   final RepositorioReportes reportes;
   final RepositorioAvisos avisos;
@@ -98,6 +101,7 @@ class Dependencias {
     required this.examenes,
     required this.servicioExamenes,
     required this.seminarios,
+    required this.narraciones,
     required this.premium,
     required this.reportes,
     required this.avisos,
@@ -129,6 +133,7 @@ class Dependencias {
       examenes: RepositorioExamenesFirestore(),
       servicioExamenes: ServicioExamenesCloudFunctions(),
       seminarios: RepositorioSeminariosFirestore(),
+      narraciones: RepositorioNarracionesFirestore(),
       premium: RepositorioPremiumFirestore(
         comprobantes: ServicioComprobanteStorage(),
       ),

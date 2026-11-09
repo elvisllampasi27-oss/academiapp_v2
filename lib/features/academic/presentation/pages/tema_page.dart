@@ -51,6 +51,10 @@ class TemaPage extends StatefulWidget {
   /// Panel de dudas con el tutor (si está disponible).
   final Widget Function(VoidCallback cerrar)? dudas;
 
+  /// Narraciones en audio, debajo de la clase. Recibe cómo pausar el video
+  /// (para que no suenen los dos a la vez).
+  final Widget Function(VoidCallback pausarClase)? narraciones;
+
   /// Reportar un problema con la clase o el material (lo compone quien abre
   /// la pantalla).
   final VoidCallback? onReportar;
@@ -67,6 +71,7 @@ class TemaPage extends StatefulWidget {
     this.abrirEnlace = _abrirEnNavegador,
     this.practica,
     this.dudas,
+    this.narraciones,
     this.onReportar,
   });
 
@@ -356,6 +361,7 @@ class _TemaPageState extends State<TemaPage> {
         ),
         const SizedBox(height: 24),
       ],
+      ?widget.narraciones?.call(_control.pausar),
       if (material.estaVacio)
         const EntradaDifuminada(
           child: Card(

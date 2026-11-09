@@ -6,7 +6,9 @@ import '../tema_panel.dart';
 import '../widgets_panel.dart';
 import 'editor_quiz_page.dart';
 import 'modelo_contenido.dart';
+import 'narraciones_admin.dart';
 import 'repositorio_contenido_admin.dart';
+import 'seccion_narraciones_admin.dart';
 
 /// Todo el material de un tema: clase, contenidos, quizzes, separata,
 /// material del tutor y publicación.
@@ -18,6 +20,9 @@ class EditorTemaPage extends StatefulWidget {
   final bool publicado;
   final RepositorioContenidoAdmin repositorio;
   final GeneradorQuiz generador;
+
+  /// Narraciones en audio del tema (null: la sección no aparece).
+  final RepositorioNarracionesAdmin? narraciones;
 
   /// true si se guardó algo (para volver a leer la lista).
   final ValueChanged<bool> onVolver;
@@ -32,6 +37,7 @@ class EditorTemaPage extends StatefulWidget {
     required this.repositorio,
     required this.generador,
     required this.onVolver,
+    this.narraciones,
   });
 
   @override
@@ -255,6 +261,20 @@ class _EditorTemaPageState extends State<EditorTemaPage> {
                     style: TextStyle(color: p.alerta),
                   ),
               ]),
+              if (widget.narraciones case final narraciones?)
+                _tarjeta('Narraciones (audio)', [
+                  Text(
+                    'Cuentos, leyendas, batallas, biografías… Se escuchan '
+                    'debajo de la clase.',
+                    style: TextStyle(color: p.apagado, height: 1.45),
+                  ),
+                  SeccionNarracionesAdmin(
+                    versionId: widget.versionId,
+                    temaId: widget.tema.id,
+                    tituloTema: widget.tema.titulo,
+                    repositorio: narraciones,
+                  ),
+                ]),
               _tarjeta(
                 'Qué aprenderás (contenidos)',
                 [

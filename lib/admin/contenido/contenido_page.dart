@@ -14,6 +14,7 @@ import '../versiones/modelo_versiones.dart';
 import '../widgets_panel.dart';
 import 'editor_tema_page.dart';
 import 'modelo_contenido.dart';
+import 'narraciones_admin.dart';
 import 'repositorio_contenido_admin.dart';
 
 /// Cursos y temas de una versión con lo que le falta a cada tema.
@@ -21,6 +22,7 @@ class ContenidoPage extends StatefulWidget {
   final RepositorioContenidoAdmin contenido;
   final RepositorioEstudiantesAdmin estudiantes;
   final GeneradorQuiz generador;
+  final RepositorioNarracionesAdmin? narraciones;
 
   /// Para abrir directo un tema (desde un reporte).
   final String? versionInicial;
@@ -31,6 +33,7 @@ class ContenidoPage extends StatefulWidget {
     required this.contenido,
     required this.estudiantes,
     required this.generador,
+    this.narraciones,
     this.versionInicial,
     this.temaInicial,
   });
@@ -120,6 +123,7 @@ class _ContenidoPageState extends State<ContenidoPage> {
                 publicado: resumen.publicados.contains(editando.id),
                 repositorio: widget.contenido,
                 generador: widget.generador,
+                narraciones: widget.narraciones,
                 onVolver: (cambio) => setState(() {
                   _editando = null;
                   if (cambio) _resumen = widget.contenido.resumen(version.id);

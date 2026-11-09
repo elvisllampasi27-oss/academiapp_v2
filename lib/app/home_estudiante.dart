@@ -19,6 +19,7 @@ import '../features/premium/presentation/premium_page.dart';
 import '../features/reportes/domain/reporte.dart';
 import '../features/reportes/presentation/reportar.dart';
 import '../features/seminars/presentation/seminarios_page.dart';
+import '../features/narrations/presentation/seccion_narraciones.dart';
 import '../features/tutor/presentation/conversacion_tutor.dart';
 import '../features/tutor/presentation/widgets/panel_tutor.dart';
 import 'dependencias.dart';
@@ -334,6 +335,12 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
               versionId: versionId,
               temaId: tema.id,
             ),
+          ),
+          narraciones: (pausarClase) => SeccionNarraciones(
+            repositorio: _d.narraciones,
+            versionId: versionId,
+            temaId: tema.id,
+            alReproducir: pausarClase,
           ),
           dudas: (cerrar) => PanelTutor(
             conversacion: conversacion,
