@@ -151,6 +151,11 @@ sin crear otro intento ni más evidencias para el BKT.
 | `simulacros` | servidor | examen semanal (un intento por semana; ranking) |
 | `uso_tutor` | servidor | límite diario |
 | `seminarios` | admin / scripts | |
+| `narraciones` | admin (panel → Cursos y temas) | audio del tema en Storage (`narraciones/{version}/{tema}/`) o enlace de prueba |
+| `solicitudes_docente/{uid}` | el usuario (la suya) / admin | celular y enlaces para verificar; solo los ven él y el admin |
+| `docentes/{uid}` | admin (panel → Docentes) | lo público del docente (su página); sin celular |
+| `clases_docente` (+ `corazones/{uid}`) | docente (pendiente) / admin | YouTube por tema; contador de corazones ±1 junto con el corazón propio |
+| `en_vivos` | docente (pendiente) / admin | TikTok, Meet o YouTube con horario; índice (estado, fin) |
 
 ## Premium y pagos
 
@@ -164,6 +169,19 @@ sin crear otro intento ni más evidencias para el BKT.
 4. **Con Blaze**: activar "Foto del comprobante" en Configuración, desplegar
    `storage.rules` (`firebase deploy --only storage`) y la app sube la foto a
    `comprobantes/{uid}/`.
+
+## Docentes
+
+Cualquier usuario (alumno o no, con o sin matrícula) pide su cuenta de
+docente con su celular y su canal o redes. Aprobarlo no le da Premium ni
+matrícula (eso lo decide el administrador aparte): solo le permite enviar
+clases (YouTube por tema, con corazones y reporte) y programar en vivos (en
+Inicio con cuenta regresiva). Todo pasa por el panel → DOCENTES antes de que
+lo vean los alumnos. Retirar la cuenta oculta sus clases y en vivos.
+
+## Plan Blaze
+
+Los pasos, con comandos, están en [`BLAZE.md`](BLAZE.md).
 
 ## Pruebas
 

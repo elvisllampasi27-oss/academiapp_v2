@@ -5,6 +5,9 @@ import 'acceso/puerta_admin.dart';
 import 'avisos/repositorio_avisos_admin.dart';
 import 'bandeja/repositorio_bandeja.dart';
 import 'contenido/narraciones_admin_firestore.dart';
+import 'docentes/repositorio_clases_docentes_admin.dart';
+import 'docentes/repositorio_docentes_admin.dart';
+import 'docentes/repositorio_en_vivos_admin.dart';
 import 'contenido/repositorio_contenido_admin_firestore.dart';
 import 'estudiantes/repositorio_estudiantes_admin_firestore.dart';
 import 'examenes/repositorio_examenes_admin_firestore.dart';
@@ -35,6 +38,9 @@ class _AppAdminState extends State<AppAdmin> {
   final _contenido = RepositorioContenidoAdminFirestore();
   final _generador = GeneradorQuizFunctions();
   final _narraciones = RepositorioNarracionesAdminFirestore();
+  final _docentes = RepositorioDocentesAdminFirestore();
+  final _clasesDocentes = RepositorioClasesDocentesAdminFirestore();
+  final _enVivos = RepositorioEnVivosAdminFirestore();
   final _bandeja = RepositorioBandejaFirestore();
   final _avisos = RepositorioAvisosAdminFirestore();
   final _sonda = SondaSistemaFirebase();
@@ -60,6 +66,9 @@ class _AppAdminState extends State<AppAdmin> {
           repositorioContenido: _contenido,
           generadorQuiz: _generador,
           repositorioNarraciones: _narraciones,
+          repositorioDocentes: _docentes,
+          repositorioClasesDocentes: _clasesDocentes,
+          repositorioEnVivos: _enVivos,
           repositorioBandeja: _bandeja,
           repositorioAvisos: _avisos,
           sondaSistema: _sonda,

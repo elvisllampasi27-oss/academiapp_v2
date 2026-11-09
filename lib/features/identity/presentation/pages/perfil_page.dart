@@ -13,6 +13,9 @@ class PerfilPage extends StatelessWidget {
   final VoidCallback? onReportar;
   final VoidCallback? onMisReportes;
 
+  /// "¿Eres docente?": pedir la cuenta o ver en qué va.
+  final VoidCallback? onDocente;
+
   /// Actividad del alumno en su matrícula (el mapa de cuadritos).
   final ActividadAlumno? actividad;
 
@@ -23,6 +26,7 @@ class PerfilPage extends StatelessWidget {
     this.onAbrirPremium,
     this.onReportar,
     this.onMisReportes,
+    this.onDocente,
     this.actividad,
   });
 
@@ -124,6 +128,19 @@ class PerfilPage extends StatelessWidget {
                 subtitle: const Text('Su estado y la respuesta del equipo'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: onMisReportes,
+              ),
+            ),
+          if (onDocente != null)
+            Card(
+              child: ListTile(
+                leading: const Icon(
+                  Icons.school_outlined,
+                  color: ColoresApp.celeste,
+                ),
+                title: const Text('¿Eres docente?'),
+                subtitle: const Text('Solicita tu cuenta o envía tus clases'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: onDocente,
               ),
             ),
           const SizedBox(height: 16),

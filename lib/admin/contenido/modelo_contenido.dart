@@ -1,5 +1,6 @@
 import '../../core/enlaces.dart';
 import '../../features/academic/domain/entities/curriculo.dart';
+import '../../core/presentation/video/id_youtube.dart';
 
 /// Material de los temas tal como lo administra el panel (Dart puro).
 
@@ -97,26 +98,7 @@ bool pasaFiltro(FiltroTemas filtro, MaterialTema? m, bool publicado) =>
     };
 
 /// Id de YouTube desde un enlace o el id solo. null si no se reconoce.
-String? idYoutube(String texto) {
-  final t = texto.trim();
-  final soloId = RegExp(r'^[A-Za-z0-9_-]{11}$');
-  if (soloId.hasMatch(t)) return t;
-  final uri = Uri.tryParse(t);
-  if (uri == null || !uri.hasScheme) return null;
-  final host = uri.host.replaceFirst('www.', '').replaceFirst('m.', '');
-  String? id;
-  if (host == 'youtu.be') {
-    id = uri.pathSegments.firstOrNull;
-  } else if (host.endsWith('youtube.com')) {
-    id =
-        uri.queryParameters['v'] ??
-        (uri.pathSegments.length >= 2 &&
-                const ['shorts', 'embed', 'live'].contains(uri.pathSegments[0])
-            ? uri.pathSegments[1]
-            : null);
-  }
-  return id != null && soloId.hasMatch(id) ? id : null;
-}
+String? idYoutube(String texto) => idVideoYoutube(texto);
 
 /// Enlace https válido (para la separata y el material extra).
 bool enlaceValido(String texto) {

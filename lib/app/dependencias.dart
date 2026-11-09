@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../features/academic/domain/repositories/repositorio_contenido.dart';
+import '../features/academic/domain/entities/curriculo.dart';
 import '../features/academic/domain/repositories/repositorio_curriculo.dart';
 import '../features/academic/domain/repositories/repositorio_plan_academico.dart';
 import '../features/academic/domain/repositories/repositorio_progreso_clase.dart';
@@ -41,6 +42,13 @@ import '../features/premium/infrastructure/servicio_comprobante_storage.dart';
 import '../features/seminars/infrastructure/repositorio_seminarios_firestore.dart';
 import '../features/narrations/domain/narracion.dart';
 import '../features/narrations/infrastructure/repositorio_narraciones_firestore.dart';
+import '../features/teachers/domain/clase_docente.dart';
+import '../features/teachers/domain/en_vivo.dart';
+import '../features/teachers/domain/solicitud_docente.dart';
+import '../features/teachers/infrastructure/repositorio_clases_docente_firestore.dart';
+import '../features/teachers/infrastructure/repositorio_en_vivos_firestore.dart';
+import '../features/teachers/infrastructure/temario_vigente_firestore.dart';
+import '../features/teachers/infrastructure/repositorio_docentes_firestore.dart';
 import '../features/student_model/domain/repositories/repositorio_evidencia.dart';
 import '../features/student_model/infrastructure/repositories/repositorio_evidencia_firestore.dart';
 import '../features/tutor/domain/repositories/servicio_tutor.dart';
@@ -74,6 +82,12 @@ class Dependencias {
   final ServicioExamenes servicioExamenes;
   final RepositorioSeminarios seminarios;
   final RepositorioNarraciones narraciones;
+  final RepositorioDocentes docentes;
+  final RepositorioClasesDocente clasesDocentes;
+  final RepositorioEnVivos enVivos;
+
+  /// Temario de la versión vigente (para el docente sin matrícula).
+  final Future<Curriculo?> Function() temarioVigente;
   final RepositorioPremium premium;
   final RepositorioReportes reportes;
   final RepositorioAvisos avisos;
@@ -102,6 +116,10 @@ class Dependencias {
     required this.servicioExamenes,
     required this.seminarios,
     required this.narraciones,
+    required this.docentes,
+    required this.clasesDocentes,
+    required this.enVivos,
+    required this.temarioVigente,
     required this.premium,
     required this.reportes,
     required this.avisos,
@@ -111,6 +129,8 @@ class Dependencias {
   factory Dependencias.firebase() {
     final autenticacion = FirebaseServicioAutenticacion();
     final usuarios = RepositorioUsuarioFirestore();
+    RepositorioCurriculo curriculoDe(String versionId) =>
+        RepositorioCurriculoFirestore(versionId: versionId);
 
     return Dependencias(
       autenticacion: autenticacion,
@@ -121,8 +141,7 @@ class Dependencias {
       matriculas: RepositorioMatriculaFirestore(),
       versiones: RepositorioVersionAcademicaFirestore(),
       planes: RepositorioPlanAcademicoFirestore(),
-      curriculoDe: (versionId) =>
-          RepositorioCurriculoFirestore(versionId: versionId),
+      curriculoDe: curriculoDe,
       contenidos: RepositorioContenidoFirestore(),
       recursos: RepositorioRecursoFirestore(),
       progresoClases: RepositorioProgresoClaseFirestore(),
@@ -134,6 +153,10 @@ class Dependencias {
       servicioExamenes: ServicioExamenesCloudFunctions(),
       seminarios: RepositorioSeminariosFirestore(),
       narraciones: RepositorioNarracionesFirestore(),
+      docentes: RepositorioDocentesFirestore(),
+      clasesDocentes: RepositorioClasesDocenteFirestore(),
+      enVivos: RepositorioEnVivosFirestore(),
+      temarioVigente: () => leerTemarioVigente(curriculoDe: curriculoDe),
       premium: RepositorioPremiumFirestore(
         comprobantes: ServicioComprobanteStorage(),
       ),

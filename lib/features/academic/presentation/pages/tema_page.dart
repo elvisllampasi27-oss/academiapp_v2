@@ -55,6 +55,10 @@ class TemaPage extends StatefulWidget {
   /// (para que no suenen los dos a la vez).
   final Widget Function(VoidCallback pausarClase)? narraciones;
 
+  /// Clases de docentes del tema (con corazones). Recibe cómo pausar la
+  /// clase, para cuando abren una.
+  final Widget Function(VoidCallback pausarClase)? clasesDocentes;
+
   /// Reportar un problema con la clase o el material (lo compone quien abre
   /// la pantalla).
   final VoidCallback? onReportar;
@@ -72,6 +76,7 @@ class TemaPage extends StatefulWidget {
     this.practica,
     this.dudas,
     this.narraciones,
+    this.clasesDocentes,
     this.onReportar,
   });
 
@@ -385,6 +390,7 @@ class _TemaPageState extends State<TemaPage> {
       ],
       // La sección del quiz trae su propia entrada (aparece al cargar).
       ?widget.practica?.call(quizHabilitado),
+      ?widget.clasesDocentes?.call(_control.pausar),
       if (organizado.otros.isNotEmpty) ...[
         const SizedBox(height: 20),
         const _TituloSeccion('Más material'),

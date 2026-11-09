@@ -133,19 +133,23 @@ class _HojaReportarState extends State<_HojaReportar> {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: ColoresApp.apagado),
           ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final t in TipoReporte.values)
-                ChoiceChip(
-                  label: Text(t.etiqueta),
-                  selected: _tipo == t,
-                  onSelected: (_) => setState(() => _tipo = t),
-                ),
-            ],
-          ),
+          // Una clase de docente se reporta como tal (sin elegir el tipo).
+          if (widget.tipo != TipoReporte.claseDocente) ...[
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final t in TipoReporte.values)
+                  if (t != TipoReporte.claseDocente)
+                    ChoiceChip(
+                      label: Text(t.etiqueta),
+                      selected: _tipo == t,
+                      onSelected: (_) => setState(() => _tipo = t),
+                    ),
+              ],
+            ),
+          ],
           const SizedBox(height: 14),
           TextField(
             controller: _mensaje,

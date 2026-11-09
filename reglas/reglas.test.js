@@ -9,6 +9,7 @@
  * Usa el emulador de Firestore (no toca la base real).
  */
 const test = require('node:test');
+const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
@@ -16,7 +17,7 @@ const {
   assertSucceeds,
   assertFails,
 } = require('@firebase/rules-unit-testing');
-const { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } = require('firebase/firestore');
+const { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch, increment, Timestamp } = require('firebase/firestore');
 
 let entorno;
 
@@ -231,6 +232,143 @@ test('narraciones: las agrega el administrador; las lee quien tiene sesión', as
   await assertFails(getDoc(doc(anonimo(), 'narraciones/n1')));
   await assertFails(deleteDoc(doc(alumno(), 'narraciones/n1')));
   await assertSucceeds(deleteDoc(doc(admin(), 'narraciones/n1')));
+});
+
+test('docentes: cada uno pide su cuenta; el administrador decide', async () => {
+  const solicitud = {
+    uid: 'alumno',
+    nombre: 'Ana',
+    correo: 'a@b.pe',
+    celular: '987654321',
+    cursos: 'Historia del Perú',
+    enlaces: ['https://youtube.com/@ana'],
+    mensaje: 'Enseño historia hace cinco años en Huamanga.',
+    estado: 'pendiente',
+    creadaEn: serverTimestamp(),
+  };
+  // A nombre de otro, ya aprobada, sin enlaces o mensaje corto: no.
+  await assertFails(setDoc(doc(otro(), 'solicitudes_docente/alumno'), solicitud));
+  await assertFails(setDoc(doc(alumno(), 'solicitudes_docente/alumno'), { ...solicitud, estado: 'aprobada' }));
+  await assertFails(setDoc(doc(alumno(), 'solicitudes_docente/alumno'), { ...solicitud, enlaces: [] }));
+  await assertFails(setDoc(doc(alumno(), 'solicitudes_docente/alumno'), { ...solicitud, mensaje: 'Hola' }));
+  await assertFails(setDoc(doc(alumno(), 'solicitudes_docente/alumno'), { ...solicitud, celular: '12345' }));
+  await assertSucceeds(setDoc(doc(alumno(), 'solicitudes_docente/alumno'), solicitud));
+  await assertFails(getDoc(doc(otro(), 'solicitudes_docente/alumno')));
+
+  // Mientras está en revisión no la cambia; tampoco se aprueba solo.
+  await assertFails(setDoc(doc(alumno(), 'solicitudes_docente/alumno'), solicitud));
+  await assertFails(setDoc(doc(alumno(), 'docentes/alumno'), { activo: true }));
+
+  // El administrador no la aprueba: el alumno corrige y la vuelve a enviar.
+  await assertSucceeds(updateDoc(doc(admin(), 'solicitudes_docente/alumno'), { estado: 'rechazada', motivo: 'El enlace no abre.' }));
+  await assertSucceeds(setDoc(doc(alumno(), 'solicitudes_docente/alumno'), solicitud));
+
+  await assertSucceeds(setDoc(doc(admin(), 'docentes/alumno'), { uid: 'alumno', activo: true }));
+  await assertSucceeds(getDoc(doc(otro(), 'docentes/alumno')));
+});
+
+test('clases de docentes: solo un docente aprobado envía; un corazón por alumno', async () => {
+  const profe = () => entorno.authenticatedContext('profe').firestore();
+  const clase = {
+    docenteUid: 'profe',
+    docenteNombre: 'Ana',
+    temaId: 'his-03',
+    temaTitulo: 'Los incas',
+    cursoNombre: 'Historia del Perú',
+    titulo: 'El Tahuantinsuyo en 10 minutos',
+    videoId: 'pRRaLT4H-9s',
+    estado: 'pendiente',
+    corazones: 0,
+    creadaEn: serverTimestamp(),
+  };
+
+  // Sin cuenta de docente, no.
+  await assertFails(setDoc(doc(profe(), 'clases_docente/c1'), clase));
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'docentes/profe'), { uid: 'profe', activo: true });
+  });
+  // Ya publicada, con corazones o con un video raro, tampoco.
+  await assertFails(setDoc(doc(profe(), 'clases_docente/c1'), { ...clase, estado: 'aprobada' }));
+  await assertFails(setDoc(doc(profe(), 'clases_docente/c1'), { ...clase, corazones: 99 }));
+  await assertFails(setDoc(doc(profe(), 'clases_docente/c1'), { ...clase, videoId: 'x' }));
+  await assertSucceeds(setDoc(doc(profe(), 'clases_docente/c1'), clase));
+
+  // Sin publicar: la ve el docente, no los alumnos.
+  await assertSucceeds(getDoc(doc(profe(), 'clases_docente/c1')));
+  await assertFails(getDoc(doc(alumno(), 'clases_docente/c1')));
+  await assertFails(updateDoc(doc(profe(), 'clases_docente/c1'), { estado: 'aprobada' }));
+  await assertSucceeds(updateDoc(doc(admin(), 'clases_docente/c1'), { estado: 'aprobada' }));
+  await assertSucceeds(getDoc(doc(alumno(), 'clases_docente/c1')));
+
+  const corazon = (db, uid, n) => {
+    const lote = writeBatch(db);
+    lote.update(doc(db, 'clases_docente/c1'), { corazones: increment(n) });
+    if (n > 0) {
+      lote.set(doc(db, `clases_docente/c1/corazones/${uid}`), { creadoEn: serverTimestamp() });
+    } else {
+      lote.delete(doc(db, `clases_docente/c1/corazones/${uid}`));
+    }
+    return lote.commit();
+  };
+
+  await assertSucceeds(corazon(alumno(), 'alumno', 1));
+  // Otra vez el mismo alumno, o subir de a 5: no.
+  await assertFails(corazon(alumno(), 'alumno', 1));
+  await assertFails(corazon(otro(), 'otro', 5));
+  // Solo el contador, sin su corazón: no. Cambiar el título: no.
+  await assertFails(updateDoc(doc(otro(), 'clases_docente/c1'), { corazones: increment(1) }));
+  await assertFails(updateDoc(doc(otro(), 'clases_docente/c1'), { titulo: 'Otra cosa' }));
+  // El corazón de otro no se toca.
+  await assertFails(deleteDoc(doc(otro(), 'clases_docente/c1/corazones/alumno')));
+  await assertSucceeds(corazon(alumno(), 'alumno', -1));
+  const despues = await entorno.withSecurityRulesDisabled(async (ctx) =>
+    (await getDoc(doc(ctx.firestore(), 'clases_docente/c1'))).data().corazones);
+  assert.equal(despues, 0);
+});
+
+test('en vivos: solo un docente aprobado programa; los alumnos ven los aprobados', async () => {
+  const profe = () => entorno.authenticatedContext('profe').firestore();
+  const inicio = new Date(Date.now() + 2 * 60 * 60 * 1000);
+  inicio.setSeconds(0, 0);
+  const minutos = (n) => Timestamp.fromDate(new Date(inicio.getTime() + n * 60 * 1000));
+  const enVivo = {
+    docenteUid: 'profe',
+    docenteNombre: 'Ana',
+    titulo: 'Repaso de los incas',
+    plataforma: 'meet',
+    enlace: 'https://meet.google.com/abc-defg-hij',
+    inicio: Timestamp.fromDate(inicio),
+    fin: minutos(60),
+    duracionMinutos: 60,
+    cursoNombre: 'Historia del Perú',
+    estado: 'pendiente',
+    creadoEn: serverTimestamp(),
+  };
+
+  // Sin cuenta de docente, no.
+  await assertFails(setDoc(doc(profe(), 'en_vivos/v1'), enVivo));
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'docentes/profe'), { uid: 'profe', activo: true });
+  });
+  // Ya aprobado, con un fin que no cuadra, en el pasado o sin https: no.
+  await assertFails(setDoc(doc(profe(), 'en_vivos/v1'), { ...enVivo, estado: 'aprobado' }));
+  await assertFails(setDoc(doc(profe(), 'en_vivos/v1'), { ...enVivo, fin: minutos(600) }));
+  await assertFails(setDoc(doc(profe(), 'en_vivos/v1'), {
+    ...enVivo,
+    inicio: Timestamp.fromDate(new Date(Date.now() - 60 * 60 * 1000)),
+    fin: Timestamp.fromDate(new Date(Date.now())),
+  }));
+  await assertFails(setDoc(doc(profe(), 'en_vivos/v1'), { ...enVivo, enlace: 'http://meet.google.com/x' }));
+  await assertSucceeds(setDoc(doc(profe(), 'en_vivos/v1'), enVivo));
+
+  // Sin aprobar no lo ven los alumnos; el docente no se lo aprueba solo.
+  await assertFails(getDoc(doc(alumno(), 'en_vivos/v1')));
+  await assertFails(updateDoc(doc(profe(), 'en_vivos/v1'), { estado: 'aprobado' }));
+  await assertSucceeds(updateDoc(doc(admin(), 'en_vivos/v1'), { estado: 'aprobado' }));
+  await assertSucceeds(getDoc(doc(alumno(), 'en_vivos/v1')));
+
+  await assertFails(deleteDoc(doc(alumno(), 'en_vivos/v1')));
+  await assertSucceeds(deleteDoc(doc(profe(), 'en_vivos/v1')));
 });
 
 test('reportes: el estudiante manda el suyo como nuevo; el admin responde', async () => {

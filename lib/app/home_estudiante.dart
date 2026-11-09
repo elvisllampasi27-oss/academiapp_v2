@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features/academic/domain/entities/curriculo.dart';
 import '../features/academic/domain/entities/curso.dart';
 import '../features/academic/domain/entities/tema.dart';
 import '../features/academic/domain/services/obtener_material_tema_service.dart';
@@ -20,6 +21,11 @@ import '../features/reportes/domain/reporte.dart';
 import '../features/reportes/presentation/reportar.dart';
 import '../features/seminars/presentation/seminarios_page.dart';
 import '../features/narrations/presentation/seccion_narraciones.dart';
+import '../features/teachers/domain/clase_docente.dart';
+import '../features/teachers/presentation/en_vivos.dart';
+import '../features/teachers/presentation/perfil_docente_page.dart';
+import '../features/teachers/presentation/seccion_clases_docentes.dart';
+import '../features/teachers/presentation/solicitud_docente_page.dart';
 import '../features/tutor/presentation/conversacion_tutor.dart';
 import '../features/tutor/presentation/widgets/panel_tutor.dart';
 import 'dependencias.dart';
@@ -134,6 +140,9 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                 'Tu cuenta está lista, pero todavía no tienes una matrícula '
                 'activa. Cuando se active, aquí verás tus actividades del día.',
             onCerrarSesion: widget.onCerrarSesion,
+            // Un docente no necesita matrícula para pedir su cuenta ni para
+            // enviar sus clases.
+            onDocente: () => _abrirDocente(_d.temarioVigente),
           );
         }
 
@@ -160,6 +169,17 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                 avisos: AvisosInicio(
                   repositorio: _d.avisos,
                   versionId: contexto.matricula.versionId,
+                ),
+                enVivos: SeccionEnVivos(
+                  repositorio: _d.enVivos,
+                  onVerDocente: _abrirPerfilDocente,
+                  onReportar: (e) => _reportar(
+                    context,
+                    TipoReporte.claseDocente,
+                    ContextoReporte(
+                      titulo: 'En vivo de ${e.docenteNombre}: ${e.titulo}',
+                    ),
+                  ),
                 ),
                 examen: AvisoExamenSemanal(
                   servicio: _d.servicioExamenes,
@@ -247,6 +267,10 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                     ),
                   ),
                 ),
+                onDocente: () => _abrirDocente(
+                  // Matriculado: su propio temario (ya está leído).
+                  () async => contexto.curriculo,
+                ),
               ),
             ),
           ],
@@ -254,6 +278,49 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
       },
     );
   }
+
+  void _abrirDocente(Future<Curriculo?> Function() temario) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SolicitudDocentePage(
+          uid: widget.usuario.uid,
+          nombre: widget.usuario.nombre,
+          correo: widget.usuario.correo,
+          repositorio: _d.docentes,
+          clases: _d.clasesDocentes,
+          temario: temario,
+          enVivos: _d.enVivos,
+        ),
+      ),
+    );
+  }
+
+  void _abrirPerfilDocente(String docenteUid, String nombre) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PerfilDocentePage(
+          docenteUid: docenteUid,
+          nombre: nombre,
+          uid: widget.usuario.uid,
+          docentes: _d.docentes,
+          clases: _d.clasesDocentes,
+          enVivos: _d.enVivos,
+          onReportarClase: _reportarClase,
+        ),
+      ),
+    );
+  }
+
+  void _reportarClase(ClaseDocente clase, {String? versionId}) => _reportar(
+    context,
+    TipoReporte.claseDocente,
+    ContextoReporte(
+      titulo: 'Clase de ${clase.docenteNombre}: ${clase.titulo}',
+      versionId: versionId,
+      temaId: versionId == null ? null : clase.temaId,
+      claseId: clase.id,
+    ),
+  );
 
   void _reportar(
     BuildContext context,
@@ -342,6 +409,14 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
             temaId: tema.id,
             alReproducir: pausarClase,
           ),
+          clasesDocentes: (pausarClase) => SeccionClasesDocentes(
+            repositorio: _d.clasesDocentes,
+            temaId: tema.id,
+            uid: widget.usuario.uid,
+            alAbrir: pausarClase,
+            onVerDocente: _abrirPerfilDocente,
+            onReportar: (clase) => _reportarClase(clase, versionId: versionId),
+          ),
           dudas: (cerrar) => PanelTutor(
             conversacion: conversacion,
             tituloTema: tema.titulo,
@@ -385,10 +460,14 @@ class _PantallaAviso extends StatelessWidget {
   final String mensaje;
   final Future<void> Function() onCerrarSesion;
 
+  /// "¿Eres docente?" (solo cuando no tiene matrícula).
+  final VoidCallback? onDocente;
+
   const _PantallaAviso({
     required this.titulo,
     required this.mensaje,
     required this.onCerrarSesion,
+    this.onDocente,
   });
 
   @override
@@ -414,6 +493,14 @@ class _PantallaAviso extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(mensaje, textAlign: TextAlign.center),
                 const SizedBox(height: 24),
+                if (onDocente != null) ...[
+                  FilledButton.icon(
+                    onPressed: onDocente,
+                    icon: const Icon(Icons.school_outlined),
+                    label: const Text('¿Eres docente? Entra aquí'),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 OutlinedButton.icon(
                   onPressed: onCerrarSesion,
                   icon: const Icon(Icons.logout),

@@ -30,16 +30,19 @@ class EstadoSistemaPage extends StatefulWidget {
   State<EstadoSistemaPage> createState() => _EstadoSistemaPageState();
 }
 
-/// Lo pendiente antes de pasar al plan Blaze (producción).
+/// Lo pendiente antes de pasar al plan Blaze (producción). El detalle,
+/// con los comandos, está en docs/BLAZE.md.
 const pasosAntesDeBlaze = [
-  'Actualizar firebase-functions a la última versión y desplegar las '
-      'funciones.',
-  'Desplegar las reglas de Storage (firebase deploy --only storage).',
-  'Activar App Check en la app y en el panel.',
-  'Crear un proyecto aparte para pruebas (dev) y dejar este solo para '
-      'producción.',
-  'Cambiar la contraseña de la cuenta de prueba del estudiante.',
-  'Poner un presupuesto con alertas en Google Cloud.',
+  'Activar Blaze y poner un presupuesto con alertas en Google Cloud.',
+  'Guardar la clave de Gemini como secreto '
+      '(firebase functions:secrets:set GEMINI_API_KEY).',
+  'Actualizar firebase-functions, probar y desplegar las funciones.',
+  'Desplegar Firestore y Storage (firebase deploy --only firestore, '
+      'luego --only storage).',
+  'Configurar CORS del bucket para la web (storage.cors.json).',
+  'Activar "Foto del comprobante" y subir las narraciones reales.',
+  'Después: App Check, proyecto aparte para pruebas y cambiar la '
+      'contraseña de la cuenta de prueba.',
 ];
 
 class _EstadoSistemaPageState extends State<EstadoSistemaPage> {

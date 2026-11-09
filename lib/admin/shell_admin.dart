@@ -13,6 +13,12 @@ import 'examenes/examenes_admin_page.dart';
 import 'configuracion/configuracion_page.dart';
 import 'contenido/contenido_page.dart';
 import 'contenido/narraciones_admin.dart';
+import 'docentes/clases_docentes_page.dart';
+import 'docentes/docentes_page.dart';
+import 'docentes/en_vivos_admin_page.dart';
+import 'docentes/repositorio_en_vivos_admin.dart';
+import 'docentes/repositorio_clases_docentes_admin.dart';
+import 'docentes/repositorio_docentes_admin.dart';
 import 'contenido/repositorio_contenido_admin.dart';
 import 'examenes/repositorio_examenes_admin.dart';
 import 'pagos/cupones_page.dart';
@@ -41,6 +47,9 @@ enum SeccionPanel {
   contenido,
   examenes,
   semanales,
+  docentes,
+  clasesDocentes,
+  enVivos,
   reportes,
   estado,
   configuracion,
@@ -60,6 +69,9 @@ class ShellAdmin extends StatefulWidget {
   final RepositorioContenidoAdmin repositorioContenido;
   final GeneradorQuiz generadorQuiz;
   final RepositorioNarracionesAdmin? repositorioNarraciones;
+  final RepositorioDocentesAdmin repositorioDocentes;
+  final RepositorioClasesDocentesAdmin repositorioClasesDocentes;
+  final RepositorioEnVivosAdmin repositorioEnVivos;
   final RepositorioBandeja repositorioBandeja;
   final RepositorioAvisosAdmin repositorioAvisos;
   final SondaSistema sondaSistema;
@@ -81,6 +93,9 @@ class ShellAdmin extends StatefulWidget {
     required this.repositorioBandeja,
     required this.repositorioAvisos,
     required this.sondaSistema,
+    required this.repositorioDocentes,
+    required this.repositorioClasesDocentes,
+    required this.repositorioEnVivos,
     this.repositorioNarraciones,
     this.ahora = DateTime.now,
   });
@@ -100,6 +115,12 @@ class _ShellAdminState extends State<ShellAdmin> {
 
   late final Stream<int> _pendientes = widget.repositorioPagos.pendientes();
   late final Stream<int> _reportesNuevos = widget.repositorioBandeja.nuevos();
+  late final Stream<int> _docentesPendientes = widget.repositorioDocentes
+      .pendientes();
+  late final Stream<int> _clasesPendientes = widget.repositorioClasesDocentes
+      .pendientes();
+  late final Stream<int> _enVivosPendientes = widget.repositorioEnVivos
+      .pendientes();
 
   /// A dónde llevar Exámenes o Cursos y temas al venir de un reporte.
   (String, String?)? _destino;
@@ -219,6 +240,20 @@ class _ShellAdminState extends State<ShellAdmin> {
         ranking: widget.repositorioRanking,
         onAbrirEstudiante: _abrirEstudiante,
       ),
+      SeccionPanel.docentes => DocentesPage(
+        repositorio: widget.repositorioDocentes,
+        ahora: widget.ahora,
+      ),
+      SeccionPanel.clasesDocentes => ClasesDocentesPage(
+        key: ValueKey(_visita),
+        repositorio: widget.repositorioClasesDocentes,
+        ahora: widget.ahora,
+      ),
+      SeccionPanel.enVivos => EnVivosAdminPage(
+        key: ValueKey(_visita),
+        repositorio: widget.repositorioEnVivos,
+        ahora: widget.ahora,
+      ),
       SeccionPanel.reportes => BandejaPage(
         repositorio: widget.repositorioBandeja,
         onAbrirEstudiante: _abrirEstudiante,
@@ -226,6 +261,7 @@ class _ShellAdminState extends State<ShellAdmin> {
             _irA(SeccionPanel.examenes, (examen, pregunta)),
         onIrTema: (version, tema) =>
             _irA(SeccionPanel.contenido, (version, tema)),
+        onIrClases: () => _ir(SeccionPanel.clasesDocentes),
         ahora: widget.ahora,
       ),
       SeccionPanel.configuracion => ConfiguracionPage(
@@ -251,6 +287,9 @@ class _ShellAdminState extends State<ShellAdmin> {
             onSalir: widget.onSalir,
             pendientes: _pendientes,
             reportesNuevos: _reportesNuevos,
+            docentesPendientes: _docentesPendientes,
+            clasesPendientes: _clasesPendientes,
+            enVivosPendientes: _enVivosPendientes,
           ),
           Expanded(child: _pagina()),
         ],
@@ -266,6 +305,9 @@ class _MenuLateral extends StatelessWidget {
   final VoidCallback onSalir;
   final Stream<int> pendientes;
   final Stream<int> reportesNuevos;
+  final Stream<int> docentesPendientes;
+  final Stream<int> clasesPendientes;
+  final Stream<int> enVivosPendientes;
 
   const _MenuLateral({
     required this.seccion,
@@ -274,6 +316,9 @@ class _MenuLateral extends StatelessWidget {
     required this.onSalir,
     required this.pendientes,
     required this.reportesNuevos,
+    required this.docentesPendientes,
+    required this.clasesPendientes,
+    required this.enVivosPendientes,
   });
 
   static const _grupos = [
@@ -309,6 +354,14 @@ class _MenuLateral extends StatelessWidget {
           'Exámenes semanales',
           Icons.event_note_outlined,
         ),
+      ],
+    ),
+    (
+      'DOCENTES',
+      [
+        (SeccionPanel.docentes, 'Solicitudes', Icons.school_outlined),
+        (SeccionPanel.clasesDocentes, 'Clases', Icons.ondemand_video_outlined),
+        (SeccionPanel.enVivos, 'En vivos', Icons.sensors),
       ],
     ),
     (
@@ -386,6 +439,9 @@ class _MenuLateral extends StatelessWidget {
                       contador: switch (s) {
                         SeccionPanel.pagos => pendientes,
                         SeccionPanel.reportes => reportesNuevos,
+                        SeccionPanel.docentes => docentesPendientes,
+                        SeccionPanel.clasesDocentes => clasesPendientes,
+                        SeccionPanel.enVivos => enVivosPendientes,
                         _ => null,
                       },
                     ),

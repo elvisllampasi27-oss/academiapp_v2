@@ -18,6 +18,9 @@ class BandejaPage extends StatefulWidget {
 
   /// Abre Cursos y temas en ese tema.
   final void Function(String versionId, String temaId) onIrTema;
+
+  /// Abre Clases de docentes (para una clase reportada).
+  final VoidCallback? onIrClases;
   final DateTime Function() ahora;
 
   const BandejaPage({
@@ -26,6 +29,7 @@ class BandejaPage extends StatefulWidget {
     required this.onAbrirEstudiante,
     required this.onIrPregunta,
     required this.onIrTema,
+    this.onIrClases,
     this.ahora = DateTime.now,
   });
 
@@ -46,6 +50,7 @@ IconData iconoReporte(TipoReporte tipo) => switch (tipo) {
   TipoReporte.material => Icons.description_outlined,
   TipoReporte.app => Icons.phone_android,
   TipoReporte.otro => Icons.outlined_flag,
+  TipoReporte.claseDocente => Icons.school_outlined,
 };
 
 class _BandejaPageState extends State<BandejaPage> {
@@ -233,6 +238,13 @@ class _BandejaPageState extends State<BandejaPage> {
                   icon: const Icon(Icons.menu_book_outlined, size: 18),
                   label: const Text('Ir al tema'),
                 ),
+              if (c.claseId != null)
+                if (widget.onIrClases case final irClases?)
+                  OutlinedButton.icon(
+                    onPressed: irClases,
+                    icon: const Icon(Icons.ondemand_video_outlined, size: 18),
+                    label: const Text('Ir a clases de docentes'),
+                  ),
             ],
           ),
           const SizedBox(height: 12),

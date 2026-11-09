@@ -23,6 +23,9 @@ class InicioPage extends StatelessWidget {
   /// Avisos del equipo (van arriba de "Hoy").
   final Widget? avisos;
 
+  /// En vivos de los docentes (cuenta regresiva y "Unirme").
+  final Widget? enVivos;
+
   /// Aviso del examen semanal abierto.
   final Widget? examen;
 
@@ -42,6 +45,7 @@ class InicioPage extends StatelessWidget {
     required this.onVerRuta,
     required this.onAbrirPerfil,
     this.avisos,
+    this.enVivos,
     this.examen,
     this.seminarios,
     this.maximoRefuerzos = 2,
@@ -110,6 +114,7 @@ class InicioPage extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           ?avisos,
+          ?enVivos,
           ?examen,
           _TarjetaHoy(
             dia: dia,

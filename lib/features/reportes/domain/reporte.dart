@@ -7,7 +7,10 @@ enum TipoReporte {
   video('La clase no se ve'),
   material('Separata o material'),
   app('Falla de la app'),
-  otro('Otro');
+  otro('Otro'),
+
+  /// Solo desde una clase de docente (no aparece entre las opciones).
+  claseDocente('Clase o en vivo de un docente');
 
   final String etiqueta;
   const TipoReporte(this.etiqueta);
@@ -30,12 +33,16 @@ class ContextoReporte {
   final String? versionId;
   final String? temaId;
 
+  /// La clase de docente reportada.
+  final String? claseId;
+
   const ContextoReporte({
     required this.titulo,
     this.examenId,
     this.preguntaId,
     this.versionId,
     this.temaId,
+    this.claseId,
   });
 
   Map<String, String> aMapa() => {
@@ -44,6 +51,7 @@ class ContextoReporte {
     'preguntaId': ?preguntaId,
     'versionId': ?versionId,
     'temaId': ?temaId,
+    'claseId': ?claseId,
   };
 
   factory ContextoReporte.desdeMapa(Map<String, dynamic>? m) => ContextoReporte(
@@ -52,6 +60,7 @@ class ContextoReporte {
     preguntaId: m?['preguntaId'] as String?,
     versionId: m?['versionId'] as String?,
     temaId: m?['temaId'] as String?,
+    claseId: m?['claseId'] as String?,
   );
 }
 
