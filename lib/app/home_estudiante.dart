@@ -387,12 +387,12 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
             repositorioRecurso: _d.recursos,
           ),
           repositorioProgreso: _d.progresoClases,
-          practica: (habilitada) => SeccionPracticaTema(
+          practica: (claseVista) => SeccionPracticaTema(
             service: practica,
             temaId: tema.id,
             versionId: versionId,
             tituloTema: tema.titulo,
-            habilitada: habilitada,
+            claseVista: claseVista,
           ),
           onReportar: () => _reportar(
             context,

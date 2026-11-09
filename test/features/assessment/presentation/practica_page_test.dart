@@ -43,7 +43,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Quiz del tema'), findsOneWidget);
-    expect(find.text('Disponible'), findsOneWidget);
     await tester.tap(find.text('Empezar quiz'));
     await tester.pumpAndSettle();
   }
@@ -122,7 +121,9 @@ void main() {
     expect(find.text('Todavía no hay quiz para este tema.'), findsOneWidget);
   });
 
-  testWidgets('bloqueado hasta terminar la clase', (tester) async {
+  testWidgets('sin terminar la clase pregunta antes de empezar', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -131,16 +132,26 @@ void main() {
             temaId: 'algebra-02',
             versionId: 'version-1',
             tituloTema: 'Polinomios',
-            habilitada: false,
+            claseVista: false,
           ),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Termina la clase para activar el quiz.'), findsOneWidget);
-    expect(find.text('Disponible'), findsNothing);
-    final boton = find.widgetWithText(FilledButton, 'Empezar quiz');
-    expect(tester.widget<FilledButton>(boton).onPressed, isNull);
+    await tester.tap(find.text('Empezar quiz'));
+    await tester.pumpAndSettle();
+    expect(find.text('Aún no terminas la clase'), findsOneWidget);
+
+    // "Ver la clase": se queda en el tema.
+    await tester.tap(find.text('Ver la clase'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pregunta 1 de 2'), findsNothing);
+
+    await tester.tap(find.text('Empezar quiz'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dar el quiz'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pregunta 1 de 2'), findsOneWidget);
   });
 }

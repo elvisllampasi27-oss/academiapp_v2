@@ -33,3 +33,10 @@ const List<String> carrerasUnsch = [
   'Psicología',
   'Trabajo Social',
 ];
+
+/// Para quien no postula: un docente o alguien que ya estudió. Van al final
+/// de la lista de carreras.
+const opcionesSinPostular = ['Soy docente', 'Ya estudié (no postulo)'];
+
+/// Lo que se elige en el registro y al completar el perfil.
+const opcionesCarrera = [...carrerasUnsch, ...opcionesSinPostular];

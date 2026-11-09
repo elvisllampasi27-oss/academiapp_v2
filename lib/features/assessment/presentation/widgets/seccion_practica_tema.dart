@@ -6,15 +6,15 @@ import '../../domain/services/practica_tema_service.dart';
 import '../pages/practica_page.dart';
 import '../../../../core/presentation/animaciones.dart';
 
-/// Bloque "Quiz del tema" dentro de la pantalla del tema.
-/// Mientras [habilitada] sea false (la clase no se terminó) no se puede
-/// empezar.
+/// Bloque "Quiz del tema" dentro de la pantalla del tema. Siempre se puede
+/// empezar; si [claseVista] es false, antes pregunta si quiere darlo sin
+/// terminar la clase.
 class SeccionPracticaTema extends StatefulWidget {
   final PracticaTemaService service;
   final String temaId;
   final String versionId;
   final String tituloTema;
-  final bool habilitada;
+  final bool claseVista;
 
   const SeccionPracticaTema({
     super.key,
@@ -22,7 +22,7 @@ class SeccionPracticaTema extends StatefulWidget {
     required this.temaId,
     required this.versionId,
     required this.tituloTema,
-    this.habilitada = true,
+    this.claseVista = true,
   });
 
   @override
@@ -42,8 +42,30 @@ class _SeccionPracticaTemaState extends State<SeccionPracticaTema> {
     _ => 'Práctica',
   };
 
-  void _empezar(Evaluacion practica) {
-    Navigator.of(context).push(
+  Future<void> _empezar(Evaluacion practica) async {
+    if (!widget.claseVista) {
+      final darlo = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Aún no terminas la clase'),
+          content: const Text(
+            '¿Seguro que quieres dar el quiz sin terminar de ver la clase?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Ver la clase'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Dar el quiz'),
+            ),
+          ],
+        ),
+      );
+      if (darlo != true || !mounted) return;
+    }
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => PracticaPage(
           service: widget.service,
@@ -65,8 +87,6 @@ class _SeccionPracticaTemaState extends State<SeccionPracticaTema> {
         }
 
         final practicas = snapshot.data ?? const [];
-        final disponible =
-            widget.habilitada && !snapshot.hasError && practicas.isNotEmpty;
 
         return EntradaDifuminada(
           child: Card(
@@ -75,22 +95,9 @@ class _SeccionPracticaTemaState extends State<SeccionPracticaTema> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Quiz del tema',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      // Al terminar la clase, la etiqueta aparece con su
-                      // animación (recién se crea en ese momento).
-                      if (disponible)
-                        const EntradaDifuminada(child: _Etiqueta('Disponible')),
-                    ],
+                  const Text(
+                    'Quiz del tema',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 10),
                   if (snapshot.hasError)
@@ -100,17 +107,7 @@ class _SeccionPracticaTemaState extends State<SeccionPracticaTema> {
                       'Todavía no hay quiz para este tema.',
                       style: TextStyle(color: ColoresApp.apagado),
                     )
-                  else if (!widget.habilitada) ...[
-                    const Text(
-                      'Termina la clase para activar el quiz.',
-                      style: TextStyle(color: ColoresApp.apagado),
-                    ),
-                    const SizedBox(height: 12),
-                    const FilledButton(
-                      onPressed: null,
-                      child: Text('Empezar quiz'),
-                    ),
-                  ] else
+                  else
                     for (final practica in practicas)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
@@ -139,31 +136,6 @@ class _SeccionPracticaTemaState extends State<SeccionPracticaTema> {
           ),
         );
       },
-    );
-  }
-}
-
-class _Etiqueta extends StatelessWidget {
-  final String texto;
-
-  const _Etiqueta(this.texto);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: ColoresApp.ambar.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        texto,
-        style: const TextStyle(
-          color: ColoresApp.ambar,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
     );
   }
 }

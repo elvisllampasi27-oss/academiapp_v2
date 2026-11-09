@@ -44,9 +44,10 @@ class TemaPage extends StatefulWidget {
   final AbrirEnlace abrirEnlace;
 
   /// Bloque del quiz. Lo compone quien abre la pantalla (así el módulo
-  /// académico no depende del de evaluación). [habilitada] es false mientras
-  /// la clase no se haya visto.
-  final Widget Function(bool habilitada)? practica;
+  /// académico no depende del de evaluación). Siempre se puede dar; con
+  /// [claseVista] en false, antes pregunta si quiere darlo sin terminar la
+  /// clase.
+  final Widget Function(bool claseVista)? practica;
 
   /// Panel de dudas con el tutor (si está disponible).
   final Widget Function(VoidCallback cerrar)? dudas;
@@ -86,11 +87,6 @@ class TemaPage extends StatefulWidget {
 
 class _TemaPageState extends State<TemaPage> {
   final _control = ControlClase();
-  final _avance = ValueNotifier<AvanceClase>((
-    fraccion: 0,
-    duracion: 0,
-    saltadoDesde: null,
-  ));
 
   MaterialTema? _material;
   bool _cargando = true;
@@ -130,7 +126,6 @@ class _TemaPageState extends State<TemaPage> {
         _seguimiento = seguimiento;
         _decenaGuardada = (seguimiento.fraccion * 10).floor();
         _vistoGuardado = seguimiento.visto;
-        _avance.value = _leerAvance(seguimiento);
         _cargando = false;
       });
     } catch (_) {
@@ -164,28 +159,18 @@ class _TemaPageState extends State<TemaPage> {
       duracion: duracion,
     );
 
-    _avance.value = _leerAvance(_seguimiento);
-
     if (!avanzo) return;
 
     if (_seguimiento.completada && !completadaAntes) {
       _guardar();
+      // El quiz ya no pregunta antes de empezar.
       setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Clase vista. Ya puedes hacer el quiz.')),
-      );
       return;
     }
 
     // Se guarda cada 10 % para no escribir a cada segundo.
     if ((_seguimiento.fraccion * 10).floor() > _decenaGuardada) _guardar();
   }
-
-  static AvanceClase _leerAvance(SeguimientoClase s) => (
-    fraccion: s.fraccion,
-    duracion: s.duracion,
-    saltadoDesde: s.saltadoDesde,
-  );
 
   void _guardar() {
     _decenaGuardada = (_seguimiento.fraccion * 10).floor();
@@ -243,7 +228,6 @@ class _TemaPageState extends State<TemaPage> {
   @override
   void dispose() {
     if (_seguimiento.visto > _vistoGuardado + 1) _guardar();
-    _avance.dispose();
     super.dispose();
   }
 
@@ -342,7 +326,7 @@ class _TemaPageState extends State<TemaPage> {
 
     final material = organizado.material;
     final videoId = organizado.videoId;
-    final quizHabilitado = videoId == null || _seguimiento.completada;
+    final claseVista = videoId == null || _seguimiento.completada;
 
     return [
       if (videoId != null) ...[
@@ -358,10 +342,9 @@ class _TemaPageState extends State<TemaPage> {
         const SizedBox(height: 12),
         EntradaDifuminada(
           retraso: const Duration(milliseconds: 120),
-          child: _AvanceClase(
-            titulo: organizado.clase!.titulo,
-            avance: _avance,
-            onVolver: _control.irA,
+          child: Text(
+            organizado.clase!.titulo,
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
         const SizedBox(height: 24),
@@ -389,7 +372,7 @@ class _TemaPageState extends State<TemaPage> {
         const SizedBox(height: 20),
       ],
       // La sección del quiz trae su propia entrada (aparece al cargar).
-      ?widget.practica?.call(quizHabilitado),
+      ?widget.practica?.call(claseVista),
       ?widget.clasesDocentes?.call(_control.pausar),
       if (organizado.otros.isNotEmpty) ...[
         const SizedBox(height: 20),
@@ -473,92 +456,6 @@ class _Organizado {
         for (final r in material.recursos)
           if (r != clase && r != separata) r,
       ],
-    );
-  }
-}
-
-typedef AvanceClase = ({
-  double fraccion,
-  double duracion,
-  double? saltadoDesde,
-});
-
-class _AvanceClase extends StatelessWidget {
-  final String titulo;
-  final ValueNotifier<AvanceClase> avance;
-  final void Function(double segundos) onVolver;
-
-  const _AvanceClase({
-    required this.titulo,
-    required this.avance,
-    required this.onVolver,
-  });
-
-  static String _reloj(double segundos) {
-    final total = segundos.floor();
-    final s = (total % 60).toString().padLeft(2, '0');
-    return '${total ~/ 60}:$s';
-  }
-
-  static String _minutos(double segundos) {
-    final minutos = (segundos / 60).round();
-    return minutos < 1 ? '1 min' : '$minutos min';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: avance,
-      builder: (context, valor, _) {
-        final completa = valor.fraccion >= 1;
-        final porcentaje = (valor.fraccion * 100).floor();
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              [
-                titulo,
-                if (valor.duracion > 0) _minutos(valor.duracion),
-              ].join(' · '),
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 10),
-            // Avanza suave entre cada actualización del video.
-            BarraProgreso(
-              valor: valor.fraccion,
-              minHeight: 3,
-              radio: 2,
-              color: completa ? ColoresApp.texto : ColoresApp.ambar,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              completa
-                  ? 'Clase vista por completo · quiz activado'
-                  : 'Clase vista: $porcentaje % · termínala para activar el quiz',
-              style: const TextStyle(fontSize: 13, color: ColoresApp.apagado),
-            ),
-            if (valor.saltadoDesde case final desde?)
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Te saltaste una parte desde ${_reloj(desde)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: ColoresApp.ambar,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => onVolver(desde),
-                    child: const Text('Volver ahí'),
-                  ),
-                ],
-              ),
-          ],
-        );
-      },
     );
   }
 }

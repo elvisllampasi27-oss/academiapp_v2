@@ -88,8 +88,8 @@ void main() {
           abiertos.add(uri);
           return true;
         },
-        practica: (habilitada) =>
-            Text(habilitada ? 'quiz activo' : 'quiz bloqueado'),
+        practica: (claseVista) =>
+            Text(claseVista ? 'clase vista' : 'clase sin terminar'),
         dudas: conDudas
             ? (cerrar) => TextButton(
                 onPressed: cerrar,
@@ -112,7 +112,7 @@ void main() {
     ubicacion: 'https://ejemplo.pe/separata.pdf',
   );
 
-  testWidgets('la clase se ve dentro de la app y activa el quiz al terminar', (
+  testWidgets('la clase se ve dentro de la app y registra lo visto', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -125,44 +125,19 @@ void main() {
 
     expect(find.text('video AbCdEfGhIjK'), findsOneWidget);
     expect(find.text('Espacio geográfico'), findsOneWidget);
-    expect(find.text('quiz bloqueado'), findsOneWidget);
-    expect(
-      find.text('Clase vista: 0 % · termínala para activar el quiz'),
-      findsOneWidget,
-    );
+    expect(find.text('clase sin terminar'), findsOneWidget);
+    // Sin porcentaje en pantalla: solo el título de la clase.
+    expect(find.textContaining('%'), findsNothing);
 
     reproductor.ver(0, 50);
     await tester.pump();
-    expect(
-      find.text('Clase vista: 50 % · termínala para activar el quiz'),
-      findsOneWidget,
-    );
     expect(progreso.guardados.values.single.tramos.single.$2, 50);
 
     reproductor.ver(50, 90);
     await tester.pump();
 
-    expect(find.text('quiz activo'), findsOneWidget);
-    expect(
-      find.text('Clase vista por completo · quiz activado'),
-      findsOneWidget,
-    );
+    expect(find.text('clase vista'), findsOneWidget);
     expect(progreso.guardados.values.single.completada, isTrue);
-  });
-
-  testWidgets('si se salta una parte ofrece volver ahi', (tester) async {
-    await tester.pumpWidget(pagina(RepositorioRecursoEnMemoria([clase])));
-    await tester.pumpAndSettle();
-
-    reproductor.ver(0, 10);
-    reproductor.ver(80, 85);
-    await tester.pump();
-
-    expect(find.text('Te saltaste una parte desde 0:10'), findsOneWidget);
-    expect(find.text('quiz bloqueado'), findsOneWidget);
-
-    await tester.tap(find.text('Volver ahí'));
-    expect(reproductor.idas, [10]);
   });
 
   testWidgets('continua donde se quedo y respeta la clase ya vista', (
@@ -182,12 +157,12 @@ void main() {
     await tester.pumpWidget(pagina(RepositorioRecursoEnMemoria([clase])));
     await tester.pumpAndSettle();
 
-    expect(find.text('quiz activo'), findsOneWidget);
+    expect(find.text('clase vista'), findsOneWidget);
     // Ya vista: vuelve a empezar desde el inicio si la repasa.
     expect(reproductor.inicio, 0);
   });
 
-  testWidgets('sin video el quiz esta activo y el material se abre fuera', (
+  testWidgets('sin video cuenta como vista y el material se abre fuera', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -204,7 +179,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('quiz activo'), findsOneWidget);
+    expect(find.text('clase vista'), findsOneWidget);
     expect(find.text('Más material'), findsOneWidget);
 
     await tester.tap(find.text('Ejercicios').first);

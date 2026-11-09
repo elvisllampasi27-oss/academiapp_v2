@@ -321,8 +321,11 @@ test('clases de docentes: solo un docente aprobado envía; un corazón por alumn
   // El corazón de otro no se toca.
   await assertFails(deleteDoc(doc(otro(), 'clases_docente/c1/corazones/alumno')));
   await assertSucceeds(corazon(alumno(), 'alumno', -1));
-  const despues = await entorno.withSecurityRulesDisabled(async (ctx) =>
-    (await getDoc(doc(ctx.firestore(), 'clases_docente/c1'))).data().corazones);
+  // withSecurityRulesDisabled no devuelve lo que devuelve la función.
+  let despues;
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    despues = (await getDoc(doc(ctx.firestore(), 'clases_docente/c1'))).data().corazones;
+  });
   assert.equal(despues, 0);
 });
 

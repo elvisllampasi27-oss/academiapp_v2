@@ -143,7 +143,7 @@ class _RegistroPageState extends State<RegistroPage> {
                   SelectorVidrio(
                     hint: 'Carrera a la que postulas',
                     valor: _carrera,
-                    opciones: carrerasUnsch,
+                    opciones: opcionesCarrera,
                     alCambiar: (valor) => setState(() => _carrera = valor),
                   ),
                   const SizedBox(height: 20),
