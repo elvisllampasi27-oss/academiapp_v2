@@ -473,7 +473,7 @@ class _PantallaAviso extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AcademiApp')),
+      appBar: AppBar(title: const Text('Sinchi')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),

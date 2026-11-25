@@ -127,7 +127,7 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Si ${_correoController.text.trim()} está registrado en AcademiApp, '
+          'Si ${_correoController.text.trim()} está registrado en Sinchi, '
           'recibirás un enlace para restablecer tu contraseña. '
           'Revisa también la carpeta de spam.',
           style: TextStyle(

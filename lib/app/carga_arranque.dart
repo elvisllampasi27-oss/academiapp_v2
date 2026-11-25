@@ -34,7 +34,7 @@ class CargaArranque extends StatelessWidget {
               alCompletar: alCompletar,
               avanceCompartido: avance,
               tamano: anchoPuma,
-              etiqueta: 'Preparando AcademiApp',
+              etiqueta: 'Preparando Sinchi',
               mostrarEtiqueta: false,
             ),
           ),
@@ -43,7 +43,7 @@ class CargaArranque extends StatelessWidget {
               offset: const Offset(0, altoPuma / 2 + 30),
               child: const ExcludeSemantics(
                 child: Text(
-                  'Preparando AcademiApp…',
+                  'Preparando Sinchi…',
                   style: TextStyle(
                     color: ColoresApp.apagado,
                     fontSize: 13,

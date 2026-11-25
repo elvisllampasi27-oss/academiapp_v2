@@ -139,7 +139,7 @@ class _ClaseDocentePageState extends State<ClaseDocentePage> {
           const SizedBox(height: 16),
           const Text(
             'Esta clase la comparte un docente invitado y la revisó el '
-            'equipo de AcademiApp. Si ves algo que no corresponde, '
+            'equipo de Sinchi. Si ves algo que no corresponde, '
             'repórtala con la bandera.',
             style: TextStyle(
               color: ColoresApp.tenue,
