@@ -305,7 +305,7 @@ class BarraAutenticacion extends StatelessWidget {
         ),
         const Expanded(
           child: Text(
-            'AcademiApp',
+            'Sinchi',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,

@@ -12,7 +12,7 @@ class AcademiApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AcademiApp',
+      title: 'Sinchi',
       debugShowCheckedModeBanner: false,
       theme: temaApp(),
       home: PuertaSesionPage(dependencias: dependencias),

@@ -48,7 +48,7 @@ class _AppAdminState extends State<AppAdmin> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AcademiApp · Panel',
+      title: 'Sinchi · Panel',
       debugShowCheckedModeBanner: false,
       theme: temaPanel(),
       home: PuertaAdmin(

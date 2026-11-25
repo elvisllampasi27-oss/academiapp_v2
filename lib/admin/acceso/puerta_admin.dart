@@ -145,7 +145,7 @@ class _LoginAdminState extends State<_LoginAdmin> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
-                      'Panel de AcademiApp',
+                      'Panel de Sinchi',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,

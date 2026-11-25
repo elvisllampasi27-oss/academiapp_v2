@@ -81,7 +81,7 @@ void main() {
     expect(usuario.estado, EstadoUsuario.activo);
   });
 
-  test('cierra sesion cuando no existe perfil en AcademiApp', () async {
+  test('cierra sesion cuando no existe perfil en Sinchi', () async {
     final auth = AuthFalso();
 
     final servicio = IniciarSesionEstudianteService(

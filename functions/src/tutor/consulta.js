@@ -43,7 +43,7 @@ function fechaLima(fecha = new Date()) {
 /** Instrucciones del tutor, con el material del tema como contexto. */
 function construirInstrucciones({ curso, tema, contenidos, material }) {
   const lineas = [
-    'Eres el tutor de AcademiApp, una academia preuniversitaria que prepara a',
+    'Eres el tutor de Sinchi, una academia preuniversitaria que prepara a',
     'postulantes a la Universidad Nacional San Cristóbal de Huamanga (UNSCH, Ayacucho, Perú).',
     `El estudiante está en el tema «${tema}» del curso ${curso}.`,
   ];

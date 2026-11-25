@@ -25,9 +25,7 @@ class IniciarSesionEstudianteService {
     if (usuario == null) {
       await servicioAutenticacion.cerrarSesion();
 
-      throw StateError(
-        'El usuario autenticado no tiene un perfil en AcademiApp.',
-      );
+      throw StateError('El usuario autenticado no tiene un perfil en Sinchi.');
     }
 
     if (usuario.estado != EstadoUsuario.activo) {

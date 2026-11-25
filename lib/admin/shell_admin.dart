@@ -401,7 +401,7 @@ class _MenuLateral extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'AcademiApp',
+                      'Sinchi',
                       style: TextStyle(fontWeight: FontWeight.w800),
                     ),
                     Text(

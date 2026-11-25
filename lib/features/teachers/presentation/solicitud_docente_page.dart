@@ -198,7 +198,7 @@ class _SolicitudDocentePageState extends State<SolicitudDocentePage> {
       EstadoSolicitudDocente.aprobada => (
         Icons.verified_outlined,
         ColoresApp.celeste,
-        '¡Ya eres docente en AcademiApp!',
+        '¡Ya eres docente en Sinchi!',
         'Envía tus clases y programa tus en vivos desde aquí. Cada uno '
             'pasa por revisión antes de que lo vean los alumnos.',
       ),
@@ -251,7 +251,7 @@ class _SolicitudDocentePageState extends State<SolicitudDocentePage> {
     ),
     const SizedBox(height: 6),
     const Text(
-      'Comparte tus clases con los alumnos de AcademiApp; no necesitas estar '
+      'Comparte tus clases con los alumnos de Sinchi; no necesitas estar '
       'matriculado. Revisamos cada solicitud: déjanos tu celular y tu canal '
       'de YouTube o una red social donde se vea tu trabajo.',
       style: TextStyle(color: ColoresApp.apagado, height: 1.4),
