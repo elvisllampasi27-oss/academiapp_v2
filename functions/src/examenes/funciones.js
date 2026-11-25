@@ -13,12 +13,11 @@ const {
   nombreCorto,
   ordenarRanking,
   calificarExamen,
+  sigueEnCurso,
 } = require('./reglas');
 
 /** Como en la UNSCH: unos 2 minutos por pregunta. */
 const SEGUNDOS_POR_PREGUNTA = 120;
-/** Margen para el envío automático al acabarse el tiempo. */
-const MARGEN_SEGUNDOS = 120;
 
 const publica = (doc) => {
   const d = doc.data();
@@ -67,10 +66,6 @@ const revisarPreguntaExamen = onCall(async (request) => {
     imagenSolucion: clave.imagenSolucion || null,
   };
 });
-
-/** ¿El intento sigue abierto (con el margen para el envío automático)? */
-const sigueEnCurso = (d, ahora) => d.estado === 'en_curso'
-  && d.venceEn.toMillis() + MARGEN_SEGUNDOS * 1000 > ahora;
 
 /** Firestore: el documento ya existe (create() de dos llamadas a la vez). */
 const yaExiste = (e) => e && (e.code === 6 || e.code === 'already-exists');
@@ -295,6 +290,7 @@ const enviarSimulacro = onCall(async (request) => {
 
   const db = admin.firestore();
   const uid = request.auth.uid;
+  await verificarEstudiante(db, uid);
   const ref = db.collection('simulacros').doc(simulacroId);
   const snap = await ref.get();
   if (!snap.exists || snap.data().usuarioId !== uid) {
@@ -318,7 +314,19 @@ const enviarSimulacro = onCall(async (request) => {
   // envío automático al acabarse el tiempo), solo uno lo corrige.
   const hecho = await db.runTransaction(async (tx) => {
     const datos = (await tx.get(ref)).data();
+    if (datos.estado === 'vencido') return { vencido: true };
     if (datos.estado !== 'en_curso') return { yaEnviado: datos };
+
+    // Se acabó el tiempo (más el margen) y nunca se envió: se cierra sin
+    // nota y no entra al ranking. Así nadie deja el examen abierto, busca
+    // las respuestas y lo envía después.
+    if (!sigueEnCurso(datos, Date.now())) {
+      tx.update(ref, {
+        estado: 'vencido',
+        terminadoEn: FieldValue.serverTimestamp(),
+      });
+      return { vencido: true };
+    }
 
     const resultado = corregir(datos.preguntas, respuestas);
     const usados = Math.round((Date.now() - datos.iniciadoEn.toMillis()) / 1000);
@@ -335,6 +343,13 @@ const enviarSimulacro = onCall(async (request) => {
     });
     return { resultado, tiempoUsadoSegundos };
   });
+
+  if (hecho.vencido) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Se acabó el tiempo de este examen y no llegó tu envío. No cuenta para el ranking.',
+    );
+  }
 
   // Ya estaba enviado: se devuelve lo guardado (la primera corrección).
   if (hecho.yaEnviado) {

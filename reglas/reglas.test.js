@@ -21,8 +21,8 @@ const { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch, 
 
 let entorno;
 
-const alumno = () => entorno.authenticatedContext('alumno').firestore();
-const otro = () => entorno.authenticatedContext('otro').firestore();
+const alumno = () => entorno.authenticatedContext('alumno', { email: 'a@b.pe' }).firestore();
+const otro = () => entorno.authenticatedContext('otro', { email: 'o@b.pe' }).firestore();
 const admin = () => entorno.authenticatedContext('jefe', { admin: true }).firestore();
 const anonimo = () => entorno.unauthenticatedContext().firestore();
 
@@ -68,6 +68,28 @@ test('perfil: crea el suyo como estudiante activo y nada más', async () => {
   await assertFails(setDoc(doc(otro(), 'usuarios/otro'), { ...perfil, rol: 'admin' }));
   await assertFails(setDoc(doc(otro(), 'usuarios/otro'), { ...perfil, plan: 'premium' }));
   await assertFails(setDoc(doc(otro(), 'usuarios/alumno'), perfil));
+});
+
+test('perfil: el correo es el de su cuenta y el nombre tiene un largo razonable', async () => {
+  // Con otro correo, no (así nadie se hace pasar por otro en el panel).
+  await assertFails(setDoc(doc(otro(), 'usuarios/otro'), { ...perfil, correo: 'a@b.pe' }));
+  // Mayúsculas distintas sí: es el mismo correo.
+  await assertSucceeds(setDoc(doc(otro(), 'usuarios/otro'), { ...perfil, correo: 'O@B.pe' }));
+  await entorno.clearFirestore();
+  await assertFails(setDoc(doc(otro(), 'usuarios/otro'), { ...perfil, correo: 'o@b.pe', nombre: '' }));
+  await assertFails(setDoc(doc(otro(), 'usuarios/otro'), { ...perfil, correo: 'o@b.pe', nombre: 'x'.repeat(81) }));
+  await assertFails(setDoc(doc(otro(), 'usuarios/otro'), { ...perfil, correo: 'o@b.pe', carreraPostulada: 'x'.repeat(121) }));
+  await assertSucceeds(setDoc(doc(otro(), 'usuarios/otro'), { ...perfil, correo: 'o@b.pe', carreraPostulada: null }));
+});
+
+test('perfil: al cambiar el nombre también se revisa el largo', async () => {
+  await assertFails(updateDoc(doc(alumno(), 'usuarios/alumno'), { nombre: 'x'.repeat(81) }));
+  await assertFails(updateDoc(doc(alumno(), 'usuarios/alumno'), { nombre: 42 }));
+  // Un perfil viejo con un nombre largo igual registra su actividad.
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), 'usuarios/alumno'), { nombre: 'x'.repeat(200) });
+  });
+  await assertSucceeds(updateDoc(doc(alumno(), 'usuarios/alumno'), { ultimaActividad: serverTimestamp() }));
 });
 
 test('perfil: cambia su nombre, pero no su plan, rol ni estado', async () => {
@@ -177,10 +199,51 @@ test('pagos: el estudiante registra el suyo como pendiente', async () => {
   await assertFails(getDoc(doc(otro(), 'pagos/yape__0045812')));
 });
 
-test('pagos: una beca es de monto 0 y una por cupón', async () => {
+const cupones = {
+  'BECA-UNSCH': { tipo: 'premiumGratis', valor: 0, usos: 0, usosMaximos: 10, vence: null, activo: true },
+  DESC50: { tipo: 'descuento', valor: 50, usos: 0, usosMaximos: null, vence: null, activo: true },
+  APAGADA: { tipo: 'premiumGratis', valor: 0, usos: 0, usosMaximos: null, vence: null, activo: false },
+  VENCIDA: { tipo: 'premiumGratis', valor: 0, usos: 0, usosMaximos: null, vence: new Date('2020-01-01'), activo: true },
+  AGOTADA: { tipo: 'premiumGratis', valor: 0, usos: 3, usosMaximos: 3, vence: null, activo: true },
+};
+
+async function sembrarCupones() {
+  await entorno.withSecurityRulesDisabled(async (ctx) => {
+    for (const [codigo, datos] of Object.entries(cupones)) {
+      await setDoc(doc(ctx.firestore(), `cupones/${codigo}`), datos);
+    }
+  });
+}
+
+test('pagos: una beca es de monto 0, una por cupón y solo con un cupón de Premium gratis', async () => {
+  await sembrarCupones();
   const beca = { usuarioId: 'alumno', nombre: 'Ana', correo: 'a@b.pe', monto: 0, metodo: 'beca', operacion: '', cupon: 'BECA-UNSCH', estado: 'pendiente', creadoEn: serverTimestamp() };
-  await assertSucceeds(setDoc(doc(alumno(), 'pagos/beca__alumno__BECA-UNSCH'), beca));
-  await assertFails(setDoc(doc(alumno(), 'pagos/beca__alumno__OTRA'), { ...beca, cupon: 'OTRA', monto: 5 }));
+  const pedir = (cupon, extra = {}) => setDoc(
+    doc(alumno(), `pagos/beca__alumno__${cupon}`),
+    { ...beca, cupon, ...extra },
+  );
+
+  await assertSucceeds(pedir('BECA-UNSCH'));
+  await assertFails(pedir('DESC50', { monto: 5 }));
+  // Un cupón que no existe, uno de descuento, apagado, vencido o agotado: no.
+  await assertFails(pedir('INVENTADA'));
+  await assertFails(pedir('DESC50'));
+  await assertFails(pedir('APAGADA'));
+  await assertFails(pedir('VENCIDA'));
+  await assertFails(pedir('AGOTADA'));
+});
+
+test('pagos: con Yape, el cupón (si viene) tiene que existir y estar vigente', async () => {
+  await sembrarCupones();
+  const conCupon = (operacion, cupon) => setDoc(
+    doc(alumno(), `pagos/yape__${operacion}`),
+    { ...pagoYape, operacion, monto: 15, cupon, creadoEn: serverTimestamp() },
+  );
+
+  await assertSucceeds(conCupon('3000001', 'DESC50'));
+  await assertFails(conCupon('3000002', 'INVENTADO'));
+  await assertFails(conCupon('3000003', 'VENCIDA'));
+  await assertFails(conCupon('3000004', 'cupones/../DESC50'));
 });
 
 test('premium, cupones y configuración: solo el administrador los cambia', async () => {

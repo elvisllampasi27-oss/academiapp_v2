@@ -9,6 +9,16 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.admin == true;
     }
 
+    // Nombre del perfil: sale en el ranking y en el panel (1 a 80 letras).
+    function nombreValido(nombre) {
+      return nombre is string && nombre.size() >= 1 && nombre.size() <= 80;
+    }
+
+    // Carrera a la que postula (de la lista de la app) o ninguna.
+    function carreraValida(carrera) {
+      return carrera == null || (carrera is string && carrera.size() <= 120);
+    }
+
     // PERFIL DEL USUARIO
     match /usuarios/{userId} {
 
@@ -16,23 +26,37 @@ service cloud.firestore {
                   || esAdmin();
 
       // Solo los datos del perfil: el plan, el rol y el estado los cambia
-      // el administrador (o el servidor), nunca el propio estudiante.
+      // el administrador (o el servidor), nunca el propio estudiante. El
+      // correo es el de su cuenta: nadie se registra con el de otro.
       allow create: if request.auth != null
                     && request.auth.uid == userId
                     && request.resource.data.keys().hasOnly([
                          'correo', 'nombre', 'rol', 'estado',
                          'fechaCreacion', 'carreraPostulada'])
                     && request.resource.data.rol == 'estudiante'
-                    && request.resource.data.estado == 'activo';
+                    && request.resource.data.estado == 'activo'
+                    && request.resource.data.correo is string
+                    && request.resource.data.correo.lower()
+                         == request.auth.token.email.lower()
+                    && nombreValido(request.resource.data.nombre)
+                    && carreraValida(request.resource.data.get('carreraPostulada', null));
 
       // "ultimaActividad" solo con la hora del servidor (la usa el panel).
+      // El nombre y la carrera se revisan solo si cambian: un perfil viejo
+      // con un nombre largo igual puede registrar su actividad.
       allow update: if request.auth != null
                     && request.auth.uid == userId
                     && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['nombre', 'carreraPostulada', 'ultimaActividad'])
                     && (!request.resource.data.diff(resource.data).affectedKeys()
                           .hasAny(['ultimaActividad'])
-                        || request.resource.data.ultimaActividad == request.time);
+                        || request.resource.data.ultimaActividad == request.time)
+                    && (!request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['nombre'])
+                        || nombreValido(request.resource.data.nombre))
+                    && (!request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['carreraPostulada'])
+                        || carreraValida(request.resource.data.get('carreraPostulada', null)));
 
       // El administrador solo cambia el vencimiento de Premium.
       allow update: if esAdmin()
@@ -52,6 +76,24 @@ service cloud.firestore {
 
     // CUPONES Y BECAS: el estudiante consulta uno por su código (no puede
     // listarlos); solo el administrador los crea y cambia.
+    function rutaCupon(codigo) {
+      return /databases/$(database)/documents/cupones/$(codigo);
+    }
+
+    // Un cupón que existe, está activo, no venció y le quedan usos. Los
+    // usos se cuentan al aprobar; el panel lo vuelve a revisar entonces.
+    function cuponVigente(codigo) {
+      return codigo is string
+          && codigo.matches('^[A-Z0-9-]+$')
+          && exists(rutaCupon(codigo))
+          && get(rutaCupon(codigo)).data.get('activo', true) != false
+          && (get(rutaCupon(codigo)).data.get('vence', null) == null
+              || get(rutaCupon(codigo)).data.vence > request.time)
+          && (get(rutaCupon(codigo)).data.get('usosMaximos', null) == null
+              || get(rutaCupon(codigo)).data.get('usos', 0)
+                   < get(rutaCupon(codigo)).data.usosMaximos);
+    }
+
     match /cupones/{codigo} {
 
       allow get: if request.auth != null;
@@ -293,6 +335,8 @@ service cloud.firestore {
                         && resource.data.docenteUid == request.auth.uid);
     }
 
+    // Con Yape o Plin el cupón es opcional; si viene, tiene que existir y
+    // estar vigente. Una beca solo vale con un cupón de Premium gratis.
     match /pagos/{pagoId} {
 
       allow read: if (request.auth != null
@@ -314,10 +358,14 @@ service cloud.firestore {
                         (request.resource.data.metodo in ['yape', 'plin']
                           && request.resource.data.operacion.matches('[0-9]{6,20}')
                           && pagoId == request.resource.data.metodo + '__'
-                               + request.resource.data.operacion)
+                               + request.resource.data.operacion
+                          && (!('cupon' in request.resource.data)
+                              || cuponVigente(request.resource.data.cupon)))
                         || (request.resource.data.metodo == 'beca'
                           && request.resource.data.monto == 0
-                          && request.resource.data.cupon is string
+                          && cuponVigente(request.resource.data.cupon)
+                          && get(rutaCupon(request.resource.data.cupon)).data.tipo
+                               == 'premiumGratis'
                           && pagoId == 'beca__' + request.auth.uid + '__'
                                + request.resource.data.cupon)
                       ));

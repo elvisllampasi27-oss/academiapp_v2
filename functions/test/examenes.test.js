@@ -84,3 +84,18 @@ test('califica, cuenta por seccion y trata las no respondidas como incorrectas',
   assert.strictEqual(r.detalle[1].opcionElegidaId, null);
   assert.strictEqual(r.detalle[0].solucion, 'Porque sí.');
 });
+
+test('el intento vale hasta que vence mas el margen del envio automatico', () => {
+  const { sigueEnCurso, MARGEN_ENVIO_MS } = require('../src/examenes/reglas');
+  const vence = Date.parse('2026-11-28T15:00:00Z');
+  const intento = { estado: 'en_curso', venceEn: { toMillis: () => vence } };
+
+  assert.strictEqual(sigueEnCurso(intento, vence - 60 * 1000), true);
+  assert.strictEqual(sigueEnCurso(intento, vence + MARGEN_ENVIO_MS - 1), true);
+  // Pasado el margen ya no se recibe, aunque nunca se haya enviado.
+  assert.strictEqual(sigueEnCurso(intento, vence + MARGEN_ENVIO_MS), false);
+  assert.strictEqual(sigueEnCurso(intento, vence + 3 * 24 * 60 * 60 * 1000), false);
+  // Uno ya cerrado nunca sigue en curso.
+  assert.strictEqual(sigueEnCurso({ ...intento, estado: 'completado' }, vence - 1000), false);
+  assert.strictEqual(sigueEnCurso({ ...intento, estado: 'vencido' }, vence - 1000), false);
+});

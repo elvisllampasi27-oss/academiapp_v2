@@ -57,3 +57,12 @@ test('sin habilidades definidas usa la habilidad general del tema', () => {
     ['suma-matrices'],
   );
 });
+
+test('las escrituras se parten en tandas y el ultimo (el intento) va al final', () => {
+  const { enTandas } = require('../src/assessment/calificar');
+  const lista = Array.from({ length: 1001 }, (_, i) => i);
+  const tandas = enTandas(lista, 450);
+  assert.deepStrictEqual(tandas.map((t) => t.length), [450, 450, 101]);
+  assert.strictEqual(tandas.at(-1).at(-1), 1000);
+  assert.deepStrictEqual(enTandas([], 450), []);
+});

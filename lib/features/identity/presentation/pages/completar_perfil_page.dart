@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/usuario_autenticado.dart';
 import '../../domain/services/completar_perfil_service.dart';
 import '../../domain/values/carreras_unsch.dart';
+import '../../domain/values/validacion_credenciales.dart';
 import '../messages/mensajes_autenticacion.dart';
 import '../widgets/estilo_autenticacion.dart';
 
@@ -38,8 +39,9 @@ class _CompletarPerfilPageState extends State<CompletarPerfilPage> {
   }
 
   Future<void> _guardar() async {
-    if (_nombreController.text.trim().isEmpty) {
-      setState(() => _error = 'Ingresa tu nombre completo.');
+    final problema = ValidacionCredenciales.errorNombre(_nombreController.text);
+    if (problema != null) {
+      setState(() => _error = problema);
       return;
     }
 

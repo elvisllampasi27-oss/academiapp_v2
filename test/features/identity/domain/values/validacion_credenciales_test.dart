@@ -16,6 +16,17 @@ void main() {
     expect(ValidacionCredenciales.esContrasenaValida('123456'), isTrue);
   });
 
+  test('el nombre no puede estar vacío ni pasar de 80 letras', () {
+    expect(ValidacionCredenciales.errorNombre('  '), isNotNull);
+    expect(ValidacionCredenciales.errorNombre(' Ana Quispe '), isNull);
+    expect(ValidacionCredenciales.errorNombre('a' * 80), isNull);
+    expect(ValidacionCredenciales.errorNombre('a' * 81), contains('80'));
+  });
+
+  test('las carreras caben en el límite de las reglas (120 letras)', () {
+    expect(opcionesCarrera.every((c) => c.length <= 120), isTrue);
+  });
+
   test('la lista de carreras no tiene duplicados', () {
     expect(carrerasUnsch.toSet().length, carrerasUnsch.length);
   });

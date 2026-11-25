@@ -67,4 +67,11 @@ function validarSolicitud(data) {
   return null;
 }
 
-module.exports = { calificar, validarSolicitud, habilidadesDePregunta };
+/** Parte [lista] en grupos de [tamano] (el último puede ser más chico). */
+function enTandas(lista, tamano) {
+  const tandas = [];
+  for (let i = 0; i < lista.length; i += tamano) tandas.push(lista.slice(i, i + tamano));
+  return tandas;
+}
+
+module.exports = { calificar, validarSolicitud, habilidadesDePregunta, enTandas };

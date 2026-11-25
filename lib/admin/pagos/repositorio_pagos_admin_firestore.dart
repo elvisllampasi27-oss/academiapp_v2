@@ -58,6 +58,20 @@ class RepositorioPagosAdminFirestore
         throw StateError('Este pago ya fue revisado. Actualiza la lista.');
       }
 
+      // El cupón se revisa aquí, dentro de la transacción: así dos becas
+      // pendientes no pueden pasar el límite de usos.
+      Cupon? cupon;
+      if (pago.cupon case final codigo?) {
+        final d = await tx.get(db.collection('cupones').doc(codigo));
+        cupon = d.exists ? cuponDesdeMapa(d.id, d.data()!) : null;
+      }
+      if (problemaDeCupon(pago, cupon) case final problema?) {
+        throw StateError(
+          '$problema Recházalo, o si corresponde, dale Premium a mano '
+          'desde su ficha.',
+        );
+      }
+
       final anterior = (usuario.data()?['premiumHasta'] as Timestamp?)
           ?.toDate();
       final nuevo = premiumNuevoHasta(anterior, DateTime.now(), dias);
