@@ -41,7 +41,9 @@ class _RegistroPageState extends State<RegistroPage> {
     final correo = _correoController.text.trim();
     final contrasena = _contrasenaController.text;
 
-    if (nombre.isEmpty) return 'Ingresa tu nombre completo.';
+    if (ValidacionCredenciales.errorNombre(nombre) case final error?) {
+      return error;
+    }
     if (!ValidacionCredenciales.esCorreoValido(correo)) {
       return 'Ingresa un correo válido.';
     }

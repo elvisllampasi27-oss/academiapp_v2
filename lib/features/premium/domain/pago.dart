@@ -1,3 +1,5 @@
+import 'cupon.dart';
+
 enum EstadoPago { pendiente, aprobado, rechazado }
 
 enum MetodoPago {
@@ -71,3 +73,25 @@ String idPago({
 }) => metodo == MetodoPago.beca
     ? 'beca__${uid}__$cupon'
     : '${metodo.name}__${normalizarOperacion(operacion)}';
+
+/// Por qué no se puede aprobar [pago] con su cupón, o null si se puede.
+/// [cupon] es el cupón tal como está ahora (null si ya no existe). La
+/// vigencia se mide en la fecha en que el estudiante envió el pago.
+String? problemaDeCupon(Pago pago, Cupon? cupon) {
+  final codigo = pago.cupon;
+  if (codigo == null) {
+    return pago.metodo == MetodoPago.beca ? 'Esta beca no tiene cupón.' : null;
+  }
+  if (cupon == null) return 'El cupón $codigo no existe.';
+  if (pago.metodo == MetodoPago.beca && cupon.tipo != TipoCupon.premiumGratis) {
+    return 'El cupón $codigo no es de Premium gratis: no sirve como beca.';
+  }
+  if (!cupon.activo) return 'El cupón $codigo está desactivado.';
+  if (cupon.vence case final vence? when vence.isBefore(pago.creadoEn)) {
+    return 'El cupón $codigo ya había vencido cuando se envió el pago.';
+  }
+  if (cupon.usosMaximos case final maximo? when cupon.usos >= maximo) {
+    return 'El cupón $codigo ya se usó las $maximo veces permitidas.';
+  }
+  return null;
+}

@@ -82,7 +82,8 @@ class RepositorioDocentesAdminFirestore implements RepositorioDocentesAdmin {
       ..set(db.collection('docentes').doc(s.uid), {
         'uid': s.uid,
         'nombre': s.nombre,
-        'correo': s.correo,
+        // Sin el correo: docentes/ lo lee cualquier estudiante con sesión.
+        // El panel lo toma de la solicitud.
         'cursos': s.cursos,
         'enlaces': s.enlaces,
         'activo': true,

@@ -69,6 +69,109 @@ class RepositorioFalso implements RepositorioPremium {
 }
 
 void main() {
+  group('cupón al aprobar un pago', () {
+    Pago pago({MetodoPago metodo = MetodoPago.beca, String? cupon = 'UNSCH'}) {
+      return Pago(
+        id: 'p1',
+        usuarioId: 'u1',
+        nombre: 'Ana',
+        correo: 'a@b.pe',
+        monto: 0,
+        metodo: metodo,
+        operacion: '',
+        cupon: cupon,
+        estado: EstadoPago.pendiente,
+        creadoEn: DateTime(2026, 11, 20),
+      );
+    }
+
+    const beca = Cupon(
+      codigo: 'UNSCH',
+      tipo: TipoCupon.premiumGratis,
+      usosMaximos: 3,
+      usos: 2,
+    );
+
+    test('una beca con un cupón de Premium gratis vigente se aprueba', () {
+      expect(problemaDeCupon(pago(), beca), isNull);
+      expect(
+        problemaDeCupon(pago(metodo: MetodoPago.yape, cupon: null), null),
+        isNull,
+      );
+    });
+
+    test('no se aprueba si el cupón no existe o no es de Premium gratis', () {
+      expect(problemaDeCupon(pago(), null), contains('no existe'));
+      expect(
+        problemaDeCupon(
+          pago(),
+          const Cupon(codigo: 'UNSCH', tipo: TipoCupon.descuento, valor: 50),
+        ),
+        contains('no es de Premium gratis'),
+      );
+      expect(problemaDeCupon(pago(cupon: null), null), isNotNull);
+    });
+
+    test('no se aprueba si está desactivado, venció o se agotó', () {
+      expect(
+        problemaDeCupon(
+          pago(),
+          const Cupon(
+            codigo: 'UNSCH',
+            tipo: TipoCupon.premiumGratis,
+            activo: false,
+          ),
+        ),
+        contains('desactivado'),
+      );
+      expect(
+        problemaDeCupon(
+          pago(),
+          Cupon(
+            codigo: 'UNSCH',
+            tipo: TipoCupon.premiumGratis,
+            vence: DateTime(2026, 11, 1),
+          ),
+        ),
+        contains('vencido'),
+      );
+      // Venció después de que lo envió: igual vale.
+      expect(
+        problemaDeCupon(
+          pago(),
+          Cupon(
+            codigo: 'UNSCH',
+            tipo: TipoCupon.premiumGratis,
+            vence: DateTime(2026, 11, 22),
+          ),
+        ),
+        isNull,
+      );
+      expect(
+        problemaDeCupon(
+          pago(),
+          const Cupon(
+            codigo: 'UNSCH',
+            tipo: TipoCupon.premiumGratis,
+            usosMaximos: 3,
+            usos: 3,
+          ),
+        ),
+        contains('3 veces'),
+      );
+    });
+
+    test('con Yape, un cupón de descuento sirve', () {
+      expect(
+        problemaDeCupon(
+          pago(metodo: MetodoPago.yape, cupon: 'BECA50'),
+          const Cupon(codigo: 'BECA50', tipo: TipoCupon.descuento, valor: 50),
+        ),
+        isNull,
+      );
+    });
+  });
+
   group('reglas de Premium', () {
     test('cupones: precio con descuento, precio fijo y beca', () {
       const descuento = Cupon(

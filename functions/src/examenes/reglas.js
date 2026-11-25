@@ -47,6 +47,24 @@ function cierreExamenMs(ahoraMs) {
   return (hoy + faltan) * DIA_MS + DESFASE_LIMA_MS;
 }
 
+/**
+ * Margen para el envío automático al acabarse el tiempo: cubre la mala
+ * señal y un celular con el reloj algo atrasado (la app cuenta el tiempo
+ * con su propio reloj).
+ */
+const MARGEN_ENVIO_MS = 5 * 60 * 1000;
+
+/**
+ * ¿El intento sigue abierto? Vale hasta [venceEn] más el margen del envío
+ * automático. Pasado eso ya no se recibe: nadie puede quedarse con el
+ * examen abierto y enviarlo días después.
+ * @param {{estado: string, venceEn: {toMillis: () => number}}} intento
+ */
+function sigueEnCurso(intento, ahoraMs) {
+  return intento.estado === 'en_curso'
+    && intento.venceEn.toMillis() + MARGEN_ENVIO_MS > ahoraMs;
+}
+
 /** Id del examen semanal: `{version}__s03`. */
 function idExamenSemanal(versionId, semana) {
   return `${versionId}__s${String(semana).padStart(2, '0')}`;
@@ -123,6 +141,8 @@ function calificarExamen(preguntas, claves, respuestas) {
 }
 
 module.exports = {
+  MARGEN_ENVIO_MS,
+  sigueEnCurso,
   semanaAcademica,
   semanaDeExamen,
   cierreExamenMs,

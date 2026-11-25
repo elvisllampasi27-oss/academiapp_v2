@@ -4,6 +4,9 @@
 class ValidacionCredenciales {
   static const int longitudMinimaContrasena = 6;
 
+  /// Mismo límite que firestore.rules: el nombre sale en el ranking.
+  static const int longitudMaximaNombre = 80;
+
   static final RegExp _patronCorreo = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   const ValidacionCredenciales._();
@@ -13,4 +16,14 @@ class ValidacionCredenciales {
 
   static bool esContrasenaValida(String contrasena) =>
       contrasena.length >= longitudMinimaContrasena;
+
+  /// Mensaje de error del nombre completo, o null si está bien.
+  static String? errorNombre(String nombre) {
+    final limpio = nombre.trim();
+    if (limpio.isEmpty) return 'Ingresa tu nombre completo.';
+    if (limpio.length > longitudMaximaNombre) {
+      return 'Tu nombre es muy largo (máximo $longitudMaximaNombre letras).';
+    }
+    return null;
+  }
 }

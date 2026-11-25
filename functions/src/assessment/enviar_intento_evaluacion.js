@@ -3,7 +3,12 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const { FieldValue } = require('firebase-admin/firestore');
-const { calificar, validarSolicitud, habilidadesDePregunta } = require('./calificar');
+const {
+  calificar, validarSolicitud, habilidadesDePregunta, enTandas,
+} = require('./calificar');
+
+/** Menos que las 500 escrituras que acepta un lote de Firestore. */
+const ESCRITURAS_POR_LOTE = 450;
 
 /**
  * Recibe las respuestas del estudiante, corrige en el servidor (las claves
@@ -119,9 +124,12 @@ const enviarIntentoEvaluacion = onCall(async (request) => {
   const porPregunta = new Map(preguntas.map((p) => [p.id, p]));
 
   const ahora = FieldValue.serverTimestamp();
-  const lote = db.batch();
-
-  lote.set(intentoRef, {
+  // Respuestas y evidencias primero; el intento al final. Van en tandas
+  // (un lote de Firestore acepta 500 escrituras) y con ids fijos: si una
+  // tanda falla, el reintento vuelve a escribir lo mismo, y como el intento
+  // todavía no existe, se corrige de nuevo y no se pierde nada.
+  const escrituras = [];
+  const intento = {
     usuarioId: uid,
     matriculaId: matricula.id,
     evaluacionId,
@@ -134,11 +142,11 @@ const enviarIntentoEvaluacion = onCall(async (request) => {
     total: resultado.total,
     puntaje: resultado.puntaje,
     fechaFin: ahora,
-  });
+  };
 
   for (const d of resultado.detalle) {
     const tiempo = Number(tiemposMs[d.preguntaId]);
-    lote.set(db.collection('respuestas').doc(`${intentoRef.id}__${d.preguntaId}`), {
+    escrituras.push([db.collection('respuestas').doc(`${intentoRef.id}__${d.preguntaId}`), {
       intentoId: intentoRef.id,
       usuarioId: uid,
       matriculaId: matricula.id,
@@ -150,13 +158,13 @@ const enviarIntentoEvaluacion = onCall(async (request) => {
       dificultad: d.dificultad || 'basica',
       tiempoRespuestaMs: Number.isFinite(tiempo) && tiempo >= 0 ? Math.round(tiempo) : null,
       fecha: ahora,
-    });
+    }]);
 
     // Evidencia: una por habilidad que mide la pregunta. Es la entrada del
     // modelo del estudiante (BKT). Solo el servidor puede escribirla.
     const respuestaId = `${intentoRef.id}__${d.preguntaId}`;
     for (const habilidadId of habilidadesDePregunta(porPregunta.get(d.preguntaId), evaluacion.temaId)) {
-      lote.set(db.collection('evidencias').doc(`${respuestaId}-${habilidadId}`), {
+      escrituras.push([db.collection('evidencias').doc(`${respuestaId}-${habilidadId}`), {
         usuarioId: uid,
         matriculaId: matricula.id,
         respuestaId,
@@ -168,13 +176,18 @@ const enviarIntentoEvaluacion = onCall(async (request) => {
         numeroIntento,
         ayudaUtilizada: false,
         fecha: ahora,
-      });
+      }]);
     }
   }
+  escrituras.push([intentoRef, intento]);
 
   // Si dos envíos iguales llegan a la vez, los dos escriben los mismos
   // documentos (ids fijos): no se duplica nada.
-  await lote.commit();
+  for (const tanda of enTandas(escrituras, ESCRITURAS_POR_LOTE)) {
+    const lote = db.batch();
+    for (const [ref, datos] of tanda) lote.set(ref, datos);
+    await lote.commit();
+  }
 
   return respuesta(intentoRef.id, resultado);
 });
