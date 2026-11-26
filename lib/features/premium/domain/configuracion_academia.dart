@@ -17,6 +17,11 @@ class ConfiguracionAcademia {
   final int tutorPremium;
   final bool simulacroSoloPremium;
 
+  /// Llave pública de Culqi (pk_…). Con ella, la web cobra con Yape o
+  /// tarjeta (hosting/premium/); vacía, la web usa el pago manual. La llave
+  /// secreta nunca va aquí: es un secreto de las funciones.
+  final String culqiLlavePublica;
+
   const ConfiguracionAcademia({
     this.precio = 29,
     this.diasPremium = 90,
@@ -27,7 +32,10 @@ class ConfiguracionAcademia {
     this.tutorGratis = 3,
     this.tutorPremium = 20,
     this.simulacroSoloPremium = true,
+    this.culqiLlavePublica = '',
   });
+
+  bool get pagoEnLinea => culqiLlavePublica.isNotEmpty;
 
   factory ConfiguracionAcademia.desdeMapa(Map<String, dynamic>? m) {
     const d = ConfiguracionAcademia();
@@ -49,6 +57,7 @@ class ConfiguracionAcademia {
         'simulacroSoloPremium',
         d.simulacroSoloPremium,
       ),
+      culqiLlavePublica: texto('culqiLlavePublica'),
     );
   }
 
@@ -62,8 +71,13 @@ class ConfiguracionAcademia {
     'tutorGratis': tutorGratis,
     'tutorPremium': tutorPremium,
     'simulacroSoloPremium': simulacroSoloPremium,
+    'culqiLlavePublica': culqiLlavePublica,
   };
 }
+
+/// La pública de Culqi: pk_live_… o pk_test_… (nunca la secreta, sk_…).
+bool llavePublicaCulqiValida(String llave) =>
+    RegExp(r'^pk_(live|test)_[A-Za-z0-9]{8,}$').hasMatch(llave.trim());
 
 bool esPremium(DateTime? premiumHasta, DateTime ahora) =>
     premiumHasta != null && premiumHasta.isAfter(ahora);

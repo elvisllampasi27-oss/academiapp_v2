@@ -12,3 +12,8 @@ bool esEnlaceImagen(String url) {
 /// (hosting/privacidad/index.html). Play Store pide este enlace.
 const enlacePoliticaPrivacidad =
     'https://academiapp-v2-7b9ce.web.app/privacidad/';
+
+/// Pago de Premium en la web con Culqi (hosting/premium/). Solo se abre
+/// desde la versión web: en Android, Google Play no permite enlazar a otro
+/// medio de pago.
+const enlacePagoWeb = 'https://academiapp-v2-7b9ce.web.app/premium/';

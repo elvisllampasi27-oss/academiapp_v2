@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/enlaces.dart';
 import '../../../core/presentation/colores_app.dart';
 import '../../../core/presentation/formato_fecha.dart';
 import '../domain/compra_play.dart';
@@ -268,6 +269,8 @@ class _PremiumPageState extends State<PremiumPage> {
               const SizedBox(height: 16),
               if (_enPlay)
                 _compraPlay(c, premium)
+              else if (c.pagoEnLinea)
+                _compraWeb(c, premium)
               else if (pendiente != null)
                 _Pendiente(
                   pago: pendiente,
@@ -361,6 +364,50 @@ class _PremiumPageState extends State<PremiumPage> {
                           'Si eliminas tu cuenta, Premium no se devuelve.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: ColoresApp.apagado, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Web con Culqi: la página /premium/ cobra con Yape o tarjeta y activa
+  /// Premium al instante (misma cuenta, misma sesión).
+  Widget _compraWeb(ConfiguracionAcademia c, bool premium) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              premium ? 'Extender Premium' : 'Hazte Premium',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Pago único de S/ ${c.precio} por ${c.diasPremium} días con '
+              'Yape o tarjeta. No se renueva solo. ¿Tienes un cupón o una '
+              'beca? Lo pones al pagar.',
+              style: const TextStyle(color: ColoresApp.apagado),
+            ),
+            const SizedBox(height: 14),
+            FilledButton(
+              onPressed: () => widget.abrirEnlace(Uri.parse(enlacePagoWeb)),
+              child: const Text('Pagar con Yape o tarjeta'),
+            ),
+            TextButton(
+              onPressed: _recargar,
+              child: const Text('Ya pagué: actualizar'),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: Text(
+                'Una vez activado no hay reembolso, tampoco si eliminas tu '
+                'cuenta.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: ColoresApp.apagado, fontSize: 12),
               ),
             ),
           ],
