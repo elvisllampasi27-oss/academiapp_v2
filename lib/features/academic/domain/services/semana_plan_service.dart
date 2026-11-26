@@ -4,6 +4,33 @@ import '../entities/semana_plan.dart';
 
 DateTime _soloFecha(DateTime f) => DateTime(f.year, f.month, f.day);
 
+/// Hoy y los [dias] - 1 días siguientes del [calendario], cada uno solo
+/// con sus temas publicados.
+List<DiaAcademico> proximosDiasDelCalendario({
+  required List<DiaAcademico> calendario,
+  required DateTime hoy,
+  required Set<String> publicados,
+  int dias = 7,
+}) {
+  final desde = _soloFecha(hoy);
+  final hasta = DateTime(desde.year, desde.month, desde.day + dias);
+  return [
+    for (final d in calendario)
+      if (d.fecha case final fecha?
+          when !_soloFecha(fecha).isBefore(desde) &&
+              _soloFecha(fecha).isBefore(hasta))
+        DiaAcademico(
+          numero: d.numero,
+          planId: d.planId,
+          fecha: fecha,
+          actividades: [
+            for (final a in d.actividades)
+              if (publicados.contains(a.temaId)) a,
+          ],
+        ),
+  ];
+}
+
 /// La semana de [hoy] en el [calendario] del plan, con sus temas
 /// publicados. null si su plan todavía no empieza.
 SemanaPlan? semanaDelCalendario({
