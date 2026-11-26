@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:academiapp_v2/features/premium/domain/compra_play.dart';
 import 'package:academiapp_v2/features/premium/domain/configuracion_academia.dart';
 import 'package:academiapp_v2/features/premium/domain/cupon.dart';
 import 'package:academiapp_v2/features/premium/domain/pago.dart';
@@ -7,6 +8,8 @@ import 'package:academiapp_v2/features/premium/domain/repositorio_premium.dart';
 import 'package:academiapp_v2/features/premium/presentation/premium_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'tienda_falsa.dart';
 
 final hoy = DateTime(2026, 11, 1, 10);
 
@@ -333,8 +336,7 @@ void main() {
     Future<void> abrir(
       WidgetTester tester,
       RepositorioFalso repositorio, {
-      Future<void> Function()? onComprar,
-      String? precio,
+      ServicioCompraPlay? compra,
     }) async {
       tester.view.physicalSize = const Size(800, 1800);
       tester.view.devicePixelRatio = 1;
@@ -349,19 +351,30 @@ void main() {
             abrirEnlace: (_) async => true,
             ahora: () => hoy,
             canal: CanalCompra.googlePlay,
-            onComprarPlay: onComprar,
-            precioPlay: precio,
+            compraPlay: compra,
           ),
         ),
       );
       await tester.pumpAndSettle();
     }
 
+    ServicioCompraPlay servicio(
+      TiendaFalsa tienda,
+      RepositorioFalso repositorio, {
+      bool activa = true,
+    }) => ServicioCompraPlay(
+      tienda: tienda,
+      verificar: (_, _) async {
+        if (activa) repositorio.premiumHasta = hoy.add(const Duration(days: 90));
+        return (activada: activa, consumida: true);
+      },
+    );
+
     FilledButton boton(WidgetTester tester) => tester.widget<FilledButton>(
       find.byWidgetPredicate((w) => w is FilledButton),
     );
 
-    testWidgets('no muestra Yape, cupones ni pagos; compra aún apagada', (
+    testWidgets('no muestra Yape, cupones ni pagos; sin tienda, apagado', (
       tester,
     ) async {
       final repositorio = RepositorioFalso();
@@ -387,32 +400,62 @@ void main() {
       expect(find.text('La compra estará disponible pronto.'), findsOneWidget);
     });
 
-    testWidgets('con la compra lista, el botón la abre', (tester) async {
-      var compras = 0;
-      await abrir(
-        tester,
-        RepositorioFalso(),
-        onComprar: () async => compras++,
-        precio: 'S/ 35.00',
-      );
-
-      expect(find.text('Premium: S/ 35.00 por 90 días'), findsOneWidget);
-      await tester.tap(find.text('Obtener Premium · S/ 35.00'));
-      await tester.pumpAndSettle();
-      expect(compras, 1);
-      expect(find.textContaining('política de Google Play'), findsOneWidget);
+    testWidgets('el producto aún no existe en Google Play: apagado', (
+      tester,
+    ) async {
+      final repositorio = RepositorioFalso();
+      final tienda = TiendaFalsa()..disponible = null;
+      await abrir(tester, repositorio, compra: servicio(tienda, repositorio));
+      expect(boton(tester).onPressed, isNull);
+      expect(find.text('La compra estará disponible pronto.'), findsOneWidget);
     });
 
-    testWidgets('si la compra falla, avisa', (tester) async {
-      await abrir(
-        tester,
-        RepositorioFalso(),
-        onComprar: () async => throw StateError('cancelada'),
-      );
-      await tester.tap(find.text('Obtener Premium'));
+    testWidgets('compra con el precio de Google Play y queda Premium', (
+      tester,
+    ) async {
+      final repositorio = RepositorioFalso();
+      final tienda = TiendaFalsa();
+      await abrir(tester, repositorio, compra: servicio(tienda, repositorio));
+
+      expect(find.text('Premium: S/ 35.00 por 90 días'), findsOneWidget);
+      expect(find.textContaining('política de Google Play'), findsOneWidget);
+      await tester.tap(find.text('Obtener Premium · S/ 35.00'));
+      await tester.pumpAndSettle();
+
+      expect(tienda.cuentas, [cuentaOfuscadaPlay('ana')]);
+      expect(find.text('¡Listo! Ya tienes Premium.'), findsOneWidget);
+      expect(find.text('Eres Premium'), findsOneWidget);
+    });
+
+    testWidgets('pago pendiente: lo avisa', (tester) async {
+      final repositorio = RepositorioFalso();
+      final tienda = TiendaFalsa()..respuesta = EstadoCompraTienda.pendiente;
+      await abrir(tester, repositorio, compra: servicio(tienda, repositorio));
+      await tester.tap(find.text('Obtener Premium · S/ 35.00'));
       await tester.pumpAndSettle();
       expect(
-        find.text('No se pudo completar la compra. Inténtalo de nuevo.'),
+        find.textContaining('Tu pago está pendiente en Google Play'),
+        findsOneWidget,
+      );
+      expect(find.text('Plan gratis'), findsOneWidget);
+    });
+
+    testWidgets('cancelar no muestra error; si falla, avisa', (tester) async {
+      final repositorio = RepositorioFalso();
+      final tienda = TiendaFalsa()..respuesta = EstadoCompraTienda.cancelada;
+      await abrir(tester, repositorio, compra: servicio(tienda, repositorio));
+      await tester.tap(find.text('Obtener Premium · S/ 35.00'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('No se pudo'), findsNothing);
+      expect(find.textContaining('Google Play no pudo'), findsNothing);
+
+      tienda.respuesta = EstadoCompraTienda.error;
+      await tester.tap(find.text('Obtener Premium · S/ 35.00'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Google Play no pudo completar la compra. Inténtalo de nuevo.',
+        ),
         findsOneWidget,
       );
     });

@@ -41,6 +41,10 @@ const { prepararCuenta } = require('./src/cuenta/preparar_cuenta');
 
 exports.prepararCuenta = prepararCuenta;
 
+const { verificarCompraPlay } = require('./src/premium/compra_play');
+
+exports.verificarCompraPlay = verificarCompraPlay;
+
 const { estadoSistema } = require('./src/sistema/estado');
 
 exports.estadoSistema = estadoSistema;

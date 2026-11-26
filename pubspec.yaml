@@ -51,6 +51,9 @@ dependencies:
   # Voz opcional del puma tutor (voces del propio dispositivo, sin servidor).
   flutter_tts: ^4.2.5
   audioplayers: ^6.1.0
+  # Compra de Premium en Android (Google Play Billing).
+  in_app_purchase: ^3.3.1
+  crypto: ^3.0.6
 dev_dependencies:
   flutter_test:
     sdk: flutter
