@@ -29,9 +29,11 @@ import '../features/identity/domain/repositories/registro_actividad.dart';
 import '../features/identity/domain/repositories/repositorio_usuario.dart';
 import '../features/identity/domain/repositories/servicio_autenticacion.dart';
 import '../features/identity/domain/repositories/servicio_autenticacion_google.dart';
+import '../features/identity/domain/repositories/servicio_eliminacion_cuenta.dart';
 import '../features/identity/domain/repositories/servicio_recuperacion_contrasena.dart';
 import '../features/identity/infrastructure/repositories/repositorio_usuario_firestore.dart';
 import '../features/identity/infrastructure/services/firebase_servicio_autenticacion.dart';
+import '../features/identity/infrastructure/services/firebase_servicio_eliminacion_cuenta.dart';
 import '../features/reportes/domain/reporte.dart';
 import '../features/reportes/infrastructure/repositorio_reportes_firestore.dart';
 import '../features/seminars/domain/seminario.dart';
@@ -95,6 +97,9 @@ class Dependencias {
   /// Foto del comprobante (galería). null si no se puede en este equipo.
   final Future<Uint8List?> Function()? elegirFoto;
 
+  /// Perfil → Eliminar mi cuenta (null: no se muestra el botón).
+  final ServicioEliminacionCuenta? eliminacion;
+
   const Dependencias({
     required this.autenticacion,
     required this.recuperacion,
@@ -124,6 +129,7 @@ class Dependencias {
     required this.reportes,
     required this.avisos,
     this.elegirFoto,
+    this.eliminacion,
   });
 
   factory Dependencias.firebase() {
@@ -163,6 +169,7 @@ class Dependencias {
       reportes: RepositorioReportesFirestore(),
       avisos: RepositorioAvisosFirestore(),
       elegirFoto: elegirFotoDeGaleria,
+      eliminacion: FirebaseServicioEliminacionCuenta(),
     );
   }
 }

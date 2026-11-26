@@ -5,6 +5,7 @@ import 'avisos/avisos_page.dart';
 import 'avisos/repositorio_avisos_admin.dart';
 import 'bandeja/bandeja_page.dart';
 import 'bandeja/repositorio_bandeja.dart';
+import 'estudiantes/eliminar_cuenta_admin.dart';
 import 'estudiantes/estudiantes_page.dart';
 import 'estudiantes/ficha_estudiante_page.dart';
 import 'estudiantes/modelo_estudiantes.dart';
@@ -190,6 +191,7 @@ class _ShellAdminState extends State<ShellAdmin> {
           onVolver: () => setState(() => _fichaUid = null),
           pagos: widget.repositorioPagos,
           ahora: widget.ahora,
+          eliminarCuenta: eliminarCuentaAlumno,
         ),
         null => EstudiantesPage(
           key: ValueKey(_visita),

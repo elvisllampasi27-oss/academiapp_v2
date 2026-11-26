@@ -15,6 +15,7 @@ import '../features/avisos/presentation/avisos_inicio.dart';
 import '../features/exams/presentation/pages/examenes_page.dart';
 import '../features/exams/presentation/widgets/aviso_examen_semanal.dart';
 import '../features/identity/domain/entities/usuario_academiapp.dart';
+import '../features/identity/presentation/pages/eliminar_cuenta_page.dart';
 import '../features/identity/presentation/pages/perfil_page.dart';
 import '../features/premium/presentation/premium_page.dart';
 import '../features/reportes/domain/reporte.dart';
@@ -143,6 +144,9 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
             // Un docente no necesita matrícula para pedir su cuenta ni para
             // enviar sus clases.
             onDocente: () => _abrirDocente(_d.temarioVigente),
+            onEliminarCuenta: _d.eliminacion == null
+                ? null
+                : _abrirEliminarCuenta,
           );
         }
 
@@ -271,11 +275,28 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                   // Matriculado: su propio temario (ya está leído).
                   () async => contexto.curriculo,
                 ),
+                onEliminarCuenta: _d.eliminacion == null
+                    ? null
+                    : _abrirEliminarCuenta,
               ),
             ),
           ],
         );
       },
+    );
+  }
+
+  void _abrirEliminarCuenta() {
+    final servicio = _d.eliminacion;
+    if (servicio == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => EliminarCuentaPage(
+          servicio: servicio,
+          cargarPremium: () => _d.premium.cargar(widget.usuario.uid),
+          onEliminada: widget.onCerrarSesion,
+        ),
+      ),
     );
   }
 
@@ -463,11 +484,15 @@ class _PantallaAviso extends StatelessWidget {
   /// "¿Eres docente?" (solo cuando no tiene matrícula).
   final VoidCallback? onDocente;
 
+  /// "Eliminar mi cuenta": también sin matrícula se puede borrar.
+  final VoidCallback? onEliminarCuenta;
+
   const _PantallaAviso({
     required this.titulo,
     required this.mensaje,
     required this.onCerrarSesion,
     this.onDocente,
+    this.onEliminarCuenta,
   });
 
   @override
@@ -506,6 +531,16 @@ class _PantallaAviso extends StatelessWidget {
                   icon: const Icon(Icons.logout),
                   label: const Text('Cerrar sesión'),
                 ),
+                if (onEliminarCuenta != null) ...[
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: onEliminarCuenta,
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.red.shade300,
+                    ),
+                    child: const Text('Eliminar mi cuenta'),
+                  ),
+                ],
               ],
             ),
           ),

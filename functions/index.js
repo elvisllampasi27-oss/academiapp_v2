@@ -32,6 +32,11 @@ const { generarPreguntas } = require('./src/contenido/generar_preguntas');
 
 exports.generarPreguntas = generarPreguntas;
 
+const cuenta = require('./src/cuenta/eliminar_cuenta');
+
+exports.eliminarMiCuenta = cuenta.eliminarMiCuenta;
+exports.eliminarCuentaAlumno = cuenta.eliminarCuentaAlumno;
+
 const { estadoSistema } = require('./src/sistema/estado');
 
 exports.estadoSistema = estadoSistema;

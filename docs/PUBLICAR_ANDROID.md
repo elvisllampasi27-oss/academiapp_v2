@@ -90,7 +90,13 @@ firebase deploy --only hosting
 ```
 
 *Comprueba:* abre https://academiapp-v2-7b9ce.web.app/privacidad/ ; ese es
-el enlace que va en Play Console.
+el enlace que va en Play Console. Play Console también pide un enlace para
+eliminar la cuenta: https://academiapp-v2-7b9ce.web.app/eliminar-cuenta/
+
+La eliminación desde la app usa las funciones `eliminarMiCuenta` y
+`eliminarCuentaAlumno` (panel → ficha del estudiante), que se publican con
+el plan Blaze junto con las demás. Antes de eso, el botón responde "Esta
+opción estará disponible pronto".
 
 ## 5. Compilar para Play Store
 

@@ -20,6 +20,9 @@ class PerfilPage extends StatelessWidget {
   /// Actividad del alumno en su matrícula (el mapa de cuadritos).
   final ActividadAlumno? actividad;
 
+  /// "Eliminar mi cuenta" (null: no se muestra).
+  final VoidCallback? onEliminarCuenta;
+
   const PerfilPage({
     super.key,
     required this.usuario,
@@ -29,6 +32,7 @@ class PerfilPage extends StatelessWidget {
     this.onMisReportes,
     this.onDocente,
     this.actividad,
+    this.onEliminarCuenta,
   });
 
   @override
@@ -163,6 +167,18 @@ class PerfilPage extends StatelessWidget {
               style: TextButton.styleFrom(foregroundColor: ColoresApp.apagado),
             ),
           ),
+          if (onEliminarCuenta != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: onEliminarCuenta,
+                icon: const Icon(Icons.delete_forever_outlined),
+                label: const Text('Eliminar mi cuenta'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.red.shade300,
+                ),
+              ),
+            ),
         ]),
       ),
     );
