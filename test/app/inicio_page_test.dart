@@ -7,6 +7,7 @@ import 'package:academiapp_v2/features/academic/domain/entities/plan_academico.d
 import 'package:academiapp_v2/features/academic/domain/entities/tema.dart';
 import 'package:academiapp_v2/features/adaptive_engine/domain/entities/item_mi_ruta.dart';
 import 'package:academiapp_v2/features/adaptive_engine/domain/entities/recomendacion.dart';
+import 'package:academiapp_v2/features/enrollment/domain/pausa_plan.dart';
 import 'package:academiapp_v2/features/student_model/domain/entities/estado_dominio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -83,11 +84,14 @@ ItemMiRuta _refuerzo() {
 void main() {
   late List<String> abiertos;
   late int verRuta;
+  late int premium;
 
   Widget inicio(
     ContextoDiaEstudiante dia,
     List<ItemMiRuta> ruta, {
     DateTime? inicioPlan,
+    DateTime? retomaEl,
+    PausaPlan? pausa,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -100,6 +104,9 @@ void main() {
           onVerRuta: () => verRuta++,
           onAbrirPerfil: () {},
           inicioPlan: inicioPlan,
+          retomaEl: retomaEl,
+          pausa: pausa,
+          onAbrirPremium: () => premium++,
         ),
       ),
     );
@@ -108,6 +115,7 @@ void main() {
   setUp(() {
     abiertos = [];
     verRuta = 0;
+    premium = 0;
   });
 
   Future<void> mostrar(WidgetTester tester, Widget widget) async {
@@ -162,5 +170,55 @@ void main() {
     await mostrar(tester, inicio(_contexto(conDia: false), const []));
 
     expect(find.textContaining('Hoy no tienes temas'), findsOneWidget);
+  });
+
+  testWidgets('plan en pausa: dice la semana y ofrece Premium', (tester) async {
+    await mostrar(
+      tester,
+      inicio(
+        _contexto(),
+        const [],
+        inicioPlan: DateTime(2026, 10, 19),
+        pausa: PausaPlan(
+          desde: DateTime(2026, 10, 26),
+          semana: 2,
+          eraPrueba: true,
+        ),
+      ),
+    );
+
+    expect(find.text('Tu plan está en pausa en la semana 2'), findsOneWidget);
+    expect(
+      find.textContaining('Tu prueba gratis terminó el lunes 26 oct.'),
+      findsOneWidget,
+    );
+    expect(find.text('Sábado 31 oct'), findsOneWidget);
+    expect(find.text('Tu ruta de hoy'), findsNothing);
+    await tester.tap(find.text('Hazte Premium'));
+    expect(premium, 1);
+  });
+
+  testWidgets('ya pagó: dice el lunes en que retoma', (tester) async {
+    await mostrar(
+      tester,
+      inicio(
+        _contexto(),
+        const [],
+        inicioPlan: DateTime(2026, 10, 19),
+        retomaEl: DateTime(2026, 11, 2),
+      ),
+    );
+
+    expect(find.text('Retomas el lunes 2 nov'), findsOneWidget);
+    expect(find.textContaining('semana 3 de tu plan'), findsOneWidget);
+    expect(find.text('Tu ruta de hoy'), findsNothing);
+  });
+
+  testWidgets('el lunes en que retoma ya muestra sus temas', (tester) async {
+    await mostrar(
+      tester,
+      inicio(_contexto(), const [], retomaEl: DateTime(2026, 10, 26)),
+    );
+    expect(find.text('Tu ruta de hoy'), findsOneWidget);
   });
 }

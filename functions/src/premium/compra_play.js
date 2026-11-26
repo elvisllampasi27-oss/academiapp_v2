@@ -19,6 +19,7 @@ const { logger } = require('firebase-functions');
 const admin = require('firebase-admin');
 const { leerConfiguracion } = require('../comun/plan');
 const { premiumNuevoHasta, aplicarPagoAprobado } = require('./dar_premium');
+const { leerMatriculaActiva } = require('../comun/pausa');
 
 const PAQUETE = 'pe.sinchi.academia';
 // Los días los pone el panel (config/academia.diasPremium) al comprar.
@@ -73,7 +74,9 @@ async function activarCompraPlay({
   return db.runTransaction(async (tx) => {
     const pagoRef = db.collection('pagos').doc(idPagoPlay(token));
     const usuarioRef = db.collection('usuarios').doc(uid);
-    const [pago, usuario] = await Promise.all([tx.get(pagoRef), tx.get(usuarioRef)]);
+    const [pago, usuario, matricula] = await Promise.all([
+      tx.get(pagoRef), tx.get(usuarioRef), leerMatriculaActiva(tx, db, uid),
+    ]);
 
     if (pago.exists) {
       if (pago.data().usuarioId !== uid) {
@@ -87,6 +90,7 @@ async function activarCompraPlay({
       db,
       uid,
       usuario,
+      matricula,
       pagoRef,
       pago: {
         nombre,

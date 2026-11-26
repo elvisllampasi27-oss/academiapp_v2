@@ -7,6 +7,7 @@ import '../../features/academic/domain/entities/curso.dart';
 import '../../features/academic/domain/entities/tema.dart';
 import '../../features/adaptive_engine/domain/entities/item_mi_ruta.dart';
 import '../../features/adaptive_engine/domain/entities/recomendacion.dart';
+import '../../features/enrollment/domain/pausa_plan.dart';
 import '../../core/presentation/animaciones.dart';
 
 /// Inicio: lo primero que ve el estudiante es SU ruta de hoy
@@ -38,6 +39,15 @@ class InicioPage extends StatelessWidget {
   /// Día 1 de su plan: si todavía no llega, se dice cuándo empieza.
   final DateTime? inicioPlan;
 
+  /// Pagó con el plan en pausa: el lunes en que retoma.
+  final DateTime? retomaEl;
+
+  /// Se acabó su prueba o su Premium: el plan espera en esa semana.
+  final PausaPlan? pausa;
+
+  /// Abre Premium (desde el aviso de pausa).
+  final VoidCallback? onAbrirPremium;
+
   const InicioPage({
     super.key,
     required this.nombre,
@@ -53,7 +63,18 @@ class InicioPage extends StatelessWidget {
     this.seminarios,
     this.maximoRefuerzos = 2,
     this.inicioPlan,
+    this.retomaEl,
+    this.pausa,
+    this.onAbrirPremium,
   });
+
+  /// El lunes en que retoma, si todavía no llega.
+  DateTime? get _retomaPendiente {
+    final r = retomaEl;
+    if (r == null) return null;
+    final dia = DateTime(r.year, r.month, r.day);
+    return dia.isAfter(DateTime(hoy.year, hoy.month, hoy.day)) ? dia : null;
+  }
 
   Tema? _tema(String id) {
     for (final tema in dia.temas) {
@@ -71,7 +92,9 @@ class InicioPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final numeroDia = dia.dia?.numero;
+    final retoma = _retomaPendiente;
+    // En pausa o esperando el lunes, el día del calendario no es el suyo.
+    final numeroDia = pausa != null || retoma != null ? null : dia.dia?.numero;
     final encabezado = numeroDia == null
         ? fechaCorta(hoy)
         : '${fechaCorta(hoy)} · Día académico $numeroDia';
@@ -120,15 +143,23 @@ class InicioPage extends StatelessWidget {
           ?avisos,
           ?enVivos,
           ?examen,
-          _TarjetaHoy(
-            dia: dia,
-            practicados: {for (final item in ruta) ?item.temaId},
-            curso: _curso,
-            onAbrirTema: onAbrirTema,
-            empiezaEl: inicioPlan != null && inicioPlan!.isAfter(hoy)
-                ? inicioPlan
-                : null,
-          ),
+          if (pausa case final pausa?)
+            _TarjetaPausa(pausa: pausa, onAbrirPremium: onAbrirPremium)
+          else if (retoma != null)
+            _TarjetaRetoma(
+              retomaEl: retoma,
+              semana: inicioPlan == null ? 0 : semanaDelPlan(inicioPlan!, retoma),
+            )
+          else
+            _TarjetaHoy(
+              dia: dia,
+              practicados: {for (final item in ruta) ?item.temaId},
+              curso: _curso,
+              onAbrirTema: onAbrirTema,
+              empiezaEl: inicioPlan != null && inicioPlan!.isAfter(hoy)
+                  ? inicioPlan
+                  : null,
+            ),
           const SizedBox(height: 24),
           Row(
             children: [
@@ -224,6 +255,84 @@ class _Panel extends StatelessWidget {
         border: Border.all(color: ColoresApp.borde),
       ),
       child: child,
+    );
+  }
+}
+
+/// Se acabó la prueba o el Premium: el plan espera en su semana.
+class _TarjetaPausa extends StatelessWidget {
+  final PausaPlan pausa;
+  final VoidCallback? onAbrirPremium;
+
+  const _TarjetaPausa({required this.pausa, this.onAbrirPremium});
+
+  @override
+  Widget build(BuildContext context) {
+    final acabo = pausa.eraPrueba ? 'Tu prueba gratis' : 'Tu Premium';
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.pause_circle_outline, color: ColoresApp.ambar),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Tu plan está en pausa en la semana ${pausa.semana}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$acabo terminó el ${fechaCorta(pausa.desde).toLowerCase()}. '
+            'Hazte Premium y retomas desde la semana ${pausa.semana}, el '
+            'lunes, sin perder lo que avanzaste. Mientras tanto puedes seguir '
+            'explorando los cursos.',
+            style: const TextStyle(color: ColoresApp.apagado),
+          ),
+          if (onAbrirPremium case final abrir?) ...[
+            const SizedBox(height: 14),
+            FilledButton(onPressed: abrir, child: const Text('Hazte Premium')),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Ya pagó: retoma el lunes.
+class _TarjetaRetoma extends StatelessWidget {
+  final DateTime retomaEl;
+  final int semana;
+
+  const _TarjetaRetoma({required this.retomaEl, required this.semana});
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Retomas el ${fechaCorta(retomaEl).toLowerCase()}',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            semana > 0
+                ? 'Ese día sigues con la semana $semana de tu plan. Mientras '
+                      'tanto, puedes repasar y explorar los cursos.'
+                : 'Mientras tanto, puedes repasar y explorar los cursos.',
+            style: const TextStyle(color: ColoresApp.apagado),
+          ),
+        ],
+      ),
     );
   }
 }

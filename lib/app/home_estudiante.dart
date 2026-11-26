@@ -20,6 +20,7 @@ import '../features/exams/presentation/widgets/aviso_examen_semanal.dart';
 import '../features/identity/domain/entities/usuario_academiapp.dart';
 import '../features/identity/presentation/pages/eliminar_cuenta_page.dart';
 import '../features/identity/presentation/pages/perfil_page.dart';
+import '../features/premium/domain/repositorio_premium.dart';
 import '../features/premium/presentation/premium_page.dart';
 import '../features/reportes/domain/reporte.dart';
 import '../features/reportes/presentation/reportar.dart';
@@ -111,14 +112,42 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
   ConstruirMiRutaService get _servicioRuta =>
       ConstruirMiRutaService(repositorio: _d.evidencias);
 
-  Future<ContextoAcademico?> _cargarContextoAcademico() {
-    return CargarContextoAcademicoService(
+  Future<ContextoAcademico?> _cargarContextoAcademico() async {
+    final uid = widget.usuario.uid;
+    // Para saber si el plan está en pausa. Si falla, se sigue sin eso.
+    final premiumF = _d.premium
+        .cargar(uid)
+        .then<EstadoPremium?>((e) => e, onError: (Object _) => null);
+    final contexto = await CargarContextoAcademicoService(
       matriculas: _d.matriculas,
       versiones: _d.versiones,
       planes: _d.planes,
       curriculoDe: _d.curriculoDe,
       ruta: _servicioRuta,
-    ).cargar(usuarioId: widget.usuario.uid, ahora: DateTime.now());
+    ).cargar(usuarioId: uid, ahora: DateTime.now());
+    final premium = await premiumF;
+    return contexto?.conPremium(
+      premiumHasta: premium?.premiumHasta,
+      pruebaHasta: premium?.pruebaHasta,
+    );
+  }
+
+  /// Premium (desde el perfil o el aviso de pausa). Al volver se recarga:
+  /// si pagó, el plan retoma.
+  Future<void> _abrirPremium() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PremiumPage(
+          uid: widget.usuario.uid,
+          nombre: widget.usuario.nombre,
+          correo: widget.usuario.correo,
+          repositorio: _d.premium,
+          elegirFoto: _d.elegirFoto,
+          compraPlay: _d.compraPlay,
+        ),
+      ),
+    );
+    if (mounted) _recargar();
   }
 
   @override
@@ -214,6 +243,9 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                 hoy: DateTime.now(),
                 dia: contexto.diaEstudiante,
                 inicioPlan: contexto.matricula.fechaInicioAcademico,
+                retomaEl: contexto.matricula.retomaEl,
+                pausa: contexto.pausa(DateTime.now()),
+                onAbrirPremium: _abrirPremium,
                 ruta: contexto.ruta,
                 onAbrirTema: (tema, curso) => _abrirTema(contexto, tema, curso),
                 onVerRuta: () => _pestana.value = 3,
@@ -295,18 +327,7 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                   fin: contexto.matricula.fechaFin,
                   hoy: DateTime.now(),
                 ),
-                onAbrirPremium: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => PremiumPage(
-                      uid: widget.usuario.uid,
-                      nombre: widget.usuario.nombre,
-                      correo: widget.usuario.correo,
-                      repositorio: _d.premium,
-                      elegirFoto: _d.elegirFoto,
-                      compraPlay: _d.compraPlay,
-                    ),
-                  ),
-                ),
+                onAbrirPremium: _abrirPremium,
                 onReportar: () => _reportar(
                   context,
                   TipoReporte.app,
