@@ -12,7 +12,14 @@ test('la plantilla seminarios.json es valida', () => {
   const archivo = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'seminarios.json'), 'utf8'));
   const plan = prepararSeminarios(archivo, cursos);
   assert.deepStrictEqual(plan.errores, []);
-  assert.ok(plan.seminarios.length > 0);
+  // Sin seminarios de prueba: el ejemplo espera su enlace (PEGA_AQUI).
+  assert.ok(plan.seminarios.length + plan.omitidos.length > 0);
+
+  // Con un enlace real, el ejemplo queda listo para cargar.
+  const lleno = { seminarios: archivo.seminarios.map((s) => ({ ...s, youtube: 'pRRaLT4H-9s' })) };
+  const listo = prepararSeminarios(lleno, cursos);
+  assert.deepStrictEqual(listo.errores, []);
+  assert.strictEqual(listo.seminarios.length, archivo.seminarios.length);
 });
 
 test('acepta enlaces de YouTube habituales, incluidos los de vivo', () => {

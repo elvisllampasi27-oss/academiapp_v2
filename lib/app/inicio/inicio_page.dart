@@ -35,6 +35,9 @@ class InicioPage extends StatelessWidget {
   /// Cuántas recomendaciones de "Reforzar" se muestran en el inicio.
   final int maximoRefuerzos;
 
+  /// Día 1 de su plan: si todavía no llega, se dice cuándo empieza.
+  final DateTime? inicioPlan;
+
   const InicioPage({
     super.key,
     required this.nombre,
@@ -49,6 +52,7 @@ class InicioPage extends StatelessWidget {
     this.examen,
     this.seminarios,
     this.maximoRefuerzos = 2,
+    this.inicioPlan,
   });
 
   Tema? _tema(String id) {
@@ -121,6 +125,9 @@ class InicioPage extends StatelessWidget {
             practicados: {for (final item in ruta) ?item.temaId},
             curso: _curso,
             onAbrirTema: onAbrirTema,
+            empiezaEl: inicioPlan != null && inicioPlan!.isAfter(hoy)
+                ? inicioPlan
+                : null,
           ),
           const SizedBox(height: 24),
           Row(
@@ -227,15 +234,38 @@ class _TarjetaHoy extends StatelessWidget {
   final Curso? Function(String? id) curso;
   final void Function(Tema tema, Curso? curso) onAbrirTema;
 
+  /// Su plan todavía no empieza (null si ya empezó).
+  final DateTime? empiezaEl;
+
   const _TarjetaHoy({
     required this.dia,
     required this.practicados,
     required this.curso,
     required this.onAbrirTema,
+    this.empiezaEl,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (empiezaEl case final inicio? when dia.dia == null) {
+      return _Panel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Empiezas el ${fechaCorta(inicio).toLowerCase()}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Ese día verás aquí los temas que te tocan. Mientras tanto, '
+              'puedes explorar los cursos.',
+              style: TextStyle(color: ColoresApp.apagado),
+            ),
+          ],
+        ),
+      );
+    }
     if (dia.dia == null) {
       return const _Panel(
         child: Text(

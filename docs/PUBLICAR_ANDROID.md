@@ -94,9 +94,10 @@ el enlace que va en Play Console. Play Console también pide un enlace para
 eliminar la cuenta: https://academiapp-v2-7b9ce.web.app/eliminar-cuenta/
 
 La eliminación desde la app usa las funciones `eliminarMiCuenta` y
-`eliminarCuentaAlumno` (panel → ficha del estudiante), que se publican con
-el plan Blaze junto con las demás. Antes de eso, el botón responde "Esta
-opción estará disponible pronto".
+`eliminarCuentaAlumno` (panel → ficha del estudiante), y la matrícula
+automática con prueba gratis usa `prepararCuenta`. Se publican con el plan
+Blaze junto con las demás. Antes de eso, la app responde que esas opciones
+estarán disponibles pronto (la matrícula se sigue haciendo desde el panel).
 
 ## 5. Compilar para Play Store
 
