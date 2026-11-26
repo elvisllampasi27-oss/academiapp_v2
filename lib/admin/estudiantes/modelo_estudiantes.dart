@@ -120,7 +120,8 @@ class FichaEstudiante {
 /// Matricularse después de esta hora empieza al día siguiente.
 const configuracionInicioPanel = ConfiguracionInicio(
   horaInicio: 0,
-  horaCorte: 18,
+  // Igual que la matrícula automática (functions: prepararCuenta).
+  horaCorte: 6,
 );
 
 /// Días sin entrar a la app para avisar.

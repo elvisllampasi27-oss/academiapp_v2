@@ -69,6 +69,21 @@ class RepositorioFalso implements RepositorioPremium {
 }
 
 void main() {
+  test('la prueba gratis se distingue de un Premium pagado', () {
+    EstadoPremium estado(DateTime? hasta, DateTime? prueba) => EstadoPremium(
+      configuracion: const ConfiguracionAcademia(),
+      premiumHasta: hasta,
+      pagos: const [],
+      pruebaHasta: prueba,
+    );
+    final finPrueba = DateTime(2026, 12, 7);
+    expect(estado(finPrueba, finPrueba).enPrueba, isTrue);
+    // Pagó encima de la prueba: ya es Premium.
+    expect(estado(DateTime(2027, 3, 7), finPrueba).enPrueba, isFalse);
+    expect(estado(DateTime(2027, 3, 7), null).enPrueba, isFalse);
+    expect(estado(null, null).enPrueba, isFalse);
+  });
+
   group('cupón al aprobar un pago', () {
     Pago pago({MetodoPago metodo = MetodoPago.beca, String? cupon = 'UNSCH'}) {
       return Pago(

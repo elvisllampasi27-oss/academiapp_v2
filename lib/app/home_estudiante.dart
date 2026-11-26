@@ -12,6 +12,7 @@ import '../features/adaptive_engine/presentation/pages/mi_ruta_page.dart';
 import '../features/assessment/domain/services/practica_tema_service.dart';
 import '../features/assessment/presentation/widgets/seccion_practica_tema.dart';
 import '../features/avisos/presentation/avisos_inicio.dart';
+import '../features/enrollment/presentation/preparar_plan.dart';
 import '../features/exams/presentation/pages/examenes_page.dart';
 import '../features/exams/presentation/widgets/aviso_examen_semanal.dart';
 import '../features/identity/domain/entities/usuario_academiapp.dart';
@@ -63,6 +64,10 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
 
   /// Si el puma del arranque ya terminó de formarse y se entró a la app.
   bool _entro = false;
+
+  /// Veces que se preparó el plan en esta sesión: si después de prepararlo
+  /// sigue sin aparecer, no se insiste (evita un ciclo sin fin).
+  int _planesPreparados = 0;
 
   @override
   void initState() {
@@ -135,18 +140,47 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
         final contexto = snapshot.data;
 
         if (contexto == null) {
-          return _PantallaAviso(
-            titulo: 'Hola, ${widget.usuario.nombre}',
-            mensaje:
-                'Tu cuenta está lista, pero todavía no tienes una matrícula '
-                'activa. Cuando se active, aquí verás tus actividades del día.',
-            onCerrarSesion: widget.onCerrarSesion,
-            // Un docente no necesita matrícula para pedir su cuenta ni para
-            // enviar sus clases.
-            onDocente: () => _abrirDocente(_d.temarioVigente),
-            onEliminarCuenta: _d.eliminacion == null
-                ? null
-                : _abrirEliminarCuenta,
+          _PantallaAviso sinPlan(String mensaje, {VoidCallback? reintentar}) {
+            return _PantallaAviso(
+              titulo: 'Hola, ${widget.usuario.nombre}',
+              mensaje: mensaje,
+              onCerrarSesion: widget.onCerrarSesion,
+              onReintentar: reintentar,
+              // Un docente no necesita matrícula para pedir su cuenta ni
+              // para enviar sus clases.
+              onDocente: () => _abrirDocente(_d.temarioVigente),
+              onEliminarCuenta: _d.eliminacion == null
+                  ? null
+                  : _abrirEliminarCuenta,
+            );
+          }
+
+          // Recién registrado (o sin plan): se lo prepara solo.
+          final preparacion = _d.preparacion;
+          if (preparacion == null) {
+            return sinPlan(
+              'Tu cuenta está lista, pero todavía no tienes un plan activo. '
+              'Cuando se active, aquí verás tus actividades del día.',
+            );
+          }
+          if (_planesPreparados >= 2) {
+            return sinPlan(
+              'No pudimos abrir tu plan. Escríbenos para revisarlo.',
+              reintentar: () {
+                _planesPreparados = 0;
+                _recargar();
+              },
+            );
+          }
+          return PrepararPlan(
+            servicio: preparacion,
+            nombre: widget.usuario.nombre,
+            onListo: () {
+              _planesPreparados++;
+              _recargar();
+            },
+            siFalla: (mensaje, reintentar) =>
+                sinPlan(mensaje, reintentar: reintentar),
           );
         }
 
@@ -166,6 +200,7 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                 nombre: widget.usuario.nombre,
                 hoy: DateTime.now(),
                 dia: contexto.diaEstudiante,
+                inicioPlan: contexto.matricula.fechaInicioAcademico,
                 ruta: contexto.ruta,
                 onAbrirTema: (tema, curso) => _abrirTema(contexto, tema, curso),
                 onVerRuta: () => _pestana.value = 3,
@@ -487,12 +522,16 @@ class _PantallaAviso extends StatelessWidget {
   /// "Eliminar mi cuenta": también sin matrícula se puede borrar.
   final VoidCallback? onEliminarCuenta;
 
+  /// "Reintentar" (cuando no se pudo preparar el plan).
+  final VoidCallback? onReintentar;
+
   const _PantallaAviso({
     required this.titulo,
     required this.mensaje,
     required this.onCerrarSesion,
     this.onDocente,
     this.onEliminarCuenta,
+    this.onReintentar,
   });
 
   @override
@@ -518,6 +557,14 @@ class _PantallaAviso extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(mensaje, textAlign: TextAlign.center),
                 const SizedBox(height: 24),
+                if (onReintentar != null) ...[
+                  FilledButton.icon(
+                    onPressed: onReintentar,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reintentar'),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 if (onDocente != null) ...[
                   FilledButton.icon(
                     onPressed: onDocente,

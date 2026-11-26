@@ -20,7 +20,9 @@ import '../features/assessment/infrastructure/services/servicio_correccion_cloud
 import '../features/avisos/domain/aviso.dart';
 import '../features/avisos/infrastructure/repositorio_avisos_firestore.dart';
 import '../features/enrollment/domain/repositories/repositorio_matricula.dart';
+import '../features/enrollment/domain/services/servicio_preparacion_cuenta.dart';
 import '../features/enrollment/infrastructure/repositories/repositorio_matricula_firestore.dart';
+import '../features/enrollment/infrastructure/services/firebase_servicio_preparacion_cuenta.dart';
 import '../features/exams/domain/repositories/repositorio_examenes.dart';
 import '../features/exams/domain/repositories/servicio_examenes.dart';
 import '../features/exams/infrastructure/repositorio_examenes_firestore.dart';
@@ -100,6 +102,9 @@ class Dependencias {
   /// Perfil → Eliminar mi cuenta (null: no se muestra el botón).
   final ServicioEliminacionCuenta? eliminacion;
 
+  /// Matrícula automática y prueba gratis (null: se espera al panel).
+  final ServicioPreparacionCuenta? preparacion;
+
   const Dependencias({
     required this.autenticacion,
     required this.recuperacion,
@@ -130,6 +135,7 @@ class Dependencias {
     required this.avisos,
     this.elegirFoto,
     this.eliminacion,
+    this.preparacion,
   });
 
   factory Dependencias.firebase() {
@@ -170,6 +176,7 @@ class Dependencias {
       avisos: RepositorioAvisosFirestore(),
       elegirFoto: elegirFotoDeGaleria,
       eliminacion: FirebaseServicioEliminacionCuenta(),
+      preparacion: FirebaseServicioPreparacionCuenta(),
     );
   }
 }

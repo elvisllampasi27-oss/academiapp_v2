@@ -25,9 +25,11 @@ class RepositorioPremiumFirestore implements RepositorioPremium {
       db.collection('pagos').where('usuarioId', isEqualTo: uid).get(),
     ).wait;
     final hasta = usuario.data()?['premiumHasta'];
+    final prueba = usuario.data()?['pruebaHasta'];
     return EstadoPremium(
       configuracion: ConfiguracionAcademia.desdeMapa(config.data()),
       premiumHasta: hasta is Timestamp ? hasta.toDate() : null,
+      pruebaHasta: prueba is Timestamp ? prueba.toDate() : null,
       pagos: [for (final d in pagos.docs) ?pagoDesdeMapa(d.id, d.data())]
         ..sort((a, b) => b.creadoEn.compareTo(a.creadoEn)),
     );

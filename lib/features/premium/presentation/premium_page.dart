@@ -171,6 +171,7 @@ class _PremiumPageState extends State<PremiumPage> {
             children: enCascada([
               _Encabezado(
                 premium: premium,
+                prueba: estado.enPrueba,
                 hasta: estado.premiumHasta,
                 precio: c.precio,
                 dias: c.diasPremium,
@@ -402,6 +403,9 @@ class _PremiumPageState extends State<PremiumPage> {
 
 class _Encabezado extends StatelessWidget {
   final bool premium;
+
+  /// Es la prueba gratis: termina el día anterior a [hasta] (el lunes).
+  final bool prueba;
   final DateTime? hasta;
   final int precio;
   final int dias;
@@ -411,7 +415,24 @@ class _Encabezado extends StatelessWidget {
     required this.hasta,
     required this.precio,
     required this.dias,
+    this.prueba = false,
   });
+
+  String get _titulo => switch ((premium, prueba)) {
+    (true, true) => 'Prueba gratis',
+    (true, false) => 'Eres Premium',
+    _ => 'Plan gratis',
+  };
+
+  String get _detalle {
+    final fin = hasta;
+    if (!premium || fin == null) return 'Premium: S/ $precio por $dias días';
+    if (prueba) {
+      final ultimo = fin.subtract(const Duration(days: 1));
+      return 'Todo incluido hasta el ${fechaCorta(ultimo).toLowerCase()}';
+    }
+    return 'Hasta el ${fechaCorta(fin)} ${fin.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -442,7 +463,7 @@ class _Encabezado extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  premium ? 'Eres Premium' : 'Plan gratis',
+                  _titulo,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -450,9 +471,7 @@ class _Encabezado extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  premium && hasta != null
-                      ? 'Hasta el ${fechaCorta(hasta!)} ${hasta!.year}'
-                      : 'Premium: S/ $precio por $dias días',
+                  _detalle,
                   style: const TextStyle(color: ColoresApp.apagado),
                 ),
               ],
