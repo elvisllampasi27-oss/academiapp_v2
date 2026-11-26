@@ -16,7 +16,9 @@ DateTime _dia(DateTime f) => DateTime.utc(f.year, f.month, f.day);
 int semanaDelPlan(DateTime inicio, DateTime dia) {
   final i = _dia(inicio);
   var lunes = i.subtract(Duration(days: i.weekday - DateTime.monday));
-  if (i.weekday >= DateTime.saturday) lunes = lunes.add(const Duration(days: 7));
+  if (i.weekday >= DateTime.saturday) {
+    lunes = lunes.add(const Duration(days: 7));
+  }
   final d = _dia(dia);
   if (d.isBefore(i) || d.isBefore(lunes)) return 0;
   return d.difference(lunes).inDays ~/ 7 + 1;
@@ -89,9 +91,8 @@ RetomaPlan? retomaDelPlan({
     ahora: ahora,
   );
   if (pausa == null) return null;
-  final lunesPausa = _dia(
-    pausa.desde,
-  ).subtract(Duration(days: pausa.desde.weekday - DateTime.monday));
+  final lunesPausa = _dia(pausa.desde)
+      .subtract(Duration(days: pausa.desde.weekday - DateTime.monday));
   final hoy = _dia(ahora);
   final retoma = hoy.weekday == DateTime.monday
       ? hoy

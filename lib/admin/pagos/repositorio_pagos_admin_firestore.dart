@@ -82,7 +82,9 @@ class RepositorioPagosAdminFirestore
     );
     if (retoma == null) return '';
     tx.update(matricula.reference, {
-      'fechaInicioAcademico': Timestamp.fromDate(inicioRetomado(inicio, retoma)),
+      'fechaInicioAcademico': Timestamp.fromDate(
+        inicioRetomado(inicio, retoma),
+      ),
       'retomaEl': Timestamp.fromDate(retoma.retomaEl),
       'diasEnPausa': FieldValue.increment(retoma.desplazamientoDias),
     });

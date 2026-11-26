@@ -7,15 +7,18 @@ final inicio = DateTime(2026, 11, 2);
 final finPrueba = DateTime(2026, 11, 9);
 
 void main() {
-  test('semana del plan: de lunes a domingo; sábado o domingo, la siguiente', () {
-    expect(semanaDelPlan(inicio, DateTime(2026, 11, 2)), 1);
-    expect(semanaDelPlan(inicio, DateTime(2026, 11, 8)), 1);
-    expect(semanaDelPlan(inicio, DateTime(2026, 11, 9)), 2);
-    expect(semanaDelPlan(inicio, DateTime(2026, 11, 1)), 0);
-    // Empezó un sábado: su semana 1 es la del lunes 9.
-    expect(semanaDelPlan(DateTime(2026, 11, 7), DateTime(2026, 11, 8)), 0);
-    expect(semanaDelPlan(DateTime(2026, 11, 7), DateTime(2026, 11, 9)), 1);
-  });
+  test(
+    'semana del plan: de lunes a domingo; sábado o domingo, la siguiente',
+    () {
+      expect(semanaDelPlan(inicio, DateTime(2026, 11, 2)), 1);
+      expect(semanaDelPlan(inicio, DateTime(2026, 11, 8)), 1);
+      expect(semanaDelPlan(inicio, DateTime(2026, 11, 9)), 2);
+      expect(semanaDelPlan(inicio, DateTime(2026, 11, 1)), 0);
+      // Empezó un sábado: su semana 1 es la del lunes 9.
+      expect(semanaDelPlan(DateTime(2026, 11, 7), DateTime(2026, 11, 8)), 0);
+      expect(semanaDelPlan(DateTime(2026, 11, 7), DateTime(2026, 11, 9)), 1);
+    },
+  );
 
   test('pausa: solo si se acabó la prueba o el Premium', () {
     final ahora = DateTime(2026, 12, 1, 10);

@@ -148,7 +148,9 @@ class InicioPage extends StatelessWidget {
           else if (retoma != null)
             _TarjetaRetoma(
               retomaEl: retoma,
-              semana: inicioPlan == null ? 0 : semanaDelPlan(inicioPlan!, retoma),
+              semana: inicioPlan == null
+                  ? 0
+                  : semanaDelPlan(inicioPlan!, retoma),
             )
           else
             _TarjetaHoy(
