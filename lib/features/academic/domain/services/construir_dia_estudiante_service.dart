@@ -106,6 +106,11 @@ class ConstruirDiaEstudianteService {
         hoy: fechaActual,
         publicados: temasPublicados,
       ),
+      proximosDias: proximosDiasDelCalendario(
+        calendario: calendario,
+        hoy: fechaActual,
+        publicados: temasPublicados,
+      ),
     );
   }
 }

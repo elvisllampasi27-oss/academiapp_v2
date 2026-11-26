@@ -43,6 +43,8 @@ import '../features/reportes/domain/reporte.dart';
 import '../features/reportes/infrastructure/repositorio_reportes_firestore.dart';
 import '../features/seminars/domain/seminario.dart';
 import '../features/premium/domain/compra_play.dart';
+import '../features/recordatorios/domain/recordatorios.dart';
+import '../features/recordatorios/infrastructure/servicio_recordatorios_locales.dart';
 import '../features/premium/domain/repositorio_premium.dart';
 import '../features/premium/infrastructure/elegir_foto.dart';
 import '../features/premium/infrastructure/repositorio_premium_firestore.dart';
@@ -113,6 +115,9 @@ class Dependencias {
   /// Compra de Premium con Google Play (solo en Android; null en la web).
   final ServicioCompraPlay? compraPlay;
 
+  /// Recordatorios en el teléfono (solo en Android; null en la web).
+  final ServicioRecordatorios? recordatorios;
+
   const Dependencias({
     required this.autenticacion,
     required this.recuperacion,
@@ -145,6 +150,7 @@ class Dependencias {
     this.eliminacion,
     this.preparacion,
     this.compraPlay,
+    this.recordatorios,
   });
 
   factory Dependencias.firebase() {
@@ -192,6 +198,9 @@ class Dependencias {
               tienda: TiendaGooglePlay(),
               verificar: verificarCompraConFirebase(),
             )
+          : null,
+      recordatorios: !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+          ? ServicioRecordatoriosLocales()
           : null,
     );
   }

@@ -21,6 +21,8 @@ import '../features/identity/domain/entities/usuario_academiapp.dart';
 import '../features/identity/presentation/pages/eliminar_cuenta_page.dart';
 import '../features/identity/presentation/pages/perfil_page.dart';
 import '../features/premium/domain/repositorio_premium.dart';
+import '../features/recordatorios/domain/recordatorios.dart';
+import '../features/enrollment/domain/pausa_plan.dart';
 import '../features/premium/presentation/premium_page.dart';
 import '../features/reportes/domain/reporte.dart';
 import '../features/reportes/presentation/reportar.dart';
@@ -126,10 +128,48 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
       ruta: _servicioRuta,
     ).cargar(usuarioId: uid, ahora: DateTime.now());
     final premium = await premiumF;
-    return contexto?.conPremium(
+    final completo = contexto?.conPremium(
       premiumHasta: premium?.premiumHasta,
       pruebaHasta: premium?.pruebaHasta,
     );
+    if (completo != null) _programarRecordatorios(completo);
+    return completo;
+  }
+
+  /// Se pide permiso para notificar una vez por sesión.
+  static bool _permisoPedido = false;
+
+  /// Vuelve a programar los recordatorios del teléfono con lo de hoy (los
+  /// anteriores se reemplazan). Si falla, la app sigue igual.
+  void _programarRecordatorios(ContextoAcademico contexto) {
+    final servicio = _d.recordatorios;
+    if (servicio == null) return;
+    final ahora = DateTime.now();
+    final dia = contexto.diaEstudiante;
+    final titulos = {for (final t in dia.temas) t.id: t.titulo};
+    final matricula = contexto.matricula;
+    final retomaEl = matricula.retomaEl;
+    final lista = planificarRecordatorios(
+      ahora: ahora,
+      proximosDias: dia.proximosDias,
+      tituloDe: (id) => titulos[id] ?? 'un tema nuevo',
+      practicados: {for (final item in contexto.ruta) ?item.temaId},
+      semana: dia.semana,
+      pausa: contexto.pausa(ahora),
+      retomaEl: retomaEl,
+      semanaRetoma: retomaEl == null
+          ? 0
+          : semanaDelPlan(matricula.fechaInicioAcademico, retomaEl),
+    );
+    Future<void> programar() async {
+      if (!_permisoPedido) {
+        _permisoPedido = true;
+        if (!await servicio.pedirPermiso()) return;
+      }
+      await servicio.programar(lista);
+    }
+
+    programar().catchError((Object _) {});
   }
 
   /// Premium (desde el perfil o el aviso de pausa). Al volver se recarga:

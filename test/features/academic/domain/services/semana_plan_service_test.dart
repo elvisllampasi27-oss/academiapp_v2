@@ -51,4 +51,19 @@ void main() {
       isNull,
     );
   });
+
+  test('próximos 7 días: desde hoy, con sus temas publicados', () {
+    final dias = proximosDiasDelCalendario(
+      calendario: calendario,
+      hoy: DateTime(2026, 10, 30, 9),
+      publicados: {'t29', 't30', 't35'},
+    );
+    // Viernes 30, sábado 31, (domingo no), lunes 2 y martes 3: ahí se
+    // acaban los 40 temas del plan.
+    expect(dias.first.fecha, DateTime(2026, 10, 30));
+    expect(dias.last.fecha, DateTime(2026, 11, 3));
+    expect(dias.length, 4);
+    expect(dias.first.actividades.map((a) => a.temaId), ['t30']);
+    expect(dias[2].actividades.map((a) => a.temaId), ['t35']);
+  });
 }
