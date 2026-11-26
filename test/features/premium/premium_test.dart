@@ -298,6 +298,7 @@ void main() {
           repositorio: repositorio,
           abrirEnlace: (_) async => true,
           ahora: () => hoy,
+          canal: CanalCompra.web,
         ),
       ),
     );
@@ -326,5 +327,97 @@ void main() {
     expect(repositorio.enviados, ['yape 0045812 S/ 15 BECA50']);
     expect(find.text('Tu pago está en revisión'), findsOneWidget);
     expect(find.text('Enviar captura por WhatsApp'), findsOneWidget);
+  });
+
+  group('Premium en Google Play', () {
+    Future<void> abrir(
+      WidgetTester tester,
+      RepositorioFalso repositorio, {
+      Future<void> Function()? onComprar,
+      String? precio,
+    }) async {
+      tester.view.physicalSize = const Size(800, 1800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PremiumPage(
+            uid: 'ana',
+            nombre: 'Ana',
+            correo: 'ana@mail.pe',
+            repositorio: repositorio,
+            abrirEnlace: (_) async => true,
+            ahora: () => hoy,
+            canal: CanalCompra.googlePlay,
+            onComprarPlay: onComprar,
+            precioPlay: precio,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    FilledButton boton(WidgetTester tester) => tester.widget<FilledButton>(
+      find.byWidgetPredicate((w) => w is FilledButton),
+    );
+
+    testWidgets('no muestra Yape, cupones ni pagos; compra aún apagada', (
+      tester,
+    ) async {
+      final repositorio = RepositorioFalso();
+      await repositorio.enviarPago(
+        uid: 'ana',
+        nombre: 'Ana',
+        correo: 'ana@mail.pe',
+        metodo: MetodoPago.yape,
+        operacion: '0045812',
+        monto: 35,
+      );
+      await abrir(tester, repositorio);
+
+      expect(find.text('987654321'), findsNothing);
+      expect(find.textContaining('Yape'), findsNothing);
+      expect(find.text('Cupón o beca (opcional)'), findsNothing);
+      expect(find.text('Mis pagos'), findsNothing);
+      expect(find.text('Tu pago está en revisión'), findsNothing);
+      expect(find.textContaining('S/'), findsNothing);
+      expect(find.text('Premium por 90 días'), findsOneWidget);
+      expect(find.text('Obtener Premium'), findsOneWidget);
+      expect(boton(tester).onPressed, isNull);
+      expect(find.text('La compra estará disponible pronto.'), findsOneWidget);
+    });
+
+    testWidgets('con la compra lista, el botón la abre', (tester) async {
+      var compras = 0;
+      await abrir(
+        tester,
+        RepositorioFalso(),
+        onComprar: () async => compras++,
+        precio: 'S/ 35.00',
+      );
+
+      expect(find.text('Premium: S/ 35.00 por 90 días'), findsOneWidget);
+      await tester.tap(find.text('Obtener Premium · S/ 35.00'));
+      await tester.pumpAndSettle();
+      expect(compras, 1);
+      expect(
+        find.textContaining('política de Google Play'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('si la compra falla, avisa', (tester) async {
+      await abrir(
+        tester,
+        RepositorioFalso(),
+        onComprar: () async => throw StateError('cancelada'),
+      );
+      await tester.tap(find.text('Obtener Premium'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('No se pudo completar la compra. Inténtalo de nuevo.'),
+        findsOneWidget,
+      );
+    });
   });
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -24,7 +25,16 @@ Uri? enlaceWhatsapp(String numero, String mensaje) {
   );
 }
 
-/// "Hazte Premium": beneficios, pago por Yape/Plin y estado de sus pagos.
+/// Por dónde compra Premium este alumno.
+///
+/// Google Play no deja cobrar contenido digital por fuera de su sistema ni
+/// enlazar a otro medio de pago, así que en Android solo existe la compra
+/// de Play. El pago con Yape, Plin y cupones queda para la web.
+enum CanalCompra { googlePlay, web }
+
+CanalCompra canalActual() => kIsWeb ? CanalCompra.web : CanalCompra.googlePlay;
+
+/// "Hazte Premium": beneficios y la forma de pago de [CanalCompra].
 class PremiumPage extends StatefulWidget {
   final String uid;
   final String nombre;
@@ -36,6 +46,15 @@ class PremiumPage extends StatefulWidget {
   final Future<bool> Function(Uri enlace) abrirEnlace;
   final DateTime Function() ahora;
 
+  /// null: el de esta plataforma ([canalActual]).
+  final CanalCompra? canal;
+
+  /// Abre la compra de Google Play. null mientras no esté disponible.
+  final Future<void> Function()? onComprarPlay;
+
+  /// Precio que muestra Google Play ("S/ 35.00"), si ya se conoce.
+  final String? precioPlay;
+
   const PremiumPage({
     super.key,
     required this.uid,
@@ -45,6 +64,9 @@ class PremiumPage extends StatefulWidget {
     this.elegirFoto,
     this.abrirEnlace = _abrirExterno,
     this.ahora = DateTime.now,
+    this.canal,
+    this.onComprarPlay,
+    this.precioPlay,
   });
 
   @override
@@ -61,7 +83,10 @@ class _PremiumPageState extends State<PremiumPage> {
   String? _avisoCupon;
   Uint8List? _foto;
   bool _enviando = false;
+  bool _comprando = false;
   String? _error;
+
+  bool get _enPlay => (widget.canal ?? canalActual()) == CanalCompra.googlePlay;
 
   @override
   void dispose() {
@@ -142,6 +167,25 @@ class _PremiumPageState extends State<PremiumPage> {
     }
   }
 
+  Future<void> _comprarPlay(Future<void> Function() comprar) async {
+    setState(() {
+      _comprando = true;
+      _error = null;
+    });
+    try {
+      await comprar();
+      if (!mounted) return;
+      setState(() => _comprando = false);
+      _recargar();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _comprando = false;
+        _error = 'No se pudo completar la compra. Inténtalo de nuevo.';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -173,13 +217,15 @@ class _PremiumPageState extends State<PremiumPage> {
                 premium: premium,
                 prueba: estado.enPrueba,
                 hasta: estado.premiumHasta,
-                precio: c.precio,
+                precio: _enPlay ? widget.precioPlay : 'S/ ${c.precio}',
                 dias: c.diasPremium,
               ),
               const SizedBox(height: 16),
               _Beneficios(configuracion: c),
               const SizedBox(height: 16),
-              if (pendiente != null)
+              if (_enPlay)
+                _compraPlay(c, premium)
+              else if (pendiente != null)
                 _Pendiente(
                   pago: pendiente,
                   onWhatsapp: c.whatsapp.isEmpty
@@ -192,7 +238,7 @@ class _PremiumPageState extends State<PremiumPage> {
                 )
               else
                 _formulario(c, premium),
-              if (estado.pagos.isNotEmpty) ...[
+              if (!_enPlay && estado.pagos.isNotEmpty) ...[
                 const SizedBox(height: 24),
                 const Text(
                   'Mis pagos',
@@ -204,6 +250,66 @@ class _PremiumPageState extends State<PremiumPage> {
             ]),
           );
         },
+      ),
+    );
+  }
+
+  Widget _compraPlay(ConfiguracionAcademia c, bool premium) {
+    final comprar = widget.onComprarPlay;
+    final precio = widget.precioPlay;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              premium ? 'Extender Premium' : 'Hazte Premium',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Pago único por ${c.diasPremium} días con Google Play. '
+              'No se renueva solo.',
+              style: const TextStyle(color: ColoresApp.apagado),
+            ),
+            if (_error case final e?)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(
+                  e,
+                  style: const TextStyle(color: ColoresApp.naranja),
+                ),
+              ),
+            const SizedBox(height: 14),
+            FilledButton(
+              onPressed: comprar == null || _comprando
+                  ? null
+                  : () => _comprarPlay(comprar),
+              child: _comprando
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(
+                      precio == null
+                          ? 'Obtener Premium'
+                          : 'Obtener Premium · $precio',
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                comprar == null
+                    ? 'La compra estará disponible pronto.'
+                    : 'Los reembolsos siguen la política de Google Play. '
+                          'Si eliminas tu cuenta, Premium no se devuelve.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: ColoresApp.apagado, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -407,7 +513,9 @@ class _Encabezado extends StatelessWidget {
   /// Es la prueba gratis: termina el día anterior a [hasta] (el lunes).
   final bool prueba;
   final DateTime? hasta;
-  final int precio;
+
+  /// Ya con moneda ("S/ 35"). null: todavía no se conoce.
+  final String? precio;
   final int dias;
 
   const _Encabezado({
@@ -426,7 +534,12 @@ class _Encabezado extends StatelessWidget {
 
   String get _detalle {
     final fin = hasta;
-    if (!premium || fin == null) return 'Premium: S/ $precio por $dias días';
+    if (!premium || fin == null) {
+      final p = precio;
+      return p == null
+          ? 'Premium por $dias días'
+          : 'Premium: $p por $dias días';
+    }
     if (prueba) {
       final ultimo = fin.subtract(const Duration(days: 1));
       return 'Todo incluido hasta el ${fechaCorta(ultimo).toLowerCase()}';
