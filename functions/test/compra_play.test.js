@@ -51,7 +51,7 @@ function baseDeDatos(inicial = {}) {
 
 const pedido = (uid = UID) => ({
   auth: { uid, token: { name: 'Ana Quispe', email: 'ana@mail.pe' } },
-  data: { productoId: 'premium_90_dias', token: TOKEN },
+  data: { productoId: 'sinchi_premium', token: TOKEN },
 });
 
 function dependencias(db, compra, extra = {}) {

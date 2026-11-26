@@ -340,6 +340,12 @@ class _PagosPageState extends State<PagosPage> {
               'reembolsos se ven en Play Console → Gestión de pedidos.',
               style: TextStyle(color: paleta.tenue, fontSize: 12),
             )
+          else if (p.metodo == MetodoPago.culqi)
+            Text(
+              'Lo cobró Culqi. Lo que llega (sin su comisión) y las '
+              'devoluciones se ven en CulqiPanel.',
+              style: TextStyle(color: paleta.tenue, fontSize: 12),
+            )
           else
             Align(
               alignment: Alignment.centerLeft,

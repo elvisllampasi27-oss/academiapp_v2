@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:academiapp_v2/core/enlaces.dart';
 import 'package:academiapp_v2/features/premium/domain/compra_play.dart';
 import 'package:academiapp_v2/features/premium/domain/configuracion_academia.dart';
 import 'package:academiapp_v2/features/premium/domain/cupon.dart';
@@ -330,6 +331,58 @@ void main() {
     expect(repositorio.enviados, ['yape 0045812 S/ 15 BECA50']);
     expect(find.text('Tu pago está en revisión'), findsOneWidget);
     expect(find.text('Enviar captura por WhatsApp'), findsOneWidget);
+  });
+
+  test('llave pública de Culqi: se guarda y se valida', () {
+    final c = ConfiguracionAcademia.desdeMapa({
+      'culqiLlavePublica': ' pk_test_AbC123456789 ',
+    });
+    expect(c.culqiLlavePublica, 'pk_test_AbC123456789');
+    expect(c.pagoEnLinea, isTrue);
+    expect(c.aMapa()['culqiLlavePublica'], 'pk_test_AbC123456789');
+    expect(const ConfiguracionAcademia().pagoEnLinea, isFalse);
+    expect(llavePublicaCulqiValida('pk_live_AbC123456789'), isTrue);
+    expect(llavePublicaCulqiValida('sk_live_AbC123456789'), isFalse);
+    expect(llavePublicaCulqiValida('pk_live_'), isFalse);
+  });
+
+  testWidgets('web con Culqi: abre la página de pago, sin Yape manual', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final abiertos = <Uri>[];
+    final repositorio = RepositorioFalso()
+      ..configuracion = const ConfiguracionAcademia(
+        precio: 35,
+        yapeNumero: '987654321',
+        culqiLlavePublica: 'pk_test_AbC123456789',
+      );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PremiumPage(
+          uid: 'ana',
+          nombre: 'Ana',
+          correo: 'ana@mail.pe',
+          repositorio: repositorio,
+          abrirEnlace: (enlace) async {
+            abiertos.add(enlace);
+            return true;
+          },
+          ahora: () => hoy,
+          canal: CanalCompra.web,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('987654321'), findsNothing);
+    expect(find.text('Cupón o beca (opcional)'), findsNothing);
+    expect(find.textContaining('S/ 35 por 90 días'), findsWidgets);
+    await tester.tap(find.text('Pagar con Yape o tarjeta'));
+    await tester.pumpAndSettle();
+    expect(abiertos, [Uri.parse(enlacePagoWeb)]);
   });
 
   group('Premium en Google Play', () {

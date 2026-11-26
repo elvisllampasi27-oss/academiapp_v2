@@ -3,7 +3,7 @@
 /**
  * Compra de Premium con Google Play (Android).
  *
- * La app compra el producto "premium_90_dias" (producto único, no una
+ * La app compra el producto "sinchi_premium" (producto único, no una
  * suscripción) y manda aquí el token de la compra. Esta función lo
  * confirma con la API de Google Play, da los días de Premium una sola vez
  * por token y consume la compra para que el alumno pueda volver a comprar
@@ -17,12 +17,12 @@ const crypto = require('node:crypto');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { logger } = require('firebase-functions');
 const admin = require('firebase-admin');
-const { Timestamp, FieldValue } = require('firebase-admin/firestore');
 const { leerConfiguracion } = require('../comun/plan');
+const { premiumNuevoHasta, aplicarPagoAprobado } = require('./dar_premium');
 
 const PAQUETE = 'pe.sinchi.academia';
-const PRODUCTO_PREMIUM = 'premium_90_dias';
-const DIA_MS = 24 * 60 * 60 * 1000;
+// Los días los pone el panel (config/academia.diasPremium) al comprar.
+const PRODUCTO_PREMIUM = 'sinchi_premium';
 const API = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applications';
 const ALCANCE = 'https://www.googleapis.com/auth/androidpublisher';
 
@@ -44,12 +44,6 @@ const idPagoPlay = (token) => `googlePlay__${sha256(token).slice(0, 40)}`;
  * (applicationUserName). Debe coincidir con cuentaOfuscadaPlay en Dart.
  */
 const cuentaOfuscada = (uid) => sha256(`sinchi:${uid}`);
-
-/** Igual que premiumNuevoHasta en Dart: suma a lo que le queda. */
-function premiumNuevoHasta(actualMs, ahoraMs, dias) {
-  const base = actualMs != null && actualMs > ahoraMs ? actualMs : ahoraMs;
-  return base + dias * DIA_MS;
-}
 
 /** El token que manda la app: texto no vacío y de tamaño razonable. */
 function tokenValido(token) {
@@ -89,41 +83,27 @@ async function activarCompraPlay({
       return { nueva: false, premiumHastaMs: hasta ? hasta.toMillis() : 0 };
     }
 
-    const anterior = usuario.exists ? usuario.data().premiumHasta : null;
-    const anteriorMs = anterior && typeof anterior.toMillis === 'function'
-      ? anterior.toMillis()
-      : null;
-    const nuevoMs = premiumNuevoHasta(anteriorMs, ahoraMs, dias);
-    const nuevo = Timestamp.fromMillis(nuevoMs);
-
-    tx.set(usuarioRef, { premiumHasta: nuevo }, { merge: true });
-    tx.set(pagoRef, {
-      usuarioId: uid,
-      nombre,
-      correo,
-      // Precio de lista (config/academia), para los ingresos del panel. Lo
-      // que llega de verdad, sin la comisión de Google, está en Play Console.
-      monto: Math.max(0, Math.round(Number(precio) || 0)),
-      metodo: 'googlePlay',
-      operacion: compra.orderId || '',
-      estado: 'aprobado',
-      dePrueba: compra.purchaseType === DE_PRUEBA,
-      creadoEn: FieldValue.serverTimestamp(),
-      revisadoEn: FieldValue.serverTimestamp(),
+    const nuevoMs = aplicarPagoAprobado(tx, {
+      db,
+      uid,
+      usuario,
+      pagoRef,
+      pago: {
+        nombre,
+        correo,
+        // Precio de lista (config/academia), para los ingresos del panel.
+        // Lo que llega de verdad, sin la comisión de Google, está en Play
+        // Console.
+        monto: Math.max(0, Math.round(Number(precio) || 0)),
+        metodo: 'googlePlay',
+        operacion: compra.orderId || '',
+        dePrueba: compra.purchaseType === DE_PRUEBA,
+      },
+      dias,
+      ahoraMs,
       revisadoPor: 'Google Play',
-      premiumHasta: nuevo,
-      premiumAnterior: anteriorMs == null ? null : Timestamp.fromMillis(anteriorMs),
-    });
-    const fecha = new Date(nuevoMs - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    tx.set(db.collection('registro_admin').doc(), {
-      tipo: 'pago',
-      usuarioId: uid,
-      descripcion: `Compró Premium en Google Play (${compra.orderId || 'sin N.º de pedido'}`
-        + `${compra.purchaseType === DE_PRUEBA ? ', compra de prueba' : ''}): `
-        + `hasta el ${fecha}.`,
-      adminUid: 'sistema',
-      adminCorreo: 'Google Play',
-      fecha: FieldValue.serverTimestamp(),
+      descripcion: (fin) => `Compró Premium en Google Play (${compra.orderId || 'sin N.º de pedido'}`
+        + `${compra.purchaseType === DE_PRUEBA ? ', compra de prueba' : ''}): hasta el ${fin}.`,
     });
     return { nueva: true, premiumHastaMs: nuevoMs };
   });

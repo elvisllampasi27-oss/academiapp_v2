@@ -395,7 +395,7 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
                       indice: iFila,
                       child: FilaDato(
                         '${fechaBreve(pago.creadoEn)} · '
-                        '${pago.metodo == MetodoPago.yape || pago.metodo == MetodoPago.plin ? 'S/ ${pago.monto} ${pago.metodo.etiqueta}' : pago.metodo.etiqueta}',
+                        '${pago.metodo == MetodoPago.yape || pago.metodo == MetodoPago.plin || pago.metodo == MetodoPago.culqi ? 'S/ ${pago.monto} ${pago.metodo.etiqueta}' : pago.metodo.etiqueta}',
                         switch (pago.estado) {
                           EstadoPago.pendiente => 'Por revisar',
                           EstadoPago.aprobado => 'Aprobado',

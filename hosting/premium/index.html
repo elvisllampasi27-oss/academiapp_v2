@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Premium · Sinchi</title>
+  <meta name="description" content="Hazte Premium en Sinchi con Yape o tarjeta.">
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: #0B0C10; color: #E4E4E7;
+      font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 460px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1 { font-size: 1.7rem; line-height: 1.2; margin: 0 0 4px; color: #fff; }
+    h2 { font-size: 1.15rem; margin: 0 0 6px; color: #fff; }
+    p { margin: .4em 0; }
+    a { color: #7DD3FC; }
+    .tenue { color: #A1A1AA; }
+    .chico { font-size: .85rem; }
+    .tarjeta {
+      background: #15171E; border: 1px solid #262A35; border-radius: 16px;
+      padding: 18px; margin: 18px 0;
+    }
+    .precio { font-size: 2.2rem; font-weight: 800; color: #FBBF24; margin: 6px 0; }
+    .tachado { text-decoration: line-through; color: #71717A; font-size: 1.1rem; margin-left: 8px; }
+    button, input {
+      font: inherit; border-radius: 12px; width: 100%; padding: 12px 14px;
+    }
+    input { background: #0B0C10; color: #fff; border: 1px solid #3F4350; margin: 6px 0; }
+    button { border: 0; cursor: pointer; font-weight: 700; margin-top: 10px; }
+    button:disabled { opacity: .55; cursor: default; }
+    .principal { background: #FBBF24; color: #111; }
+    .secundario { background: #262A35; color: #E4E4E7; }
+    .fila { display: flex; gap: 8px; align-items: center; }
+    .fila input { flex: 1; }
+    .fila button { width: auto; margin-top: 0; }
+    .error { color: #FB923C; }
+    .ok { color: #7DD3FC; }
+    [hidden] { display: none !important; }
+    footer { margin-top: 2.5em; color: #8B8B95; font-size: .85rem; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Sinchi Premium</h1>
+  <p class="tenue">Academia preuniversitaria en línea para postulantes a la UNSCH.</p>
+
+  <section id="cargando"><p class="tenue">Cargando…</p></section>
+
+  <section id="pronto" hidden>
+    <div class="tarjeta">
+      <h2>Muy pronto</h2>
+      <p>El pago en línea estará disponible pronto.</p>
+    </div>
+  </section>
+
+  <section id="ingreso" hidden>
+    <div class="tarjeta">
+      <h2>Inicia sesión</h2>
+      <p class="tenue">Con la misma cuenta que usas en la app Sinchi.</p>
+      <button id="google" class="secundario" type="button">Continuar con Google</button>
+      <form id="formulario-correo">
+        <input id="correo" type="email" autocomplete="email" placeholder="Correo" required>
+        <input id="clave" type="password" autocomplete="current-password" placeholder="Contraseña" required>
+        <button class="secundario" type="submit">Entrar con correo</button>
+      </form>
+      <p id="error-ingreso" class="error chico" hidden></p>
+      <p class="tenue chico">¿Todavía no tienes cuenta? Créala en la app Sinchi y vuelve aquí.</p>
+    </div>
+  </section>
+
+  <section id="cuenta" hidden>
+    <p>Hola, <strong id="nombre"></strong> <span class="tenue chico" id="correo-cuenta"></span></p>
+    <p id="estado" class="tenue"></p>
+
+    <div class="tarjeta" id="tarjeta-pago">
+      <h2>Premium por <span id="dias">90</span> días</h2>
+      <p><span class="precio" id="monto">S/ —</span><span class="tachado" id="precio-normal" hidden></span></p>
+      <p class="tenue chico">Pago único con Yape o tarjeta. No se renueva solo. Si todavía tienes Premium, los días se suman.</p>
+
+      <div class="fila">
+        <input id="cupon" placeholder="Cupón o beca (opcional)" autocomplete="off">
+        <button id="aplicar" class="secundario" type="button">Aplicar</button>
+      </div>
+      <p id="aviso-cupon" class="chico" hidden></p>
+
+      <button id="pagar" class="principal" type="button" disabled>Pagar con Yape o tarjeta</button>
+      <p id="error-pago" class="error chico" hidden></p>
+      <p class="tenue chico">Una vez activado no hay reembolso, tampoco si eliminas tu cuenta.</p>
+    </div>
+
+  </section>
+
+  <section id="listo" hidden>
+    <div class="tarjeta">
+      <h2>¡Listo, ya tienes Premium!</h2>
+      <p id="listo-hasta"></p>
+      <p>Abre la app Sinchi: ya lo verás activado.</p>
+    </div>
+  </section>
+
+  <button id="salir" class="secundario" type="button" hidden>Cerrar sesión</button>
+
+  <footer>
+    Sinchi · Elvis Brayan Llampasi Espino (RUC 10705212631) ·
+    <a href="/privacidad/">Privacidad</a>
+  </footer>
+</main>
+<script src="https://js.culqi.com/checkout-js"></script>
+<script src="https://3ds.culqi.com" defer></script>
+<script type="module" src="premium.js"></script>
+</body>
+</html>

@@ -38,7 +38,9 @@ git checkout -- firebase.json # flutterfire lo reescribe; ver abajo
 Cambiar en el código el ID viejo por el nuevo (buscar `academiapp-v2-7b9ce`):
 
 - `firebase.json` → los `appId` de Android y web (sección `flutter`).
-- `lib/core/enlaces.dart` → enlace de la política de privacidad.
+- `lib/core/enlaces.dart` → enlaces de la política de privacidad y del
+  pago web (`/premium/`). La página `hosting/premium/` no se toca: toma
+  la configuración del propio Hosting.
 - `lib/admin/importar/importar_json.dart` y
   `lib/admin/examenes/editor_pregunta.dart` → dirección del hosting.
 - `tool/cargar_examenes.js` (`URL_HOSTING`) y `tool/seed_academico_v2.js`
@@ -79,12 +81,12 @@ funciones que ya están escritas y probadas:
 | `generarPreguntas` | Generar preguntas con IA desde el panel |
 | `preguntarTutor` | Tutor con IA |
 | `verificarCompraPlay` | Confirmar la compra de Premium en Android y dar los días |
-| Cobro con Culqi | Premium en la web (se agrega en el próximo parche) |
+| `cotizarPremiumWeb`, `cobrarPremiumWeb` | Premium en la web con Culqi (Yape o tarjeta) y canje de becas |
 
 Antes de eso, la app responde "estará disponible pronto" donde haga falta,
 y la matrícula se hace desde el panel.
 
-## 3. Cuentas para cobrar (modelo mixto, pago único de 90 días)
+## 3. Cuentas para cobrar (modelo mixto, pago único)
 
 - **App de Android**: solo Google Play Billing (la política de Play lo
   exige en Perú). Nada de Yape, enlaces ni precios de la web dentro de la
@@ -93,8 +95,13 @@ y la matrícula se hace desde el panel.
   - Subir al menos una versión a *Prueba interna* (Play no deja crear
     productos sin una versión subida).
   - **Monetizar → Productos → Productos integrados → Crear**: ID
-    **`premium_90_dias`** (exacto: es el que usa la app y la función),
-    nombre "Premium 90 días", precio en soles. Activarlo.
+    **`sinchi_premium`** (exacto: es el que usa la app y la función),
+    nombre "Sinchi Premium", precio en soles. Activarlo.
+  - Precio y días: los días los pone el panel (Configuración → Plan
+    Premium) y valen para la app y la web. El precio de la web también
+    sale del panel, pero **el de Android solo se cambia aquí, en Play
+    Console** (regla de Google). Al pasar a una etapa de repaso (menos
+    días, otro precio), cambiar los dos lugares el mismo día.
   - Google Cloud (proyecto nuevo) → **APIs y servicios** → activar
     **Google Play Android Developer API**.
   - Play Console → **Usuarios y permisos → Invitar** a la cuenta de
@@ -110,9 +117,29 @@ y la matrícula se hace desde el panel.
     cuando haya ventas: leer los reembolsos con la API *Voided Purchases*.
 - **Web** (página `/premium` y la versión web de Sinchi): **Culqi** con
   Yape y tarjetas.
-  - Cuenta de Culqi con el RUC 10705212631 y una cuenta bancaria.
-  - Las claves de Culqi van como *secretos* de las funciones; nunca en la
-    app ni en git.
+  - Cuenta de Culqi con el RUC 10705212631 y una cuenta bancaria. Pedir
+    que activen **Yape** y **3DS** en la cuenta.
+  - Probar primero con las llaves de **prueba** (CulqiPanel → Desarrollo →
+    API Keys; tarjetas de prueba en la documentación de Culqi):
+    ```powershell
+    firebase functions:secrets:set CULQI_LLAVE_SECRETA   # pega la sk_test_… cuando la pida
+    firebase deploy --only functions:cotizarPremiumWeb,functions:cobrarPremiumWeb
+    ```
+    y en el panel → Configuración → **Llave pública de Culqi** la
+    `pk_test_…`. Abrir `https://<ID-NUEVO>.web.app/premium/`, pagar, y
+    revisar que el alumno quede Premium y el pago salga en el panel.
+  - Para cobrar de verdad: repetir con la `sk_live_…` (el mismo comando
+    la reemplaza; volver a desplegar esas dos funciones) y la `pk_live_…`
+    en el panel.
+  - La llave **secreta** (`sk_…`) solo va en ese comando: nunca en el
+    panel, la app, la página, el chat ni git. La pública sí es pública.
+  - Si CulqiPanel pide los dominios donde corre el checkout, agregar el
+    del hosting (`<ID-NUEVO>.web.app` y el dominio propio, si hay).
+  - Con la llave pública puesta, la web deja de mostrar el pago manual por
+    Yape: el cobro y el canje de becas pasan a ser automáticos. Borrar la
+    llave del panel vuelve al pago manual.
+  - Las devoluciones se hacen en CulqiPanel; por ahora el Premium no se
+    quita solo (igual que en Google Play).
 - El panel conserva "Dar Premium" para casos especiales.
 
 ## 4. Antes de publicar en Play Store

@@ -37,6 +37,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
   final _whatsapp = TextEditingController();
   final _tutorGratis = TextEditingController();
   final _tutorPremium = TextEditingController();
+  final _culqi = TextEditingController();
   bool _foto = false;
   bool _simulacroPremium = true;
   bool _guardando = false;
@@ -51,6 +52,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
     _whatsapp.text = c.whatsapp;
     _tutorGratis.text = '${c.tutorGratis}';
     _tutorPremium.text = '${c.tutorPremium}';
+    _culqi.text = c.culqiLlavePublica;
     _foto = c.fotoComprobante;
     _simulacroPremium = c.simulacroSoloPremium;
     return (c, acciones);
@@ -66,6 +68,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
       _whatsapp,
       _tutorGratis,
       _tutorPremium,
+      _culqi,
     ]) {
       c.dispose();
     }
@@ -79,7 +82,11 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
     final dias = _entero(_dias);
     final gratis = _entero(_tutorGratis);
     final premium = _entero(_tutorPremium);
-    final error = precio == null || precio < 0
+    final culqi = _culqi.text.trim();
+    final error = culqi.isNotEmpty && !llavePublicaCulqiValida(culqi)
+        ? 'La llave pública de Culqi empieza con pk_live_ o pk_test_. '
+              'La secreta (sk_) nunca va aquí.'
+        : precio == null || precio < 0
         ? 'Revisa el precio.'
         : dias == null || dias < 1
         ? 'Revisa los días de Premium.'
@@ -103,6 +110,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
           tutorGratis: gratis!,
           tutorPremium: premium!,
           simulacroSoloPremium: _simulacroPremium,
+          culqiLlavePublica: culqi,
         ),
       );
       if (!mounted) return;
@@ -153,6 +161,15 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                       _campo(_precio, 'Precio (S/)', numero: true),
                       _campo(_dias, 'Duración (días)', numero: true),
                     ),
+                    Text(
+                      'Se aplican desde la siguiente compra (por ejemplo, '
+                      'menos días y otro precio en la etapa de repaso). Los '
+                      'días valen para la app y la web. El precio lo cobra '
+                      'la web; en la app de Android el precio lo pone Google '
+                      'Play: cámbialo también en Play Console (producto '
+                      'sinchi_premium).',
+                      style: TextStyle(color: p.tenue, fontSize: 12),
+                    ),
                   ]),
                   _tarjeta('Pago por Yape o Plin', [
                     _par(
@@ -175,6 +192,17 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
                         'WhatsApp.',
                         style: TextStyle(color: p.tenue, fontSize: 12),
                       ),
+                    ),
+                  ]),
+                  _tarjeta('Pago en línea en la web (Culqi)', [
+                    _campo(_culqi, 'Llave pública de Culqi (pk_live_…)'),
+                    Text(
+                      'Con la llave puesta, la página /premium/ y la versión '
+                      'web cobran con Yape o tarjeta y activan Premium al '
+                      'instante. Vacía, la web usa el pago por Yape de '
+                      'arriba. La llave secreta va como secreto de las '
+                      'funciones, nunca aquí (ver docs/LANZAMIENTO.md).',
+                      style: TextStyle(color: p.tenue, fontSize: 12),
                     ),
                   ]),
                   _tarjeta('Plan gratis y Premium', [

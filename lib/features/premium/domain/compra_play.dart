@@ -3,9 +3,11 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 
-/// Producto único de Google Play (no suscripción): 90 días de Premium.
-/// Se crea con este mismo id en Play Console → Productos integrados.
-const productoPremiumPlay = 'premium_90_dias';
+/// Producto único de Google Play (no suscripción). Los días que da los
+/// pone el panel (config/academia); el precio, Play Console. Se crea con
+/// este mismo id en Play Console → Productos integrados (no se puede
+/// cambiar después, por eso no lleva los días en el nombre).
+const productoPremiumPlay = 'sinchi_premium';
 
 /// Cuenta que se manda a Google Play con la compra, para que el servidor
 /// compruebe que el token es de este alumno. Sin datos personales. Debe

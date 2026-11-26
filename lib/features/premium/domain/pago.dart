@@ -10,7 +10,11 @@ enum MetodoPago {
 
   /// Compra en la app de Android. La crea el servidor (verificarCompraPlay);
   /// en operacion va el N.º de pedido de Google Play (GPA.…).
-  googlePlay('Google Play');
+  googlePlay('Google Play'),
+
+  /// Pago en la web (hosting/premium/) con Culqi: Yape o tarjeta. Lo crea el
+  /// servidor (cobrarPremiumWeb); en operacion va el id del cargo (chr_…).
+  culqi('Yape o tarjeta (Culqi)');
 
   final String etiqueta;
   const MetodoPago(this.etiqueta);

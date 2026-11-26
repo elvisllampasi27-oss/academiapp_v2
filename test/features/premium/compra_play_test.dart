@@ -39,7 +39,7 @@ void main() {
 
     expect(await s.comprar('ana'), ResultadoCompra.activada);
     expect(tienda.cuentas, [cuentaOfuscadaPlay('ana')]);
-    expect(verificados, ['premium_90_dias token-1']);
+    expect(verificados, ['sinchi_premium token-1']);
     // El servidor ya la consumió: no hace falta confirmarla aquí.
     expect(tienda.completadas, isEmpty);
     await Future<void>.delayed(Duration.zero);
@@ -132,7 +132,7 @@ void main() {
     ]);
     await Future<void>.delayed(Duration.zero);
     await Future<void>.delayed(Duration.zero);
-    expect(verificados, ['premium_90_dias token-viejo']);
+    expect(verificados, ['sinchi_premium token-viejo']);
     expect(activaciones, 1);
   });
 

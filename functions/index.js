@@ -45,6 +45,11 @@ const { verificarCompraPlay } = require('./src/premium/compra_play');
 
 exports.verificarCompraPlay = verificarCompraPlay;
 
+const culqi = require('./src/premium/cobro_culqi');
+
+exports.cotizarPremiumWeb = culqi.cotizarPremiumWeb;
+exports.cobrarPremiumWeb = culqi.cobrarPremiumWeb;
+
 const { estadoSistema } = require('./src/sistema/estado');
 
 exports.estadoSistema = estadoSistema;
