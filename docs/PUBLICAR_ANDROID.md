@@ -22,6 +22,13 @@ flutterfire configure --project=academiapp-v2-7b9ce --platforms=android,web --an
 *Comprueba:* `git diff lib/firebase_options.dart` cambia solo la parte de
 Android; el `appId` de la web sigue siendo `1:952131163064:web:81f9b5f79794bc04fff54d`.
 
+> **Cuidado:** `flutterfire configure` reescribe `firebase.json` y borra las
+> secciones de Firestore, Storage, funciones, emuladores y hosting. Después
+> de correrlo, recupera el archivo con `git checkout -- firebase.json` y
+> cambia a mano solo el `appId` de Android. Para actualizar
+> `google-services.json` (por ejemplo, tras agregar huellas SHA) es más
+> seguro descargarlo desde la consola de Firebase.
+
 ## 2. Huellas SHA (sin esto falla el ingreso con Google)
 
 Firebase necesita las huellas de cada clave que firma la app. La de pruebas
@@ -39,8 +46,9 @@ digital.
 > `C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe`
 > (`flutter doctor -v` muestra la ruta de Java).
 
-Después de agregar las huellas, vuelve a correr el `flutterfire configure`
-del paso 1 para que `google-services.json` las incluya.
+Después de agregar las huellas, descarga de nuevo `google-services.json`
+desde la consola (tarjeta de la app Android) y reemplaza el de
+`android/app/`.
 
 *Comprueba:* `flutter run` en el celular → ingresar con Google funciona.
 
@@ -72,7 +80,20 @@ keytool -list -v -keystore "$env:USERPROFILE\sinchi-upload.jks" -alias upload
 
 *Comprueba:* `git status` no muestra `key.properties` ni el `.jks`.
 
-## 4. Compilar para Play Store
+## 4. Política de privacidad
+
+Play Store pide un enlace público. La política está en
+`hosting/privacidad/index.html`; completa los campos `[COMPLETAR]` y
+publícala (funciona en el plan gratis):
+
+```powershell
+firebase deploy --only hosting
+```
+
+*Comprueba:* abre https://academiapp-v2-7b9ce.web.app/privacidad/ ; ese es
+el enlace que va en Play Console.
+
+## 5. Compilar para Play Store
 
 ```powershell
 flutter build appbundle
@@ -87,7 +108,7 @@ lanzamiento → Configuración → Integridad de la app, copia el SHA1 y SHA256 
 la **clave de firma de apps** y agrégalos también en Firebase. Si no, el
 ingreso con Google falla en las apps instaladas desde Play Store.
 
-## 5. Limpieza
+## 6. Limpieza
 
 Cuando el ingreso con correo y con Google funcione con `pe.sinchi.academia`,
 borra la app Android vieja (`pe.edu.unsch.academiapp_v2`) en Firebase →
