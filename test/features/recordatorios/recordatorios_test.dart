@@ -92,7 +92,10 @@ void main() {
   test('ya pagó: avisa el lunes en que retoma y nada antes', () {
     final r = planificarRecordatorios(
       ahora: ahora,
-      proximosDias: [...proximos, dia(DateTime(2026, 11, 30), ['e', 'f'])],
+      proximosDias: [
+        ...proximos,
+        dia(DateTime(2026, 11, 30), ['e', 'f']),
+      ],
       tituloDe: titulo,
       practicados: const {},
       semana: semana,

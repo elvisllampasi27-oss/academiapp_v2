@@ -48,8 +48,7 @@ DateTime _a(DateTime dia, int hora) =>
 String _lista(List<String> textos) => switch (textos.length) {
   0 => '',
   1 => textos.first,
-  _ =>
-    '${textos.sublist(0, textos.length - 1).join(', ')} y ${textos.last}',
+  _ => '${textos.sublist(0, textos.length - 1).join(', ')} y ${textos.last}',
 };
 
 /// Qué recordatorios programar al abrir la app. Se vuelven a calcular cada
@@ -120,7 +119,9 @@ List<Recordatorio> planificarRecordatorios({
     agregar(
       _idDia + offset,
       _a(soloFecha, horaTemasDelDia),
-      temas.length == 1 ? 'Hoy te toca 1 tema' : 'Hoy te tocan ${temas.length} temas',
+      temas.length == 1
+          ? 'Hoy te toca 1 tema'
+          : 'Hoy te tocan ${temas.length} temas',
       _lista(temas),
     );
     if (offset == 0) {
