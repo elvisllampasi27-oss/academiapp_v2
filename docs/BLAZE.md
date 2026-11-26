@@ -1,5 +1,8 @@
 # Pasar a Blaze (producción)
 
+> Primero mira `docs/LANZAMIENTO.md`: Blaze se activa en el proyecto nuevo
+> a nombre del Gmail, al final, cuando el contenido esté listo.
+
 Hoy todo lo que necesita servidor o archivos se prueba con emuladores. Esta es
 la lista para el día que se active Blaze, en orden. Cada paso dice cómo
 comprobar que salió bien. **Nunca pegues claves en el chat ni en git.**
