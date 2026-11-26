@@ -35,6 +35,7 @@ class RepositorioMatriculaFirestore implements RepositorioMatricula {
       fechaFin: datos['fechaFin'] == null
           ? null
           : (datos['fechaFin'] as Timestamp).toDate(),
+      retomaEl: (datos['retomaEl'] as Timestamp?)?.toDate(),
       estado: _convertirEstado(datos['estado'] as String),
     );
   }

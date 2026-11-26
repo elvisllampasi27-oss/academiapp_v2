@@ -19,42 +19,9 @@ const AHORA = Date.parse('2026-12-01T15:00:00Z');
 const UID = 'alumnoUid1234567890';
 const TOKEN = 'tkn_test_AbCdEf123456';
 
-/** Firestore de mentira: get directo, transacciones e incrementos. */
-function baseDeDatos(inicial = {}) {
-  const datos = inicial;
-  const ruta = (r) => r.path.split('/');
-  let n = 0;
-  const leer = (r) => {
-    const [c, id] = ruta(r);
-    const d = datos[c] && datos[c][id];
-    return { exists: d != null, data: () => d };
-  };
-  const escribir = (r, d, opciones) => {
-    const [c, id] = ruta(r);
-    datos[c] = datos[c] || {};
-    const previo = (opciones && opciones.merge && datos[c][id]) || {};
-    const nuevo = { ...previo };
-    for (const [k, v] of Object.entries(d)) {
-      // FieldValue.increment(1) de firebase-admin.
-      const suma = v && v.constructor && v.constructor.name === 'NumericIncrementTransform'
-        ? v.operand
-        : null;
-      nuevo[k] = suma != null ? (previo[k] || 0) + suma : v;
-    }
-    datos[c][id] = nuevo;
-  };
-  return {
-    datos,
-    collection: (c) => ({ doc: (id) => ({ path: `${c}/${id ?? `auto${++n}`}`, get: async () => leer({ path: `${c}/${id}` }) }) }),
-    async runTransaction(fn) {
-      const escrituras = [];
-      const tx = { get: async (r) => leer(r), set: (r, d, o) => escrituras.push([r, d, o]) };
-      const resultado = await fn(tx);
-      for (const [r, d, o] of escrituras) escribir(r, d, o);
-      return resultado;
-    },
-  };
-}
+const { firestoreFalso } = require('./apoyo/firestore_falso');
+
+const baseDeDatos = (inicial = {}) => firestoreFalso(inicial);
 
 const pedido = (datos = {}, uid = UID) => ({
   auth: { uid, token: { name: 'Ana Quispe', email: 'ana@mail.pe' } },
@@ -240,4 +207,20 @@ test('pedidos inválidos y sin llave de Culqi', async () => {
     },
   });
   await assertRechaza(cobrar(pedido({ token: TOKEN }), caido.deps), 'unavailable');
+});
+
+test('pagar en la web también retoma el plan en pausa', async () => {
+  const { db, deps } = entorno({
+    usuarios: { [UID]: { premiumHasta: Timestamp.fromMillis(Date.parse('2026-11-09T05:00:00Z')) } },
+    matriculas: {
+      m1: {
+        usuarioId: UID,
+        estado: 'activa',
+        fechaInicioAcademico: Timestamp.fromMillis(Date.parse('2026-11-02T05:00:00Z')),
+      },
+    },
+  });
+  await cobrar(pedido({ token: TOKEN }), deps);
+  assert.equal(db.datos.matriculas.m1.diasEnPausa, 28);
+  assert.equal(new Date(db.datos.matriculas.m1.retomaEl.toMillis()).toISOString(), '2026-12-07T05:00:00.000Z');
 });

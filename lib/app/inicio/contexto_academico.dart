@@ -8,6 +8,7 @@ import '../../features/academic/domain/services/construir_dia_estudiante_service
 import '../../features/adaptive_engine/domain/entities/item_mi_ruta.dart';
 import '../../features/adaptive_engine/domain/services/construir_mi_ruta_service.dart';
 import '../../features/enrollment/domain/entities/matricula.dart';
+import '../../features/enrollment/domain/pausa_plan.dart';
 import '../../features/enrollment/domain/repositories/repositorio_matricula.dart';
 
 /// Todo lo que el estudiante necesita al abrir la app: su matrícula, el día
@@ -23,6 +24,11 @@ class ContextoAcademico {
   /// Cuándo respondió preguntas el alumno (de sus evidencias): su actividad.
   final List<DateTime> actividad;
 
+  /// Vencimiento de su Premium y de su prueba gratis (para saber si el
+  /// plan está en pausa). null si no tiene o no se pudo leer.
+  final DateTime? premiumHasta;
+  final DateTime? pruebaHasta;
+
   const ContextoAcademico({
     required this.matricula,
     required this.versionAcademica,
@@ -31,7 +37,32 @@ class ContextoAcademico {
     required this.curriculo,
     required this.publicados,
     this.actividad = const [],
+    this.premiumHasta,
+    this.pruebaHasta,
   });
+
+  ContextoAcademico conPremium({
+    required DateTime? premiumHasta,
+    required DateTime? pruebaHasta,
+  }) => ContextoAcademico(
+    matricula: matricula,
+    versionAcademica: versionAcademica,
+    diaEstudiante: diaEstudiante,
+    ruta: ruta,
+    curriculo: curriculo,
+    publicados: publicados,
+    actividad: actividad,
+    premiumHasta: premiumHasta,
+    pruebaHasta: pruebaHasta,
+  );
+
+  /// El plan en pausa (se acabó la prueba o el Premium), o null.
+  PausaPlan? pausa(DateTime ahora) => pausaDelPlan(
+    inicio: matricula.fechaInicioAcademico,
+    premiumHasta: premiumHasta,
+    pruebaHasta: pruebaHasta,
+    ahora: ahora,
+  );
 }
 
 /// Caso de uso: arma el [ContextoAcademico] de un estudiante.

@@ -17,37 +17,10 @@ const AHORA = Date.parse('2026-12-01T15:00:00Z');
 const UID = 'alumnoUid1234567890';
 const TOKEN = 'token-de-compra-de-prueba-123';
 
-/** Firestore de mentira con transacciones (lee, escribe al final). */
-function baseDeDatos(inicial = {}) {
-  const datos = JSON.parse(JSON.stringify(inicial));
-  const ruta = (r) => r.path.split('/');
-  let n = 0;
-  const db = {
-    datos,
-    collection: (c) => ({ doc: (id) => ({ path: `${c}/${id ?? `auto${++n}`}` }) }),
-    async runTransaction(fn) {
-      const escrituras = [];
-      const tx = {
-        async get(r) {
-          const [c, id] = ruta(r);
-          const d = datos[c] && datos[c][id];
-          return { exists: d != null, data: () => d };
-        },
-        set(r, d, opciones) {
-          escrituras.push([r, d, opciones]);
-        },
-      };
-      const resultado = await fn(tx);
-      for (const [r, d, opciones] of escrituras) {
-        const [c, id] = ruta(r);
-        datos[c] = datos[c] || {};
-        datos[c][id] = opciones && opciones.merge ? { ...datos[c][id], ...d } : d;
-      }
-      return resultado;
-    },
-  };
-  return db;
-}
+const { firestoreFalso } = require('./apoyo/firestore_falso');
+
+/** Copia los datos de prueba para que cada prueba empiece limpia. */
+const baseDeDatos = (inicial = {}) => firestoreFalso(JSON.parse(JSON.stringify(inicial)));
 
 const pedido = (uid = UID) => ({
   auth: { uid, token: { name: 'Ana Quispe', email: 'ana@mail.pe' } },
@@ -211,4 +184,39 @@ test('si no se puede consumir, igual da Premium y avisa', async () => {
   const r = await verificarCompra(pedido(), deps);
   assert.equal(r.estado, 'activada');
   assert.equal(r.consumida, false);
+});
+
+test('si su plan estaba en pausa, al comprar lo retoma el lunes', async () => {
+  // Plan desde el lunes 2 de noviembre; la prueba acabó el lunes 9. Compra
+  // el martes 1 de diciembre: retoma su semana 2 el lunes 7.
+  const db = baseDeDatos({
+    usuarios: { [UID]: {} },
+    matriculas: {
+      m1: { usuarioId: UID, estado: 'activa' },
+      m2: { usuarioId: 'otro', estado: 'activa' },
+    },
+  });
+  db.datos.usuarios[UID].premiumHasta = Timestamp.fromMillis(Date.parse('2026-11-09T05:00:00Z'));
+  db.datos.matriculas.m1.fechaInicioAcademico = Timestamp.fromMillis(Date.parse('2026-11-02T05:00:00Z'));
+  db.datos.matriculas.m2.fechaInicioAcademico = Timestamp.fromMillis(Date.parse('2026-11-02T05:00:00Z'));
+
+  await verificarCompra(pedido(), dependencias(db, compraPagada).deps);
+
+  const m1 = db.datos.matriculas.m1;
+  assert.equal(new Date(m1.fechaInicioAcademico.toMillis()).toISOString(), '2026-11-30T05:00:00.000Z');
+  assert.equal(new Date(m1.retomaEl.toMillis()).toISOString(), '2026-12-07T05:00:00.000Z');
+  assert.equal(m1.diasEnPausa, 28);
+  assert.equal(db.datos.matriculas.m2.fechaInicioAcademico.toMillis(), Date.parse('2026-11-02T05:00:00Z'));
+  const [registro] = Object.values(db.datos.registro_admin);
+  assert.match(registro.descripcion, /Retoma su plan en la semana 2 el 2026-12-07\./);
+});
+
+test('con Premium vigente, el plan no se mueve', async () => {
+  const db = baseDeDatos({ usuarios: { [UID]: {} }, matriculas: { m1: { usuarioId: UID, estado: 'activa' } } });
+  const inicio = Timestamp.fromMillis(Date.parse('2026-11-02T05:00:00Z'));
+  db.datos.usuarios[UID].premiumHasta = Timestamp.fromMillis(AHORA + DIA);
+  db.datos.matriculas.m1.fechaInicioAcademico = inicio;
+  await verificarCompra(pedido(), dependencias(db, compraPagada).deps);
+  assert.equal(db.datos.matriculas.m1.fechaInicioAcademico, inicio);
+  assert.equal(db.datos.matriculas.m1.retomaEl, undefined);
 });

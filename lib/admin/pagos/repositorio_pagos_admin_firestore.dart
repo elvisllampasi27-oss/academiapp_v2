@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../features/enrollment/domain/pausa_plan.dart';
 import '../../features/premium/domain/configuracion_academia.dart';
 import '../../features/premium/domain/cupon.dart';
 import '../../features/premium/domain/pago.dart';
@@ -47,13 +48,61 @@ class RepositorioPagosAdminFirestore
       [for (final d in q.docs) ?pagoDesdeMapa(d.id, d.data())]
         ..sort((a, b) => b.creadoEn.compareTo(a.creadoEn));
 
+  /// La matrícula activa del alumno (para retomar su plan si estaba en
+  /// pausa). Las transacciones del cliente no hacen consultas: se busca
+  /// antes y dentro se vuelve a leer.
+  Future<DocumentReference<Map<String, dynamic>>?> _matriculaActiva(
+    String uid,
+  ) async {
+    final q = await db
+        .collection('matriculas')
+        .where('usuarioId', isEqualTo: uid)
+        .where('estado', isEqualTo: 'activa')
+        .limit(1)
+        .get();
+    return q.docs.isEmpty ? null : q.docs.first.reference;
+  }
+
+  /// Dentro de la transacción: si su plan estaba en pausa (se le acabó la
+  /// prueba o el Premium), lo retoma el lunes en la semana en que se quedó
+  /// (ver pausa_plan.dart). Devuelve el texto para el registro.
+  String _retomarPlan(
+    Transaction tx,
+    DocumentSnapshot<Map<String, dynamic>>? matricula,
+    DateTime? premiumAnterior,
+    DateTime ahora,
+  ) {
+    final inicio = (matricula?.data()?['fechaInicioAcademico'] as Timestamp?)
+        ?.toDate();
+    if (matricula == null || inicio == null) return '';
+    final retoma = retomaDelPlan(
+      inicio: inicio,
+      premiumHasta: premiumAnterior,
+      ahora: ahora,
+    );
+    if (retoma == null) return '';
+    tx.update(matricula.reference, {
+      'fechaInicioAcademico': Timestamp.fromDate(
+        inicioRetomado(inicio, retoma),
+      ),
+      'retomaEl': Timestamp.fromDate(retoma.retomaEl),
+      'diasEnPausa': FieldValue.increment(retoma.desplazamientoDias),
+    });
+    return '. Retoma su plan en la semana ${retoma.semana} el '
+        '${fechaPanel(retoma.retomaEl)}';
+  }
+
   @override
-  Future<DateTime> aprobar(Pago pago, {required int dias}) {
+  Future<DateTime> aprobar(Pago pago, {required int dias}) async {
+    final matriculaRef = await _matriculaActiva(pago.usuarioId);
     return db.runTransaction((tx) async {
       final pagoRef = _pagos.doc(pago.id);
       final usuarioRef = db.collection('usuarios').doc(pago.usuarioId);
       final actualPago = await tx.get(pagoRef);
       final usuario = await tx.get(usuarioRef);
+      final matricula = matriculaRef == null
+          ? null
+          : await tx.get(matriculaRef);
       if (actualPago.data()?['estado'] != EstadoPago.pendiente.name) {
         throw StateError('Este pago ya fue revisado. Actualiza la lista.');
       }
@@ -75,6 +124,7 @@ class RepositorioPagosAdminFirestore
       final anterior = (usuario.data()?['premiumHasta'] as Timestamp?)
           ?.toDate();
       final nuevo = premiumNuevoHasta(anterior, DateTime.now(), dias);
+      final retoma = _retomarPlan(tx, matricula, anterior, DateTime.now());
 
       tx.update(usuarioRef, {'premiumHasta': Timestamp.fromDate(nuevo)});
       tx.update(pagoRef, {
@@ -99,7 +149,7 @@ class RepositorioPagosAdminFirestore
           usuarioId: pago.usuarioId,
           descripcion:
               'Aprobó el pago de ${pago.nombre} (${_detalle(pago)}): '
-              'Premium hasta el ${fechaPanel(nuevo)}',
+              'Premium hasta el ${fechaPanel(nuevo)}$retoma',
         ),
       );
       return nuevo;
@@ -191,14 +241,19 @@ class RepositorioPagosAdminFirestore
     required String correo,
     required int dias,
     required String motivo,
-  }) {
+  }) async {
+    final matriculaRef = await _matriculaActiva(uid);
     return db.runTransaction((tx) async {
       final usuarioRef = db.collection('usuarios').doc(uid);
       final usuario = await tx.get(usuarioRef);
+      final matricula = matriculaRef == null
+          ? null
+          : await tx.get(matriculaRef);
       final anterior = (usuario.data()?['premiumHasta'] as Timestamp?)
           ?.toDate();
       final ahora = DateTime.now();
       final nuevo = premiumNuevoHasta(anterior, ahora, dias);
+      final retoma = _retomarPlan(tx, matricula, anterior, ahora);
 
       tx.update(usuarioRef, {'premiumHasta': Timestamp.fromDate(nuevo)});
       tx.set(_pagos.doc('manual__${uid}__${ahora.millisecondsSinceEpoch}'), {
@@ -226,7 +281,7 @@ class RepositorioPagosAdminFirestore
           usuarioId: uid,
           descripcion:
               'Dio $dias días de Premium a $nombre ($motivo): hasta el '
-              '${fechaPanel(nuevo)}',
+              '${fechaPanel(nuevo)}$retoma',
         ),
       );
       return nuevo;

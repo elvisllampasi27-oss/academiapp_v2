@@ -20,6 +20,7 @@ const admin = require('firebase-admin');
 const { FieldValue } = require('firebase-admin/firestore');
 const { leerConfiguracion } = require('../comun/plan');
 const { aplicarPagoAprobado } = require('./dar_premium');
+const { leerMatriculaActiva } = require('../comun/pausa');
 
 const CULQI_LLAVE_SECRETA = defineSecret('CULQI_LLAVE_SECRETA');
 const URL_CARGOS = 'https://api.culqi.com/v2/charges';
@@ -153,7 +154,9 @@ async function canjearBeca({ db, uid, codigo, dias, ahoraMs, nombre, correo }) {
     const pagoRef = db.collection('pagos').doc(`beca__${uid}__${codigo}`);
     const cuponRef = db.collection('cupones').doc(codigo);
     const usuarioRef = db.collection('usuarios').doc(uid);
-    const [pago, cupon, usuario] = await Promise.all([tx.get(pagoRef), tx.get(cuponRef), tx.get(usuarioRef)]);
+    const [pago, cupon, usuario, matricula] = await Promise.all([
+      tx.get(pagoRef), tx.get(cuponRef), tx.get(usuarioRef), leerMatriculaActiva(tx, db, uid),
+    ]);
     if (pago.exists && pago.data().estado !== 'rechazado') {
       throw new HttpsError('already-exists', 'Ya usaste este cupón.');
     }
@@ -165,6 +168,7 @@ async function canjearBeca({ db, uid, codigo, dias, ahoraMs, nombre, correo }) {
       db,
       uid,
       usuario,
+      matricula,
       pagoRef,
       pago: { nombre, correo, monto: 0, metodo: 'beca', operacion: '', cupon: codigo },
       dias,
@@ -182,7 +186,9 @@ async function registrarCargo({ db, uid, cargo, codigo, monto, dias, ahoraMs, no
   return db.runTransaction(async (tx) => {
     const pagoRef = db.collection('pagos').doc(`culqi__${cargo.id}`);
     const usuarioRef = db.collection('usuarios').doc(uid);
-    const [pago, usuario] = await Promise.all([tx.get(pagoRef), tx.get(usuarioRef)]);
+    const [pago, usuario, matricula] = await Promise.all([
+      tx.get(pagoRef), tx.get(usuarioRef), leerMatriculaActiva(tx, db, uid),
+    ]);
     if (pago.exists) {
       const hasta = pago.data().premiumHasta;
       return hasta ? hasta.toMillis() : 0;
@@ -192,6 +198,7 @@ async function registrarCargo({ db, uid, cargo, codigo, monto, dias, ahoraMs, no
       db,
       uid,
       usuario,
+      matricula,
       pagoRef,
       pago: {
         nombre,

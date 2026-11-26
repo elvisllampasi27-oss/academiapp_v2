@@ -9,6 +9,10 @@ class Matricula {
   final DateTime fechaInicioAcademico;
   final DateTime? fechaFin;
 
+  /// Si pagó con el plan en pausa: el lunes en que retoma (ver
+  /// pausa_plan.dart). Antes de esa fecha no se muestran temas del día.
+  final DateTime? retomaEl;
+
   final EstadoMatricula estado;
 
   const Matricula({
@@ -19,5 +23,6 @@ class Matricula {
     required this.fechaInicioAcademico,
     required this.estado,
     this.fechaFin,
+    this.retomaEl,
   });
 }
