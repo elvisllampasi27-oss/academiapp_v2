@@ -10,11 +10,22 @@ class EstadoPremium {
   final DateTime? premiumHasta;
   final List<Pago> pagos;
 
+  /// Fin de su prueba gratis (null si nunca la tuvo).
+  final DateTime? pruebaHasta;
+
   const EstadoPremium({
     required this.configuracion,
     required this.premiumHasta,
     required this.pagos,
+    this.pruebaHasta,
   });
+
+  /// Su Premium es la prueba gratis (todavía no pagó nada encima).
+  bool get enPrueba {
+    final hasta = premiumHasta;
+    final prueba = pruebaHasta;
+    return hasta != null && prueba != null && !hasta.isAfter(prueba);
+  }
 
   Pago? get pendiente =>
       pagos.where((p) => p.estado == EstadoPago.pendiente).firstOrNull;

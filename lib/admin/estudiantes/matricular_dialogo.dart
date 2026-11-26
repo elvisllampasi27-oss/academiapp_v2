@@ -241,8 +241,8 @@ class _DialogoMatricularState extends State<DialogoMatricular> {
                 ),
                 Text(
                   'Los domingos no cuentan como día académico. Si se matricula '
-                  'después de las ${configuracionInicioPanel.horaCorte}:00, '
-                  'empieza al día siguiente.',
+                  'antes de las ${configuracionInicioPanel.horaCorte}:00 a. m. '
+                  'empieza ese día; si no, al día siguiente.',
                   style: TextStyle(color: p.tenue, fontSize: 12),
                 ),
                 FutureBuilder<FinTemario?>(
