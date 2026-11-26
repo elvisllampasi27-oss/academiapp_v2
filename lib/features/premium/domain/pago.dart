@@ -6,7 +6,11 @@ enum MetodoPago {
   yape('Yape'),
   plin('Plin'),
   beca('Beca'),
-  manual('Dado por el administrador');
+  manual('Dado por el administrador'),
+
+  /// Compra en la app de Android. La crea el servidor (verificarCompraPlay);
+  /// en operacion va el N.º de pedido de Google Play (GPA.…).
+  googlePlay('Google Play');
 
   final String etiqueta;
   const MetodoPago(this.etiqueta);

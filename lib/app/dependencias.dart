@@ -1,5 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
+
 import '../features/academic/domain/repositories/repositorio_contenido.dart';
 import '../features/academic/domain/entities/curriculo.dart';
 import '../features/academic/domain/repositories/repositorio_curriculo.dart';
@@ -39,10 +42,12 @@ import '../features/identity/infrastructure/services/firebase_servicio_eliminaci
 import '../features/reportes/domain/reporte.dart';
 import '../features/reportes/infrastructure/repositorio_reportes_firestore.dart';
 import '../features/seminars/domain/seminario.dart';
+import '../features/premium/domain/compra_play.dart';
 import '../features/premium/domain/repositorio_premium.dart';
 import '../features/premium/infrastructure/elegir_foto.dart';
 import '../features/premium/infrastructure/repositorio_premium_firestore.dart';
 import '../features/premium/infrastructure/servicio_comprobante_storage.dart';
+import '../features/premium/infrastructure/tienda_google_play.dart';
 import '../features/seminars/infrastructure/repositorio_seminarios_firestore.dart';
 import '../features/narrations/domain/narracion.dart';
 import '../features/narrations/infrastructure/repositorio_narraciones_firestore.dart';
@@ -105,6 +110,9 @@ class Dependencias {
   /// Matrícula automática y prueba gratis (null: se espera al panel).
   final ServicioPreparacionCuenta? preparacion;
 
+  /// Compra de Premium con Google Play (solo en Android; null en la web).
+  final ServicioCompraPlay? compraPlay;
+
   const Dependencias({
     required this.autenticacion,
     required this.recuperacion,
@@ -136,6 +144,7 @@ class Dependencias {
     this.elegirFoto,
     this.eliminacion,
     this.preparacion,
+    this.compraPlay,
   });
 
   factory Dependencias.firebase() {
@@ -177,6 +186,13 @@ class Dependencias {
       elegirFoto: elegirFotoDeGaleria,
       eliminacion: FirebaseServicioEliminacionCuenta(),
       preparacion: FirebaseServicioPreparacionCuenta(),
+      // Se crea al abrir la app para escuchar compras a medio terminar.
+      compraPlay: !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+          ? ServicioCompraPlay(
+              tienda: TiendaGooglePlay(),
+              verificar: verificarCompraConFirebase(),
+            )
+          : null,
     );
   }
 }

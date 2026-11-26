@@ -233,7 +233,10 @@ class _PagosPageState extends State<PagosPage> {
           ),
           FilaDato('Correo', p.correo),
           FilaDato('Método', p.metodo.etiqueta),
-          if (p.metodo != MetodoPago.beca) ...[
+          if (p.metodo == MetodoPago.googlePlay) ...[
+            FilaDato('Precio de lista', 'S/ ${p.monto}'),
+            FilaDato('N.º de pedido', p.operacion),
+          ] else if (p.metodo != MetodoPago.beca) ...[
             FilaDato('Monto', 'S/ ${p.monto}'),
             FilaDato('N.º de operación', p.operacion),
           ],
@@ -331,7 +334,13 @@ class _PagosPageState extends State<PagosPage> {
               'lo que le queda.',
               style: TextStyle(color: paleta.tenue, fontSize: 12),
             ),
-          ] else
+          ] else if (p.metodo == MetodoPago.googlePlay)
+            Text(
+              'Lo cobró Google Play. Lo que llega (sin su comisión) y los '
+              'reembolsos se ven en Play Console → Gestión de pedidos.',
+              style: TextStyle(color: paleta.tenue, fontSize: 12),
+            )
+          else
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
@@ -365,6 +374,7 @@ class _TarjetaPago extends StatelessWidget {
     final detalle = switch (pago.metodo) {
       MetodoPago.beca => 'Beca · ${pago.cupon}',
       MetodoPago.manual => 'Dado por el administrador · ${pago.motivo ?? ''}',
+      MetodoPago.googlePlay => 'Google Play · ${pago.operacion}',
       _ =>
         'S/ ${pago.monto} · ${pago.metodo.etiqueta} · N.º ${pago.operacion}'
             '${pago.cupon == null ? '' : ' · cupón ${pago.cupon}'}',

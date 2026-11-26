@@ -78,7 +78,8 @@ funciones que ya están escritas y probadas:
 | `iniciarSimulacro`, `enviarSimulacro`, `rankingSemanal`, `estadoExamenSemanal`, `revisarPreguntaExamen` | Examen semanal, ranking y exámenes pasados |
 | `generarPreguntas` | Generar preguntas con IA desde el panel |
 | `preguntarTutor` | Tutor con IA |
-| Cobro con Google Play y con Culqi | Premium (se agregan en los próximos parches) |
+| `verificarCompraPlay` | Confirmar la compra de Premium en Android y dar los días |
+| Cobro con Culqi | Premium en la web (se agrega en el próximo parche) |
 
 Antes de eso, la app responde "estará disponible pronto" donde haga falta,
 y la matrícula se hace desde el panel.
@@ -89,7 +90,24 @@ y la matrícula se hace desde el panel.
   exige en Perú). Nada de Yape, enlaces ni precios de la web dentro de la
   app.
   - Play Console → crear el perfil de comerciante.
-  - Crear el producto de pago único de Premium (el precio se pone ahí).
+  - Subir al menos una versión a *Prueba interna* (Play no deja crear
+    productos sin una versión subida).
+  - **Monetizar → Productos → Productos integrados → Crear**: ID
+    **`premium_90_dias`** (exacto: es el que usa la app y la función),
+    nombre "Premium 90 días", precio en soles. Activarlo.
+  - Google Cloud (proyecto nuevo) → **APIs y servicios** → activar
+    **Google Play Android Developer API**.
+  - Play Console → **Usuarios y permisos → Invitar** a la cuenta de
+    servicio con la que corren las funciones (Google Cloud → IAM; la de
+    las funciones v2 es `NÚMERO-compute@developer.gserviceaccount.com`).
+    Permisos de la app: *Ver datos financieros* y *Gestionar pedidos*.
+    Puede tardar hasta un día en valer.
+  - Probar con **Configuración → Pruebas de licencias**: agregar el Gmail
+    como probador. Esas compras no se cobran y en el panel salen como
+    compra de prueba.
+  - Reembolsos: se hacen en Play Console → Gestión de pedidos. Por ahora
+    la app no quita el Premium cuando Google reembolsa. Pendiente para
+    cuando haya ventas: leer los reembolsos con la API *Voided Purchases*.
 - **Web** (página `/premium` y la versión web de Sinchi): **Culqi** con
   Yape y tarjetas.
   - Cuenta de Culqi con el RUC 10705212631 y una cuenta bancaria.

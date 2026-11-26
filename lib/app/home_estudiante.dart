@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../features/academic/domain/entities/curriculo.dart';
@@ -69,10 +71,20 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
   /// sigue sin aparecer, no se insiste (evita un ciclo sin fin).
   int _planesPreparados = 0;
 
+  StreamSubscription<void>? _compras;
+
   @override
   void initState() {
     super.initState();
     _contextoAcademico = _cargarContextoAcademico();
+    // Compras de Google Play que quedaron a medias: se activan al entrar y,
+    // si activan Premium, se recarga el plan.
+    if (_d.compraPlay case final compra?) {
+      _compras = compra.activaciones.listen((_) {
+        if (mounted) _recargar();
+      });
+      compra.revisarPendientes();
+    }
     // Para el panel ("última actividad"). Si falla, no afecta al estudiante.
     widget.dependencias.actividad
         .registrar(widget.usuario.uid)
@@ -81,6 +93,7 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
 
   @override
   void dispose() {
+    _compras?.cancel();
     _pestana.dispose();
     super.dispose();
   }
@@ -290,6 +303,7 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
                       correo: widget.usuario.correo,
                       repositorio: _d.premium,
                       elegirFoto: _d.elegirFoto,
+                      compraPlay: _d.compraPlay,
                     ),
                   ),
                 ),

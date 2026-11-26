@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/presentation/colores_app.dart';
 import '../../../core/presentation/formato_fecha.dart';
+import '../domain/compra_play.dart';
 import '../domain/configuracion_academia.dart';
 import '../domain/cupon.dart';
 import '../domain/pago.dart';
@@ -49,11 +52,8 @@ class PremiumPage extends StatefulWidget {
   /// null: el de esta plataforma ([canalActual]).
   final CanalCompra? canal;
 
-  /// Abre la compra de Google Play. null mientras no esté disponible.
-  final Future<void> Function()? onComprarPlay;
-
-  /// Precio que muestra Google Play ("S/ 35.00"), si ya se conoce.
-  final String? precioPlay;
+  /// Compra con Google Play. null: el botón aparece apagado.
+  final ServicioCompraPlay? compraPlay;
 
   const PremiumPage({
     super.key,
@@ -65,8 +65,7 @@ class PremiumPage extends StatefulWidget {
     this.abrirEnlace = _abrirExterno,
     this.ahora = DateTime.now,
     this.canal,
-    this.onComprarPlay,
-    this.precioPlay,
+    this.compraPlay,
   });
 
   @override
@@ -86,10 +85,36 @@ class _PremiumPageState extends State<PremiumPage> {
   bool _comprando = false;
   String? _error;
 
+  /// Producto de Google Play con su precio. null: aún no carga o no existe.
+  ProductoPlay? _producto;
+  bool _productoCargado = false;
+  String? _avisoPlay;
+  StreamSubscription<void>? _activaciones;
+
   bool get _enPlay => (widget.canal ?? canalActual()) == CanalCompra.googlePlay;
 
   @override
+  void initState() {
+    super.initState();
+    final compra = widget.compraPlay;
+    if (compra == null || !_enPlay) return;
+    // Una compra pendiente que se confirma mientras está aquí.
+    _activaciones = compra.activaciones.listen((_) {
+      if (mounted) _recargar();
+    });
+    compra.cargarProducto().then((p) {
+      if (mounted) {
+        setState(() {
+          _producto = p;
+          _productoCargado = true;
+        });
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    _activaciones?.cancel();
     _operacion.dispose();
     _codigo.dispose();
     super.dispose();
@@ -167,17 +192,35 @@ class _PremiumPageState extends State<PremiumPage> {
     }
   }
 
-  Future<void> _comprarPlay(Future<void> Function() comprar) async {
+  Future<void> _comprarPlay(ServicioCompraPlay compra) async {
     setState(() {
       _comprando = true;
       _error = null;
+      _avisoPlay = null;
     });
     try {
-      await comprar();
+      final resultado = await compra.comprar(widget.uid);
       if (!mounted) return;
-      setState(() => _comprando = false);
-      _recargar();
-    } catch (e) {
+      setState(() {
+        _comprando = false;
+        if (resultado == ResultadoCompra.pendiente) {
+          _avisoPlay =
+              'Tu pago está pendiente en Google Play. Premium se activa '
+              'apenas se confirme.';
+        }
+      });
+      if (resultado == ResultadoCompra.activada) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('¡Listo! Ya tienes Premium.')),
+        );
+      }
+    } on ExcepcionCompraPlay catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _comprando = false;
+        if (!e.cancelada) _error = e.mensaje;
+      });
+    } catch (_) {
       if (!mounted) return;
       setState(() {
         _comprando = false;
@@ -217,7 +260,7 @@ class _PremiumPageState extends State<PremiumPage> {
                 premium: premium,
                 prueba: estado.enPrueba,
                 hasta: estado.premiumHasta,
-                precio: _enPlay ? widget.precioPlay : 'S/ ${c.precio}',
+                precio: _enPlay ? _producto?.precio : 'S/ ${c.precio}',
                 dias: c.diasPremium,
               ),
               const SizedBox(height: 16),
@@ -255,8 +298,10 @@ class _PremiumPageState extends State<PremiumPage> {
   }
 
   Widget _compraPlay(ConfiguracionAcademia c, bool premium) {
-    final comprar = widget.onComprarPlay;
-    final precio = widget.precioPlay;
+    final compra = widget.compraPlay;
+    final precio = _producto?.precio;
+    final disponible = compra != null && _producto != null;
+    final cargando = compra != null && !_productoCargado;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -273,6 +318,14 @@ class _PremiumPageState extends State<PremiumPage> {
               'No se renueva solo.',
               style: const TextStyle(color: ColoresApp.apagado),
             ),
+            if (_avisoPlay case final aviso?)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(
+                  aviso,
+                  style: const TextStyle(color: ColoresApp.ambar),
+                ),
+              ),
             if (_error case final e?)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
@@ -283,9 +336,9 @@ class _PremiumPageState extends State<PremiumPage> {
               ),
             const SizedBox(height: 14),
             FilledButton(
-              onPressed: comprar == null || _comprando
+              onPressed: compra == null || !disponible || _comprando
                   ? null
-                  : () => _comprarPlay(comprar),
+                  : () => _comprarPlay(compra),
               child: _comprando
                   ? const SizedBox.square(
                       dimension: 18,
@@ -300,7 +353,9 @@ class _PremiumPageState extends State<PremiumPage> {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
-                comprar == null
+                cargando
+                    ? 'Consultando Google Play…'
+                    : !disponible
                     ? 'La compra estará disponible pronto.'
                     : 'Los reembolsos siguen la política de Google Play. '
                           'Si eliminas tu cuenta, Premium no se devuelve.',
@@ -746,11 +801,11 @@ class _FilaPago extends StatelessWidget {
     };
     return Card(
       child: ListTile(
-        title: Text(
-          pago.metodo == MetodoPago.beca
-              ? 'Beca ${pago.cupon}'
-              : 'S/ ${pago.monto} · ${pago.metodo.etiqueta}',
-        ),
+        title: Text(switch (pago.metodo) {
+          MetodoPago.beca => 'Beca ${pago.cupon}',
+          MetodoPago.googlePlay => 'Google Play',
+          _ => 'S/ ${pago.monto} · ${pago.metodo.etiqueta}',
+        }),
         subtitle: Text(
           [
             fechaCorta(pago.creadoEn),

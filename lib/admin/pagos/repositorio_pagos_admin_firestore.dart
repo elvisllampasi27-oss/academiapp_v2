@@ -236,6 +236,7 @@ class RepositorioPagosAdminFirestore
   String _detalle(Pago p) => switch (p.metodo) {
     MetodoPago.beca => 'beca ${p.cupon}',
     MetodoPago.manual => 'manual',
+    MetodoPago.googlePlay => 'Google Play · ${p.operacion}',
     _ => 'S/ ${p.monto} · ${p.metodo.etiqueta} · N.º ${p.operacion}',
   };
 
