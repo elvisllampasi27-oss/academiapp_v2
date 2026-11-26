@@ -42,8 +42,9 @@ class AvisosEliminacion {
 String mensajeErrorEliminacion(String codigo, String? mensajeServidor) {
   return switch (codigo) {
     'not-found' || 'unimplemented' => 'Esta opción estará disponible pronto.',
-    'unauthenticated' || 'failed-precondition' || 'permission-denied' =>
-      mensajeServidor ?? 'No se pudo eliminar la cuenta.',
+    'unauthenticated' ||
+    'failed-precondition' ||
+    'permission-denied' => mensajeServidor ?? 'No se pudo eliminar la cuenta.',
     'unavailable' || 'deadline-exceeded' =>
       'No hay conexión con el servidor. Inténtalo de nuevo.',
     _ => 'No se pudo eliminar la cuenta. Inténtalo de nuevo.',

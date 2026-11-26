@@ -156,9 +156,7 @@ void main() {
       expect(boton(tester).onPressed, isNotNull);
     });
 
-    testWidgets('pide la contraseña, borra y cierra la sesión', (
-      tester,
-    ) async {
+    testWidgets('pide la contraseña, borra y cierra la sesión', (tester) async {
       final servicio = ServicioFalso();
       var sesionCerrada = false;
       await mostrar(
