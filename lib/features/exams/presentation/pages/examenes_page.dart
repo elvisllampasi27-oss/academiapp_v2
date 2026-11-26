@@ -35,8 +35,7 @@ class ExamenesPage extends StatefulWidget {
 class _ExamenesPageState extends State<ExamenesPage> {
   late Future<List<ExamenPasado>> _examenes = widget.repositorio.listar();
   late Future<EstadoExamenSemanal> _estado = widget.servicio.estadoSemanal();
-  late Future<HistorialSemanal> _historial = widget.servicio
-      .historialSemanal();
+  late Future<HistorialSemanal> _historial = widget.servicio.historialSemanal();
   TipoExamen _tipo = TipoExamen.ordinario;
   bool _tipoElegido = false;
 
