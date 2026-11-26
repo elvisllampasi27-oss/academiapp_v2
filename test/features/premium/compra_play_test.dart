@@ -57,7 +57,11 @@ void main() {
     await expectLater(
       servicio().comprar('ana'),
       throwsA(
-        isA<ExcepcionCompraPlay>().having((e) => e.cancelada, 'cancelada', true),
+        isA<ExcepcionCompraPlay>().having(
+          (e) => e.cancelada,
+          'cancelada',
+          true,
+        ),
       ),
     );
     expect(verificados, isEmpty);
@@ -150,7 +154,10 @@ void main() {
       mensajeErrorCompra('permission-denied', 'Esta compra es de otra cuenta.'),
       'Esta compra es de otra cuenta.',
     );
-    expect(mensajeErrorCompra('unauthenticated', null), 'Inicia sesión otra vez.');
+    expect(
+      mensajeErrorCompra('unauthenticated', null),
+      'Inicia sesión otra vez.',
+    );
     expect(
       mensajeErrorCompra('internal', 'boom'),
       'No pudimos confirmar tu compra. Inténtalo en un rato.',

@@ -365,7 +365,9 @@ void main() {
     }) => ServicioCompraPlay(
       tienda: tienda,
       verificar: (_, _) async {
-        if (activa) repositorio.premiumHasta = hoy.add(const Duration(days: 90));
+        if (activa) {
+          repositorio.premiumHasta = hoy.add(const Duration(days: 90));
+        }
         return (activada: activa, consumida: true);
       },
     );

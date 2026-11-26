@@ -801,13 +801,11 @@ class _FilaPago extends StatelessWidget {
     };
     return Card(
       child: ListTile(
-        title: Text(
-          switch (pago.metodo) {
-            MetodoPago.beca => 'Beca ${pago.cupon}',
-            MetodoPago.googlePlay => 'Google Play',
-            _ => 'S/ ${pago.monto} · ${pago.metodo.etiqueta}',
-          },
-        ),
+        title: Text(switch (pago.metodo) {
+          MetodoPago.beca => 'Beca ${pago.cupon}',
+          MetodoPago.googlePlay => 'Google Play',
+          _ => 'S/ ${pago.monto} · ${pago.metodo.etiqueta}',
+        }),
         subtitle: Text(
           [
             fechaCorta(pago.creadoEn),

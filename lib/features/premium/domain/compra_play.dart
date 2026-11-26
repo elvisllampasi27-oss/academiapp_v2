@@ -67,8 +67,10 @@ abstract class TiendaPlay {
 /// Respuesta del servidor (verificarCompraPlay).
 typedef VerificacionPlay = ({bool activada, bool consumida});
 
-typedef VerificarCompraPlay =
-    Future<VerificacionPlay> Function(String productoId, String token);
+typedef VerificarCompraPlay = Future<VerificacionPlay> Function(
+  String productoId,
+  String token,
+);
 
 /// { estado: 'activada' | 'pendiente', consumida } de verificarCompraPlay.
 VerificacionPlay verificacionDesdeMapa(Map<Object?, Object?> datos) => (
@@ -140,7 +142,10 @@ class ServicioCompraPlay {
     final enCurso = Completer<ResultadoCompra>();
     _enCurso = enCurso;
     try {
-      await tienda.comprar(productoPremiumPlay, cuenta: cuentaOfuscadaPlay(uid));
+      await tienda.comprar(
+        productoPremiumPlay,
+        cuenta: cuentaOfuscadaPlay(uid),
+      );
     } catch (_) {
       _fallar(const ExcepcionCompraPlay('No se pudo abrir Google Play.'));
     }
@@ -166,7 +171,9 @@ class ServicioCompraPlay {
         case EstadoCompraTienda.pendiente:
           _terminar(ResultadoCompra.pendiente);
         case EstadoCompraTienda.cancelada:
-          _fallar(const ExcepcionCompraPlay('Compra cancelada.', cancelada: true));
+          _fallar(
+            const ExcepcionCompraPlay('Compra cancelada.', cancelada: true),
+          );
         case EstadoCompraTienda.error:
           _fallar(
             const ExcepcionCompraPlay(
