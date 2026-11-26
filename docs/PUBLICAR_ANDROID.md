@@ -83,8 +83,7 @@ keytool -list -v -keystore "$env:USERPROFILE\sinchi-upload.jks" -alias upload
 ## 4. Política de privacidad
 
 Play Store pide un enlace público. La política está en
-`hosting/privacidad/index.html`; completa los campos `[COMPLETAR]` y
-publícala (funciona en el plan gratis):
+`hosting/privacidad/index.html`. Publícala (funciona en el plan gratis):
 
 ```powershell
 firebase deploy --only hosting
