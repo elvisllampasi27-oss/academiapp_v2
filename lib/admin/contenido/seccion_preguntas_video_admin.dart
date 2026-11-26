@@ -135,7 +135,10 @@ class _SeccionPreguntasVideoAdminState
       avisarPanel(context, error ?? 'Revisa la pregunta.');
       return;
     }
-    final guardada = await _guardar([...actuales, pregunta], 'Pregunta agregada.');
+    final guardada = await _guardar([
+      ...actuales,
+      pregunta,
+    ], 'Pregunta agregada.');
     if (!guardada || !mounted) return;
     for (final c in [_tiempo, _enunciado, _explicacion, ..._opciones]) {
       c.clear();
@@ -150,16 +153,17 @@ class _SeccionPreguntasVideoAdminState
     final ok = await confirmarPanel(
       context,
       titulo: 'Eliminar pregunta',
-      mensaje: 'La pregunta del ${textoDeSegundos(pregunta.segundo)} dejará '
+      mensaje:
+          'La pregunta del ${textoDeSegundos(pregunta.segundo)} dejará '
           'de salir en la clase.',
       confirmar: 'Eliminar',
       peligro: true,
     );
     if (!ok || !mounted) return;
-    await _guardar(
-      [for (final p in actuales) if (p.id != pregunta.id) p],
-      'Pregunta eliminada.',
-    );
+    await _guardar([
+      for (final p in actuales)
+        if (p.id != pregunta.id) p,
+    ], 'Pregunta eliminada.');
   }
 
   @override

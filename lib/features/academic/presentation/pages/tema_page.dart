@@ -187,9 +187,8 @@ class _TemaPageState extends State<TemaPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => PointerInterceptor(
-        child: _PreguntaEnClase(pregunta: pregunta),
-      ),
+      builder: (_) =>
+          PointerInterceptor(child: _PreguntaEnClase(pregunta: pregunta)),
     );
     _preguntando = false;
     if (mounted) _control.reanudar();
@@ -562,7 +561,10 @@ class _PreguntaEnClaseState extends State<_PreguntaEnClase> {
               const SizedBox(height: 8),
               Text(
                 p.enunciado,
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 14),
               for (final o in p.opciones)
