@@ -1,8 +1,10 @@
 import 'package:academiapp_v2/features/academic/domain/entities/contenido.dart';
 import 'package:academiapp_v2/features/academic/domain/entities/curso.dart';
+import 'package:academiapp_v2/features/academic/domain/entities/pregunta_video.dart';
 import 'package:academiapp_v2/features/academic/domain/entities/progreso_clase.dart';
 import 'package:academiapp_v2/features/academic/domain/entities/recurso.dart';
 import 'package:academiapp_v2/features/academic/domain/entities/tema.dart';
+import 'package:academiapp_v2/features/academic/domain/repositories/repositorio_preguntas_video.dart';
 import 'package:academiapp_v2/features/academic/domain/services/obtener_material_tema_service.dart';
 import 'package:academiapp_v2/features/academic/presentation/pages/tema_page.dart';
 import 'package:academiapp_v2/core/presentation/video/reproductor_clase.dart';
@@ -16,6 +18,7 @@ class ReproductorFalso {
   AlAvanzarClase? alAvanzar;
   double? inicio;
   int pausas = 0;
+  int reanudadas = 0;
   final idas = <double>[];
 
   Widget construir({
@@ -26,7 +29,11 @@ class ReproductorFalso {
   }) {
     this.alAvanzar = alAvanzar;
     this.inicio = inicio;
-    control.vincular(pausar: () => pausas++, irA: idas.add);
+    control.vincular(
+      pausar: () => pausas++,
+      irA: idas.add,
+      reanudar: () => reanudadas++,
+    );
     return Text('video $videoId');
   }
 
@@ -35,6 +42,25 @@ class ReproductorFalso {
       alAvanzar!(t, duracion);
     }
   }
+}
+
+class PreguntasVideoEnMemoria implements RepositorioPreguntasVideo {
+  final List<PreguntaVideo> lista;
+
+  PreguntasVideoEnMemoria(this.lista);
+
+  @override
+  Future<List<PreguntaVideo>> delTema({
+    required String versionId,
+    required String temaId,
+  }) async => lista;
+
+  @override
+  Future<void> guardar({
+    required String versionId,
+    required String temaId,
+    required List<PreguntaVideo> preguntas,
+  }) async {}
 }
 
 void main() {
@@ -71,6 +97,7 @@ void main() {
     RepositorioRecursoEnMemoria recursos, {
     List<Contenido> contenidos = const [],
     bool conDudas = false,
+    List<PreguntaVideo> preguntas = const [],
   }) {
     return MaterialApp(
       home: TemaPage(
@@ -83,6 +110,7 @@ void main() {
           repositorioRecurso: recursos,
         ),
         repositorioProgreso: progreso,
+        preguntasVideo: PreguntasVideoEnMemoria(preguntas),
         reproductor: reproductor.construir,
         abrirEnlace: (uri) async {
           abiertos.add(uri);
@@ -270,5 +298,50 @@ void main() {
     await tester.pump();
 
     expect(find.text('No se pudo abrir este material.'), findsOneWidget);
+  });
+
+  testWidgets('pregunta dentro de la clase: pausa, responde y sigue', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      pagina(
+        RepositorioRecursoEnMemoria([clase]),
+        preguntas: const [
+          PreguntaVideo(
+            id: 'p1',
+            segundo: 10,
+            enunciado: '¿Qué estudia la geografía?',
+            opciones: [
+              OpcionVideo(id: 'a', texto: 'El espacio'),
+              OpcionVideo(id: 'b', texto: 'Los números'),
+            ],
+            correctaId: 'a',
+            explicacion: 'Estudia el espacio geográfico.',
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    reproductor.ver(0, 12);
+    await tester.pumpAndSettle();
+
+    expect(find.text('¿Qué estudia la geografía?'), findsOneWidget);
+    expect(reproductor.pausas, 1);
+
+    await tester.tap(find.text('Los números'));
+    await tester.pumpAndSettle();
+    expect(find.text('La correcta es: El espacio'), findsOneWidget);
+    expect(find.text('Estudia el espacio geográfico.'), findsOneWidget);
+
+    await tester.tap(find.text('Seguir con la clase'));
+    await tester.pumpAndSettle();
+    expect(find.text('¿Qué estudia la geografía?'), findsNothing);
+    expect(reproductor.reanudadas, 1);
+
+    // Ya salió: al volver a pasar no interrumpe.
+    reproductor.ver(12, 20);
+    await tester.pumpAndSettle();
+    expect(reproductor.pausas, 1);
   });
 }

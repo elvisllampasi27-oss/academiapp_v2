@@ -464,6 +464,15 @@ service cloud.firestore {
       allow write: if esAdmin();
     }
 
+    // Preguntas dentro de la clase (una lista por versión y tema). Son de
+    // repaso, sin nota: la respuesta puede viajar a la app.
+    match /preguntas_video/{documento} {
+
+      allow read: if request.auth != null;
+
+      allow write: if esAdmin();
+    }
+
     // EVALUACIONES Y PREGUNTAS (sin respuestas correctas)
     match /evaluaciones/{evaluacionId} {
 

@@ -9,6 +9,8 @@ import 'modelo_contenido.dart';
 import 'narraciones_admin.dart';
 import 'repositorio_contenido_admin.dart';
 import 'seccion_narraciones_admin.dart';
+import 'seccion_preguntas_video_admin.dart';
+import '../../features/academic/domain/repositories/repositorio_preguntas_video.dart';
 
 /// Todo el material de un tema: clase, contenidos, quizzes, separata,
 /// material del tutor y publicación.
@@ -24,6 +26,9 @@ class EditorTemaPage extends StatefulWidget {
   /// Narraciones en audio del tema (null: la sección no aparece).
   final RepositorioNarracionesAdmin? narraciones;
 
+  /// Preguntas dentro de la clase (null: la sección no aparece).
+  final RepositorioPreguntasVideo? preguntasVideo;
+
   /// true si se guardó algo (para volver a leer la lista).
   final ValueChanged<bool> onVolver;
 
@@ -38,6 +43,7 @@ class EditorTemaPage extends StatefulWidget {
     required this.generador,
     required this.onVolver,
     this.narraciones,
+    this.preguntasVideo,
   });
 
   @override
@@ -261,6 +267,19 @@ class _EditorTemaPageState extends State<EditorTemaPage> {
                     style: TextStyle(color: p.alerta),
                   ),
               ]),
+              if (widget.preguntasVideo case final preguntas?)
+                _tarjeta('Preguntas dentro de la clase', [
+                  Text(
+                    'Pausan el video en el segundo que elijas y el alumno '
+                    'responde antes de seguir. No tienen nota.',
+                    style: TextStyle(color: p.apagado, height: 1.45),
+                  ),
+                  SeccionPreguntasVideoAdmin(
+                    versionId: widget.versionId,
+                    temaId: widget.tema.id,
+                    repositorio: preguntas,
+                  ),
+                ]),
               if (widget.narraciones case final narraciones?)
                 _tarjeta('Narraciones (audio)', [
                   Text(

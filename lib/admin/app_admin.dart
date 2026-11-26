@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'acceso/puerta_admin.dart';
 import 'avisos/repositorio_avisos_admin.dart';
 import 'bandeja/repositorio_bandeja.dart';
+import '../features/academic/infrastructure/repositories/repositorio_preguntas_video_firestore.dart';
 import 'contenido/narraciones_admin_firestore.dart';
 import 'docentes/repositorio_clases_docentes_admin.dart';
 import 'docentes/repositorio_docentes_admin.dart';
@@ -38,6 +39,7 @@ class _AppAdminState extends State<AppAdmin> {
   final _contenido = RepositorioContenidoAdminFirestore();
   final _generador = GeneradorQuizFunctions();
   final _narraciones = RepositorioNarracionesAdminFirestore();
+  final _preguntasVideo = RepositorioPreguntasVideoFirestore();
   final _docentes = RepositorioDocentesAdminFirestore();
   final _clasesDocentes = RepositorioClasesDocentesAdminFirestore();
   final _enVivos = RepositorioEnVivosAdminFirestore();
@@ -66,6 +68,7 @@ class _AppAdminState extends State<AppAdmin> {
           repositorioContenido: _contenido,
           generadorQuiz: _generador,
           repositorioNarraciones: _narraciones,
+          repositorioPreguntasVideo: _preguntasVideo,
           repositorioDocentes: _docentes,
           repositorioClasesDocentes: _clasesDocentes,
           repositorioEnVivos: _enVivos,

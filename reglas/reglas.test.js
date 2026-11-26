@@ -297,6 +297,14 @@ test('narraciones: las agrega el administrador; las lee quien tiene sesión', as
   await assertSucceeds(deleteDoc(doc(admin(), 'narraciones/n1')));
 });
 
+test('preguntas dentro de la clase: las escribe el administrador; las lee quien tiene sesión', async () => {
+  const preguntas = { versionId: 'v1', temaId: 'alg-01', preguntas: [{ id: 'p1', segundo: 90, enunciado: '¿2+2?', opciones: [{ id: 'a', texto: '4' }, { id: 'b', texto: '5' }], correctaId: 'a' }] };
+  await assertSucceeds(setDoc(doc(admin(), 'preguntas_video/v1__alg-01'), preguntas));
+  await assertFails(setDoc(doc(alumno(), 'preguntas_video/v1__alg-01'), preguntas));
+  await assertSucceeds(getDoc(doc(alumno(), 'preguntas_video/v1__alg-01')));
+  await assertFails(getDoc(doc(anonimo(), 'preguntas_video/v1__alg-01')));
+});
+
 test('docentes: cada uno pide su cuenta; el administrador decide', async () => {
   const solicitud = {
     uid: 'alumno',

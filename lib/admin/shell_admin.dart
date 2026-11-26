@@ -14,6 +14,7 @@ import 'examenes/examenes_admin_page.dart';
 import 'configuracion/configuracion_page.dart';
 import 'contenido/contenido_page.dart';
 import 'contenido/narraciones_admin.dart';
+import '../features/academic/domain/repositories/repositorio_preguntas_video.dart';
 import 'docentes/clases_docentes_page.dart';
 import 'docentes/docentes_page.dart';
 import 'docentes/en_vivos_admin_page.dart';
@@ -70,6 +71,7 @@ class ShellAdmin extends StatefulWidget {
   final RepositorioContenidoAdmin repositorioContenido;
   final GeneradorQuiz generadorQuiz;
   final RepositorioNarracionesAdmin? repositorioNarraciones;
+  final RepositorioPreguntasVideo? repositorioPreguntasVideo;
   final RepositorioDocentesAdmin repositorioDocentes;
   final RepositorioClasesDocentesAdmin repositorioClasesDocentes;
   final RepositorioEnVivosAdmin repositorioEnVivos;
@@ -98,6 +100,7 @@ class ShellAdmin extends StatefulWidget {
     required this.repositorioClasesDocentes,
     required this.repositorioEnVivos,
     this.repositorioNarraciones,
+    this.repositorioPreguntasVideo,
     this.ahora = DateTime.now,
   });
 
@@ -223,6 +226,7 @@ class _ShellAdminState extends State<ShellAdmin> {
         estudiantes: widget.repositorioEstudiantes,
         generador: widget.generadorQuiz,
         narraciones: widget.repositorioNarraciones,
+        preguntasVideo: widget.repositorioPreguntasVideo,
         versionInicial: _destino?.$1,
         temaInicial: _destino?.$2,
       ),

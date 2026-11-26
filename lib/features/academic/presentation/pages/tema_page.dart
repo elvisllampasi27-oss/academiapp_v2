@@ -9,9 +9,11 @@ import '../../../../core/presentation/menu_gota.dart';
 import '../../domain/entities/contenido.dart';
 import '../../domain/entities/curso.dart';
 import '../../domain/entities/material_tema.dart';
+import '../../domain/entities/pregunta_video.dart';
 import '../../domain/entities/progreso_clase.dart';
 import '../../domain/entities/recurso.dart';
 import '../../domain/entities/tema.dart';
+import '../../domain/repositories/repositorio_preguntas_video.dart';
 import '../../domain/repositories/repositorio_progreso_clase.dart';
 import '../../domain/services/obtener_material_tema_service.dart';
 import '../../domain/services/seguimiento_clase.dart';
@@ -64,6 +66,9 @@ class TemaPage extends StatefulWidget {
   /// la pantalla).
   final VoidCallback? onReportar;
 
+  /// Preguntas dentro de la clase (null: no hay).
+  final RepositorioPreguntasVideo? preguntasVideo;
+
   const TemaPage({
     super.key,
     required this.tema,
@@ -79,6 +84,7 @@ class TemaPage extends StatefulWidget {
     this.narraciones,
     this.clasesDocentes,
     this.onReportar,
+    this.preguntasVideo,
   });
 
   @override
@@ -95,6 +101,12 @@ class _TemaPageState extends State<TemaPage> {
   SeguimientoClase _seguimiento = SeguimientoClase();
   int _decenaGuardada = 0;
   double _vistoGuardado = 0;
+
+  /// Preguntas de la clase, las que ya salieron y dónde iba el video.
+  List<PreguntaVideo> _preguntas = const [];
+  final _respondidas = <String>{};
+  double? _posicionAnterior;
+  bool _preguntando = false;
 
   @override
   void initState() {
@@ -113,16 +125,19 @@ class _TemaPageState extends State<TemaPage> {
   Future<void> _cargar() async {
     try {
       final progreso = _obtenerProgreso();
+      final preguntas = _obtenerPreguntas();
       final material = await widget.service.obtener(
         temaId: widget.tema.id,
         versionId: widget.versionId,
       );
       final seguimiento = SeguimientoClase.desde(await progreso);
+      final listaPreguntas = await preguntas;
 
       if (!mounted) return;
 
       setState(() {
         _material = material;
+        _preguntas = listaPreguntas;
         _seguimiento = seguimiento;
         _decenaGuardada = (seguimiento.fraccion * 10).floor();
         _vistoGuardado = seguimiento.visto;
@@ -150,8 +165,49 @@ class _TemaPageState extends State<TemaPage> {
     }
   }
 
+  /// Las preguntas son un extra: si fallan, la clase sigue sin ellas.
+  Future<List<PreguntaVideo>> _obtenerPreguntas() async {
+    try {
+      return await widget.preguntasVideo?.delTema(
+            versionId: widget.versionId,
+            temaId: widget.tema.id,
+          ) ??
+          const [];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Pausa la clase, muestra la pregunta y al cerrarla sigue el video.
+  Future<void> _preguntar(PreguntaVideo pregunta) async {
+    _preguntando = true;
+    _respondidas.add(pregunta.id);
+    _control.pausar();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) =>
+          PointerInterceptor(child: _PreguntaEnClase(pregunta: pregunta)),
+    );
+    _preguntando = false;
+    if (mounted) _control.reanudar();
+  }
+
   void _alAvanzar(double posicion, double duracion) {
     if (!mounted) return;
+
+    final anterior = _posicionAnterior;
+    _posicionAnterior = posicion;
+    if (anterior != null && !_preguntando) {
+      final pregunta = preguntaQueToca(
+        _preguntas,
+        anterior: anterior,
+        actual: posicion,
+        respondidas: _respondidas,
+      );
+      if (pregunta != null) unawaited(_preguntar(pregunta));
+    }
 
     final completadaAntes = _seguimiento.completada;
     final avanzo = _seguimiento.registrar(
@@ -456,6 +512,119 @@ class _Organizado {
         for (final r in material.recursos)
           if (r != clase && r != separata) r,
       ],
+    );
+  }
+}
+
+/// Pregunta dentro de la clase: elige, ve si acertó y la explicación, y
+/// sigue con el video. No tiene nota.
+class _PreguntaEnClase extends StatefulWidget {
+  final PreguntaVideo pregunta;
+
+  const _PreguntaEnClase({required this.pregunta});
+
+  @override
+  State<_PreguntaEnClase> createState() => _PreguntaEnClaseState();
+}
+
+class _PreguntaEnClaseState extends State<_PreguntaEnClase> {
+  String? _elegida;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.pregunta;
+    final elegida = _elegida;
+    final acerto = elegida == p.correctaId;
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF16171C),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: ColoresApp.borde),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'PREGUNTA DE LA CLASE',
+                style: TextStyle(
+                  fontSize: 12,
+                  letterSpacing: 0.6,
+                  fontWeight: FontWeight.w600,
+                  color: ColoresApp.apagado,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                p.enunciado,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 14),
+              for (final o in p.opciones)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: OutlinedButton(
+                    onPressed: elegida == null
+                        ? () => setState(() => _elegida = o.id)
+                        : null,
+                    style: OutlinedButton.styleFrom(
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      side: BorderSide(
+                        color: elegida == null
+                            ? ColoresApp.borde
+                            : o.id == p.correctaId
+                            ? ColoresApp.celeste
+                            : o.id == elegida
+                            ? ColoresApp.naranja
+                            : ColoresApp.borde,
+                      ),
+                    ),
+                    child: Text(o.texto),
+                  ),
+                ),
+              if (elegida != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  acerto
+                      ? '¡Correcto!'
+                      : 'La correcta es: ${p.correcta?.texto ?? ''}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: acerto ? ColoresApp.celeste : ColoresApp.naranja,
+                  ),
+                ),
+                if (p.explicacion case final explicacion?) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    explicacion,
+                    style: const TextStyle(color: ColoresApp.apagado),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Seguir con la clase'),
+                ),
+              ] else
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Saltar pregunta'),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

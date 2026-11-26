@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb;
 
 import '../features/academic/domain/repositories/repositorio_contenido.dart';
+import '../features/academic/domain/repositories/repositorio_preguntas_video.dart';
+import '../features/academic/infrastructure/repositories/repositorio_preguntas_video_firestore.dart';
 import '../features/academic/domain/entities/curriculo.dart';
 import '../features/academic/domain/repositories/repositorio_curriculo.dart';
 import '../features/academic/domain/repositories/repositorio_plan_academico.dart';
@@ -118,6 +120,9 @@ class Dependencias {
   /// Recordatorios en el teléfono (solo en Android; null en la web).
   final ServicioRecordatorios? recordatorios;
 
+  /// Preguntas dentro de la clase (null: la clase sin preguntas).
+  final RepositorioPreguntasVideo? preguntasVideo;
+
   const Dependencias({
     required this.autenticacion,
     required this.recuperacion,
@@ -151,6 +156,7 @@ class Dependencias {
     this.preparacion,
     this.compraPlay,
     this.recordatorios,
+    this.preguntasVideo,
   });
 
   factory Dependencias.firebase() {
@@ -202,6 +208,7 @@ class Dependencias {
       recordatorios: !kIsWeb && defaultTargetPlatform == TargetPlatform.android
           ? ServicioRecordatoriosLocales()
           : null,
+      preguntasVideo: RepositorioPreguntasVideoFirestore(),
     );
   }
 }
