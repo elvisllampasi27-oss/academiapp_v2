@@ -7,3 +7,8 @@ bool esEnlaceImagen(String url) {
   return uri.scheme == 'http' &&
       (uri.host == 'localhost' || uri.host == '127.0.0.1');
 }
+
+/// Política de privacidad publicada en Firebase Hosting
+/// (hosting/privacidad/index.html). Play Store pide este enlace.
+const enlacePoliticaPrivacidad =
+    'https://academiapp-v2-7b9ce.web.app/privacidad/';

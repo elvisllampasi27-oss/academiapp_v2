@@ -5,6 +5,7 @@ import '../../domain/entities/usuario_academiapp.dart';
 import '../../../../core/presentation/animaciones.dart';
 import '../../../student_model/domain/entities/actividad_alumno.dart';
 import '../../../student_model/presentation/mapa_actividad.dart';
+import '../widgets/aviso_privacidad.dart';
 
 class PerfilPage extends StatelessWidget {
   final UsuarioAcademiApp usuario;
@@ -143,6 +144,15 @@ class PerfilPage extends StatelessWidget {
                 onTap: onDocente,
               ),
             ),
+          const Card(
+            child: ListTile(
+              leading: Icon(Icons.privacy_tip_outlined),
+              title: Text('Política de privacidad'),
+              subtitle: Text('Qué datos guardamos y para qué'),
+              trailing: Icon(Icons.open_in_new),
+              onTap: abrirPoliticaPrivacidad,
+            ),
+          ),
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerLeft,

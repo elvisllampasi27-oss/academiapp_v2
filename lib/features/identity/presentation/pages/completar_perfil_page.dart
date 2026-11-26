@@ -5,6 +5,7 @@ import '../../domain/services/completar_perfil_service.dart';
 import '../../domain/values/carreras_unsch.dart';
 import '../../domain/values/validacion_credenciales.dart';
 import '../messages/mensajes_autenticacion.dart';
+import '../widgets/aviso_privacidad.dart';
 import '../widgets/estilo_autenticacion.dart';
 
 /// Primer ingreso con Google: falta crear el perfil de AcademiApp.
@@ -128,6 +129,8 @@ class _CompletarPerfilPageState extends State<CompletarPerfilPage> {
                     cargando: _cargando,
                     alPresionar: _guardar,
                   ),
+                  const SizedBox(height: 8),
+                  const AvisoPrivacidad(accion: 'Al continuar'),
                   const SizedBox(height: 4),
                   Center(
                     child: EnlaceTexto(

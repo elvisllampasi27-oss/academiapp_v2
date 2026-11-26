@@ -4,6 +4,7 @@ import '../../domain/services/registrar_estudiante_service.dart';
 import '../../domain/values/carreras_unsch.dart';
 import '../../domain/values/validacion_credenciales.dart';
 import '../messages/mensajes_autenticacion.dart';
+import '../widgets/aviso_privacidad.dart';
 import '../widgets/estilo_autenticacion.dart';
 
 /// Registro de estudiante. Al terminar con éxito hace `pop(true)`:
@@ -156,6 +157,8 @@ class _RegistroPageState extends State<RegistroPage> {
                     cargando: _cargando,
                     alPresionar: _registrar,
                   ),
+                  const SizedBox(height: 8),
+                  const AvisoPrivacidad(),
                 ],
               ),
             ),
