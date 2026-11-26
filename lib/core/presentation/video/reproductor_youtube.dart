@@ -65,6 +65,7 @@ class _ReproductorYoutubeState extends State<ReproductorYoutube> {
     _suscripcion = _controlador.videoStateStream.listen(_alCambiar);
     widget.control.vincular(
       pausar: _controlador.pauseVideo,
+      reanudar: _controlador.playVideo,
       irA: (segundos) {
         _controlador.seekTo(seconds: segundos, allowSeekAhead: true);
         _controlador.playVideo();

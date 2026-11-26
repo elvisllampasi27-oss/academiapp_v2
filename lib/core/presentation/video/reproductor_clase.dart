@@ -1,25 +1,32 @@
 import 'package:flutter/widgets.dart';
 
 /// Permite a la pantalla del tema manejar el reproductor: pausar (al abrir
-/// las dudas) e ir a un segundo (volver a la parte que se saltó).
+/// las dudas o una pregunta de la clase), seguir e ir a un segundo (volver
+/// a la parte que se saltó).
 class ControlClase {
   VoidCallback? _pausar;
+  VoidCallback? _reanudar;
   void Function(double segundos)? _irA;
 
   void vincular({
     required VoidCallback pausar,
     required void Function(double segundos) irA,
+    VoidCallback? reanudar,
   }) {
     _pausar = pausar;
     _irA = irA;
+    _reanudar = reanudar;
   }
 
   void desvincular() {
     _pausar = null;
     _irA = null;
+    _reanudar = null;
   }
 
   void pausar() => _pausar?.call();
+
+  void reanudar() => _reanudar?.call();
 
   void irA(double segundos) => _irA?.call(segundos);
 }

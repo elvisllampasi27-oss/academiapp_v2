@@ -14,6 +14,7 @@ import '../versiones/modelo_versiones.dart';
 import '../widgets_panel.dart';
 import 'editor_tema_page.dart';
 import 'modelo_contenido.dart';
+import '../../features/academic/domain/repositories/repositorio_preguntas_video.dart';
 import 'narraciones_admin.dart';
 import 'repositorio_contenido_admin.dart';
 
@@ -23,6 +24,7 @@ class ContenidoPage extends StatefulWidget {
   final RepositorioEstudiantesAdmin estudiantes;
   final GeneradorQuiz generador;
   final RepositorioNarracionesAdmin? narraciones;
+  final RepositorioPreguntasVideo? preguntasVideo;
 
   /// Para abrir directo un tema (desde un reporte).
   final String? versionInicial;
@@ -34,6 +36,7 @@ class ContenidoPage extends StatefulWidget {
     required this.estudiantes,
     required this.generador,
     this.narraciones,
+    this.preguntasVideo,
     this.versionInicial,
     this.temaInicial,
   });
@@ -124,6 +127,7 @@ class _ContenidoPageState extends State<ContenidoPage> {
                 repositorio: widget.contenido,
                 generador: widget.generador,
                 narraciones: widget.narraciones,
+                preguntasVideo: widget.preguntasVideo,
                 onVolver: (cambio) => setState(() {
                   _editando = null;
                   if (cambio) _resumen = widget.contenido.resumen(version.id);

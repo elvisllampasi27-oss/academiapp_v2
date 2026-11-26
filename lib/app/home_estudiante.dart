@@ -518,6 +518,7 @@ class _HomeEstudianteState extends State<HomeEstudiante> {
             repositorioRecurso: _d.recursos,
           ),
           repositorioProgreso: _d.progresoClases,
+          preguntasVideo: _d.preguntasVideo,
           practica: (claseVista) => SeccionPracticaTema(
             service: practica,
             temaId: tema.id,
