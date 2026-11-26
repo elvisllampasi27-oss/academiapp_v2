@@ -77,7 +77,7 @@ funciones que ya están escritas y probadas:
 | `prepararCuenta` | Matrícula automática y prueba gratis al registrarse |
 | `eliminarMiCuenta`, `eliminarCuentaAlumno` | Eliminar la cuenta (Play Store lo exige) |
 | `enviarIntentoEvaluacion` | Corregir las prácticas |
-| `iniciarSimulacro`, `enviarSimulacro`, `rankingSemanal`, `estadoExamenSemanal`, `revisarPreguntaExamen` | Examen semanal, ranking y exámenes pasados |
+| `iniciarSimulacro`, `enviarSimulacro`, `rankingSemanal`, `estadoExamenSemanal`, `historialExamenesSemanales`, `revisarPreguntaExamen` | Examen semanal, ranking, historial con promedio y exámenes pasados |
 | `generarPreguntas` | Generar preguntas con IA desde el panel |
 | `preguntarTutor` | Tutor con IA |
 | `verificarCompraPlay` | Confirmar la compra de Premium en Android y dar los días |

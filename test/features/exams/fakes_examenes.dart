@@ -68,6 +68,11 @@ class ServicioExamenesFalso implements ServicioExamenes {
   @override
   Future<RankingSemanal?> ranking() async => rankingSemanal;
 
+  HistorialSemanal historial = const HistorialSemanal();
+
+  @override
+  Future<HistorialSemanal> historialSemanal() async => historial;
+
   @override
   Future<Simulacro> iniciarSimulacro() async {
     if (errorAlIniciar != null) throw errorAlIniciar!;

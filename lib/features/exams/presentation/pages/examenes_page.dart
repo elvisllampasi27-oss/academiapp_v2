@@ -35,6 +35,7 @@ class ExamenesPage extends StatefulWidget {
 class _ExamenesPageState extends State<ExamenesPage> {
   late Future<List<ExamenPasado>> _examenes = widget.repositorio.listar();
   late Future<EstadoExamenSemanal> _estado = widget.servicio.estadoSemanal();
+  late Future<HistorialSemanal> _historial = widget.servicio.historialSemanal();
   TipoExamen _tipo = TipoExamen.ordinario;
   bool _tipoElegido = false;
 
@@ -65,6 +66,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
     if (mounted) {
       setState(() {
         _estado = widget.servicio.estadoSemanal();
+        _historial = widget.servicio.historialSemanal();
       });
     }
   }
@@ -135,6 +137,12 @@ class _ExamenesPageState extends State<ExamenesPage> {
                   alEmpezar: _empezarSimulacro,
                   alVerRanking: _verRanking,
                 ),
+              ),
+              FutureBuilder<HistorialSemanal>(
+                future: _historial,
+                builder: (context, s) => s.data?.semanas.isNotEmpty == true
+                    ? _HistorialSemanal(historial: s.data!)
+                    : const SizedBox.shrink(),
               ),
               const SizedBox(height: 28),
               const Text(
@@ -214,6 +222,72 @@ class _ExamenesPageState extends State<ExamenesPage> {
             ]),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Sus exámenes semanales: la nota de cada uno y el promedio. El que no
+/// dio cuenta 0 (no entra al ranking).
+class _HistorialSemanal extends StatelessWidget {
+  final HistorialSemanal historial;
+
+  const _HistorialSemanal({required this.historial});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'TUS EXÁMENES SEMANALES',
+                  style: TextStyle(
+                    fontSize: 12,
+                    letterSpacing: 0.6,
+                    fontWeight: FontWeight.w600,
+                    color: ColoresApp.apagado,
+                  ),
+                ),
+              ),
+              if (historial.promedio case final promedio?)
+                Text(
+                  'Promedio $promedio',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: Column(
+              children: [
+                for (final fila in historial.semanas)
+                  ListTile(
+                    dense: true,
+                    title: Text(fila.titulo),
+                    subtitle: fila.dado
+                        ? null
+                        : const Text(
+                            'No lo diste: cuenta 0',
+                            style: TextStyle(color: ColoresApp.naranja),
+                          ),
+                    trailing: Text(
+                      '${fila.puntaje}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: fila.dado ? null : ColoresApp.naranja,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

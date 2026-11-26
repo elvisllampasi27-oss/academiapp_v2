@@ -31,4 +31,7 @@ abstract class ServicioExamenes {
 
   /// Ranking del último examen semanal que dio (null si aún no da ninguno).
   Future<RankingSemanal?> ranking();
+
+  /// Sus exámenes semanales y su promedio; los que no dio cuentan 0.
+  Future<HistorialSemanal> historialSemanal();
 }

@@ -4,6 +4,7 @@ import '../../core/presentation/colores_app.dart';
 import '../../core/presentation/formato_fecha.dart';
 import '../../features/academic/domain/entities/contexto_dia_estudiante.dart';
 import '../../features/academic/domain/entities/curso.dart';
+import '../../features/academic/domain/entities/semana_plan.dart';
 import '../../features/academic/domain/entities/tema.dart';
 import '../../features/adaptive_engine/domain/entities/item_mi_ruta.dart';
 import '../../features/adaptive_engine/domain/entities/recomendacion.dart';
@@ -100,6 +101,8 @@ class InicioPage extends StatelessWidget {
         : '${fechaCorta(hoy)} · Día académico $numeroDia';
     final primerNombre = nombre.trim().split(RegExp(r'\s+')).first;
 
+    final practicados = {for (final item in ruta) ?item.temaId};
+
     final refuerzos = ruta
         .where((i) => i.recomendacion.tipo == TipoRecomendacion.reforzar)
         .take(maximoRefuerzos)
@@ -152,16 +155,19 @@ class InicioPage extends StatelessWidget {
                   ? 0
                   : semanaDelPlan(inicioPlan!, retoma),
             )
-          else
+          else ...[
             _TarjetaHoy(
               dia: dia,
-              practicados: {for (final item in ruta) ?item.temaId},
+              practicados: practicados,
               curso: _curso,
               onAbrirTema: onAbrirTema,
               empiezaEl: inicioPlan != null && inicioPlan!.isAfter(hoy)
                   ? inicioPlan
                   : null,
             ),
+            if (dia.semana case final semana? when semana.temaIds.isNotEmpty)
+              _BarraSemana(semana: semana, practicados: practicados, hoy: hoy),
+          ],
           const SizedBox(height: 24),
           Row(
             children: [
@@ -257,6 +263,57 @@ class _Panel extends StatelessWidget {
         border: Border.all(color: ColoresApp.borde),
       ),
       child: child,
+    );
+  }
+}
+
+/// Cuánto lleva de los temas de la semana, camino a su examen del sábado.
+class _BarraSemana extends StatelessWidget {
+  final SemanaPlan semana;
+  final Set<String> practicados;
+  final DateTime hoy;
+
+  const _BarraSemana({
+    required this.semana,
+    required this.practicados,
+    required this.hoy,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final total = semana.temaIds.length;
+    final hechos = semana.temaIds.where(practicados.contains).length;
+    final examen = hoy.weekday >= DateTime.saturday
+        ? 'examen abierto'
+        : 'examen el ${fechaCorta(semana.sabado).toLowerCase()}';
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: _Panel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Semana ${semana.numero} · $examen',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Text(
+                  '$hechos de $total temas',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: ColoresApp.apagado,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            BarraProgreso(valor: total == 0 ? 0 : hechos / total, minHeight: 6),
+          ],
+        ),
+      ),
     );
   }
 }
