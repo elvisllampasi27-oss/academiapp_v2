@@ -131,3 +131,25 @@ EstadoExamenSemanal estadoSemanalDesdeMapa(Map<Object?, Object?> datos) {
     requierePremium: datos['requierePremium'] == true,
   );
 }
+
+/// { semanas: [{ semana, titulo, puntaje, dado }], promedio } de
+/// historialExamenesSemanales.
+HistorialSemanal historialDesdeMapa(Map<Object?, Object?> datos) {
+  final semanas = datos['semanas'];
+  return HistorialSemanal(
+    semanas: [
+      if (semanas is List)
+        for (final f in semanas)
+          if (f is Map)
+            FilaHistorialSemanal(
+              semana: _entero(f['semana']),
+              titulo: _texto(f['titulo']),
+              puntaje: _entero(f['puntaje']),
+              dado: f['dado'] == true,
+            ),
+    ],
+    promedio: datos['promedio'] is num
+        ? (datos['promedio'] as num).toInt()
+        : null,
+  );
+}

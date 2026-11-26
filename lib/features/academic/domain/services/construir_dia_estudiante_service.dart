@@ -7,6 +7,7 @@ import '../repositories/repositorio_publicacion_tema.dart';
 import '../repositories/repositorio_tema.dart';
 import 'calendario_academico_service.dart';
 import 'secuencia_academica_service.dart';
+import 'semana_plan_service.dart';
 
 class ConstruirDiaEstudianteService {
   final RepositorioPlanAcademico repositorioPlan;
@@ -99,6 +100,12 @@ class ConstruirDiaEstudianteService {
       actividades: actividadesPublicadas,
       cursos: cursos,
       temas: temas,
+      semana: semanaDelCalendario(
+        calendario: calendario,
+        fechaInicio: fechaInicioAcademico,
+        hoy: fechaActual,
+        publicados: temasPublicados,
+      ),
     );
   }
 }

@@ -27,6 +27,7 @@ exports.iniciarSimulacro = examenes.iniciarSimulacro;
 exports.enviarSimulacro = examenes.enviarSimulacro;
 exports.rankingSemanal = examenes.rankingSemanal;
 exports.estadoExamenSemanal = examenes.estadoExamenSemanal;
+exports.historialExamenesSemanales = require('./src/examenes/historial').historialExamenesSemanales;
 
 const { generarPreguntas } = require('./src/contenido/generar_preguntas');
 

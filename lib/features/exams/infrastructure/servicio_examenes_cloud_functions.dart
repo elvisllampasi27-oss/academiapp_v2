@@ -49,6 +49,10 @@ class ServicioExamenesCloudFunctions implements ServicioExamenes {
       rankingDesdeMapa(await _llamar('rankingSemanal'));
 
   @override
+  Future<HistorialSemanal> historialSemanal() async =>
+      historialDesdeMapa(await _llamar('historialExamenesSemanales'));
+
+  @override
   Future<ResultadoSimulacro> enviarSimulacro({
     required String simulacroId,
     required Map<String, String> respuestas,

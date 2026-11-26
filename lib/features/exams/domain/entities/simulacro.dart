@@ -139,3 +139,30 @@ class EstadoExamenSemanal {
       !requierePremium &&
       intento != EstadoIntento.completado;
 }
+
+/// Un examen semanal en su historial. Si no lo dio y ya cerró, cuenta 0.
+class FilaHistorialSemanal {
+  final int semana;
+  final String titulo;
+  final int puntaje;
+
+  /// false: no lo dio (vale 0 en su promedio; no entra al ranking).
+  final bool dado;
+
+  const FilaHistorialSemanal({
+    required this.semana,
+    required this.titulo,
+    required this.puntaje,
+    required this.dado,
+  });
+}
+
+/// Sus exámenes semanales, del más reciente al más antiguo.
+class HistorialSemanal {
+  final List<FilaHistorialSemanal> semanas;
+
+  /// null si todavía no tiene ninguno.
+  final int? promedio;
+
+  const HistorialSemanal({this.semanas = const [], this.promedio});
+}

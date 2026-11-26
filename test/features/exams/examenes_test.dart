@@ -1,4 +1,5 @@
 import 'package:academiapp_v2/features/exams/domain/entities/examen.dart';
+import 'package:academiapp_v2/features/exams/domain/entities/simulacro.dart';
 import 'package:academiapp_v2/features/exams/domain/repositories/servicio_examenes.dart';
 import 'package:academiapp_v2/features/exams/infrastructure/examenes_desde_mapa.dart';
 import 'package:academiapp_v2/features/exams/infrastructure/servicio_examenes_cloud_functions.dart';
@@ -244,5 +245,61 @@ void main() {
       find.text('El examen tipo admisión se da sábados y domingos.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('historial semanal: notas, los no dados en 0 y el promedio', (
+    tester,
+  ) async {
+    await grande(tester);
+    final servicio = ServicioExamenesFalso()
+      ..historial = const HistorialSemanal(
+        semanas: [
+          FilaHistorialSemanal(
+            semana: 2,
+            titulo: 'Semana 2',
+            puntaje: 0,
+            dado: false,
+          ),
+          FilaHistorialSemanal(
+            semana: 1,
+            titulo: 'Semana 1',
+            puntaje: 80,
+            dado: true,
+          ),
+        ],
+        promedio: 40,
+      );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ExamenesPage(
+            repositorio: RepositorioExamenesEnMemoria(
+              examenes: [examenExonerados],
+            ),
+            servicio: servicio,
+            hoy: lunes,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('TUS EXÁMENES SEMANALES'), findsOneWidget);
+    expect(find.text('Promedio 40'), findsOneWidget);
+    expect(find.text('No lo diste: cuenta 0'), findsOneWidget);
+    expect(find.text('80'), findsOneWidget);
+  });
+
+  test('historial desde el servidor', () {
+    final h = historialDesdeMapa({
+      'semanas': [
+        {'semana': 2, 'titulo': 'Semana 2', 'puntaje': 0, 'dado': false},
+        {'semana': 1, 'titulo': 'Semana 1', 'puntaje': 80, 'dado': true},
+      ],
+      'promedio': 40,
+    });
+    expect(h.semanas.map((f) => (f.semana, f.dado)), [(2, false), (1, true)]);
+    expect(h.promedio, 40);
+    expect(historialDesdeMapa({}).promedio, isNull);
   });
 }

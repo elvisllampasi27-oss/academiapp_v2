@@ -4,6 +4,7 @@ import 'package:academiapp_v2/features/academic/domain/entities/contexto_dia_est
 import 'package:academiapp_v2/features/academic/domain/entities/curso.dart';
 import 'package:academiapp_v2/features/academic/domain/entities/dia_academico.dart';
 import 'package:academiapp_v2/features/academic/domain/entities/plan_academico.dart';
+import 'package:academiapp_v2/features/academic/domain/entities/semana_plan.dart';
 import 'package:academiapp_v2/features/academic/domain/entities/tema.dart';
 import 'package:academiapp_v2/features/adaptive_engine/domain/entities/item_mi_ruta.dart';
 import 'package:academiapp_v2/features/adaptive_engine/domain/entities/recomendacion.dart';
@@ -44,7 +45,7 @@ const _actividades = [
   ActividadProgramada(id: 'a2', diaId: 'dia-8', temaId: 'algebra-02', orden: 2),
 ];
 
-ContextoDiaEstudiante _contexto({bool conDia = true}) {
+ContextoDiaEstudiante _contexto({bool conDia = true, SemanaPlan? semana}) {
   return ContextoDiaEstudiante(
     plan: _plan,
     dia: conDia
@@ -53,6 +54,7 @@ ContextoDiaEstudiante _contexto({bool conDia = true}) {
     actividades: conDia ? _actividades : const [],
     cursos: _cursos,
     temas: _temas,
+    semana: semana,
   );
 }
 
@@ -220,5 +222,47 @@ void main() {
       inicio(_contexto(), const [], retomaEl: DateTime(2026, 10, 26)),
     );
     expect(find.text('Tu ruta de hoy'), findsOneWidget);
+  });
+
+  testWidgets('barra de la semana: temas hechos y su examen', (tester) async {
+    await mostrar(
+      tester,
+      inicio(
+        _contexto(
+          semana: SemanaPlan(
+            numero: 2,
+            temaIds: const ['aritmetica-02', 'algebra-02', 'otro'],
+            sabado: DateTime(2026, 10, 31),
+          ),
+        ),
+        [_refuerzo()],
+      ),
+    );
+
+    expect(find.text('Semana 2 · examen abierto'), findsOneWidget);
+    expect(find.text('1 de 3 temas'), findsOneWidget);
+  });
+
+  testWidgets('en pausa no se muestra la barra de la semana', (tester) async {
+    await mostrar(
+      tester,
+      inicio(
+        _contexto(
+          semana: SemanaPlan(
+            numero: 2,
+            temaIds: const ['aritmetica-02'],
+            sabado: DateTime(2026, 10, 31),
+          ),
+        ),
+        const [],
+        pausa: PausaPlan(
+          desde: DateTime(2026, 10, 26),
+          semana: 2,
+          eraPrueba: false,
+        ),
+      ),
+    );
+    expect(find.textContaining('Semana 2 ·'), findsNothing);
+    expect(find.textContaining('Tu Premium terminó'), findsOneWidget);
   });
 }
