@@ -400,10 +400,7 @@ void main() {
       await tester.tap(find.text('Obtener Premium · S/ 35.00'));
       await tester.pumpAndSettle();
       expect(compras, 1);
-      expect(
-        find.textContaining('política de Google Play'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('política de Google Play'), findsOneWidget);
     });
 
     testWidgets('si la compra falla, avisa', (tester) async {
