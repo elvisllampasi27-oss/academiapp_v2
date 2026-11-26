@@ -22,6 +22,9 @@ class FichaEstudiantePage extends StatefulWidget {
   final RepositorioPagosAdmin? pagos;
   final DateTime Function() ahora;
 
+  /// Borra la cuenta y los datos del alumno (null: no se muestra).
+  final Future<void> Function(String uid)? eliminarCuenta;
+
   const FichaEstudiantePage({
     super.key,
     required this.uid,
@@ -29,6 +32,7 @@ class FichaEstudiantePage extends StatefulWidget {
     required this.onVolver,
     this.pagos,
     this.ahora = DateTime.now,
+    this.eliminarCuenta,
   });
 
   @override
@@ -134,6 +138,50 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
       ),
       'Premium actualizado.',
     );
+  }
+
+  Future<void> _eliminarCuenta(EstudianteAdmin e) async {
+    final eliminar = widget.eliminarCuenta;
+    if (eliminar == null) return;
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar cuenta'),
+        content: Text(
+          'Se borran la cuenta de ${e.nombre} (${e.correo}) y todos sus '
+          'datos: perfil, avance, respuestas, exámenes y reportes. De sus '
+          'pagos quedan el monto, la fecha y la operación, sin su nombre. '
+          'No se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar para siempre'),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true) return;
+    setState(() => _ocupado = true);
+    try {
+      await eliminar(e.uid);
+      if (!mounted) return;
+      avisarPanel(context, 'Cuenta de ${e.nombre} eliminada.');
+      widget.onVolver();
+    } catch (error) {
+      if (!mounted) return;
+      avisarPanel(
+        context,
+        'No se pudo: ${error is StateError ? error.message : error}',
+      );
+    } finally {
+      if (mounted) setState(() => _ocupado = false);
+    }
   }
 
   Future<void> _matricular(EstudianteAdmin e) async {
@@ -367,6 +415,15 @@ class _FichaEstudiantePageState extends State<FichaEstudiantePage> {
             icon: const Icon(Icons.workspace_premium_outlined, size: 18),
             label: Text(premium ? 'Extender Premium' : 'Dar Premium'),
           ),
+          if (widget.eliminarCuenta != null) ...[
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: _ocupado ? null : () => _eliminarCuenta(e),
+              style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+              icon: const Icon(Icons.delete_forever_outlined, size: 18),
+              label: const Text('Eliminar cuenta (a pedido del alumno)'),
+            ),
+          ],
         ],
       ),
     );

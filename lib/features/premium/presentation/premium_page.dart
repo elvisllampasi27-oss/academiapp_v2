@@ -383,6 +383,16 @@ class _PremiumPageState extends State<PremiumPage> {
                       )
                     : Text(beca ? 'Canjear beca' : 'Enviar pago'),
               ),
+            if (!beca && c.yapeNumero.isNotEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'Premium se activa cuando revisemos tu pago. Una vez '
+                  'activado no hay reembolso, tampoco si eliminas tu cuenta.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: ColoresApp.apagado, fontSize: 12),
+                ),
+              ),
           ],
         ),
       ),
