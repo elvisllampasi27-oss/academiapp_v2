@@ -1,4 +1,4 @@
-package pe.edu.unsch.academiapp_v2
+package pe.sinchi.academia
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -12,7 +12,12 @@
           "package_name": "pe.edu.unsch.academiapp_v2"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "952131163064-3np9p71lu1bajejsvdvt8j28cn94ccsr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBklSvusRBkvAA_8qGLMztt9vBEmZ-fsEw"
@@ -20,7 +25,49 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "952131163064-3np9p71lu1bajejsvdvt8j28cn94ccsr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:952131163064:android:3759d974178ac2b1fff54d",
+        "android_client_info": {
+          "package_name": "pe.sinchi.academia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "952131163064-tvvfd95i8j481c5dopm1vrrijh7jo3va.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "pe.sinchi.academia",
+            "certificate_hash": "f3cfe1a29f38d5f88dee9d6b5d1d4e91f876d7dd"
+          }
+        },
+        {
+          "client_id": "952131163064-3np9p71lu1bajejsvdvt8j28cn94ccsr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBklSvusRBkvAA_8qGLMztt9vBEmZ-fsEw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "952131163064-3np9p71lu1bajejsvdvt8j28cn94ccsr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
