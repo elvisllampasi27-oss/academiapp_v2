@@ -141,6 +141,10 @@ function calificarExamen(preguntas, claves, respuestas) {
 }
 
 module.exports = {
+  DIA_MS,
+  DESFASE_LIMA_MS,
+  diaLima,
+  diaSemana,
   MARGEN_ENVIO_MS,
   sigueEnCurso,
   semanaAcademica,

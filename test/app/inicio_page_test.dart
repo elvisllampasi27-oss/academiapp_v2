@@ -84,7 +84,11 @@ void main() {
   late List<String> abiertos;
   late int verRuta;
 
-  Widget inicio(ContextoDiaEstudiante dia, List<ItemMiRuta> ruta) {
+  Widget inicio(
+    ContextoDiaEstudiante dia,
+    List<ItemMiRuta> ruta, {
+    DateTime? inicioPlan,
+  }) {
     return MaterialApp(
       home: Scaffold(
         body: InicioPage(
@@ -95,6 +99,7 @@ void main() {
           onAbrirTema: (tema, _) => abiertos.add(tema.id),
           onVerRuta: () => verRuta++,
           onAbrirPerfil: () {},
+          inicioPlan: inicioPlan,
         ),
       ),
     );
@@ -137,6 +142,20 @@ void main() {
 
     expect(find.text('0 de 2 temas'), findsOneWidget);
     expect(find.textContaining('Resuelve las prácticas'), findsOneWidget);
+  });
+
+  testWidgets('antes de su día 1 dice cuándo empieza', (tester) async {
+    await mostrar(
+      tester,
+      inicio(
+        _contexto(conDia: false),
+        const [],
+        inicioPlan: DateTime(2026, 11, 2),
+      ),
+    );
+
+    expect(find.text('Empiezas el lunes 2 nov'), findsOneWidget);
+    expect(find.textContaining('Hoy no tienes temas'), findsNothing);
   });
 
   testWidgets('el domingo no hay temas', (tester) async {

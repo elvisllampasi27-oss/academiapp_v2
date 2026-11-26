@@ -37,6 +37,10 @@ const cuenta = require('./src/cuenta/eliminar_cuenta');
 exports.eliminarMiCuenta = cuenta.eliminarMiCuenta;
 exports.eliminarCuentaAlumno = cuenta.eliminarCuentaAlumno;
 
+const { prepararCuenta } = require('./src/cuenta/preparar_cuenta');
+
+exports.prepararCuenta = prepararCuenta;
+
 const { estadoSistema } = require('./src/sistema/estado');
 
 exports.estadoSistema = estadoSistema;
